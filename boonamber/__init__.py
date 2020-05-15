@@ -12,11 +12,6 @@ _amber_creds = {'api_key': None,
                 'is_set': False}
 
 
-class BoonException(Exception):
-    def __init__(self, message):
-        self.message = message
-
-
 def _api_call(method, url, headers, data=None):
     response = requests.request(method=method, url=url, headers=headers, data=data)
 

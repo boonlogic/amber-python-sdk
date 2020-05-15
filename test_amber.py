@@ -1,15 +1,10 @@
+import sys
 import boonamber as amber
 
 
 def test_create_sensor():
-    sensor_id = 'my-sensor'
-    api_key = 'my-key'
-    api_tenant = 'my-tenant'
-
     print("create_sensor")
-    success, response = amber.create_sensor(sensor_id)
-    if not success:
-        raise amber.BoonException("create sensor failed: {}".format(response))
+    success, response = amber.create_sensor('my-sensor')
     print(response)
     print()
 
