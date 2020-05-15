@@ -1,0 +1,16 @@
+{
+    "default": {
+        "username": "amber-test-user",
+        "password": "xxxxxxxxxxxxxx"
+    },
+    "missing-username": {
+        "password": "ykdjkdVKjEav3N#3"
+    },
+    "missing-password": {
+        "username": "amber-test-user"
+    },
+    "garbage": {
+        "username": "garbage-username",
+        "password": "garbage-password"
+    }
+}
