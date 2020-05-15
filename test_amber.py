@@ -6,10 +6,16 @@ def test_create_sensor():
     api_key = 'my-key'
     api_tenant = 'my-tenant'
 
-    amber.create_sensor(sensor_id, api_key, api_tenant)
+    print("create_sensor")
+    success, response = amber.create_sensor(sensor_id)
+    if not success:
+        raise amber.BoonException("create sensor failed: {}".format(response))
+    print(response)
+    print()
 
 
 def main():
+    amber.set_credentials(api_key='my-key', api_tenant='my-tenant')
     test_create_sensor()
 
 
