@@ -17,6 +17,15 @@ class BoonException(Exception):
         self.message = message
 
 
+def _api_call(method, url, headers, data=None):
+    response = requests.request(method=method, url=url, headers=headers, data=data)
+
+    if response.status_code != 200:
+        return False, '{}: {}'.format(response.status_code, response.json()['body'])
+
+    return True, response.json()['body']
+
+
 def set_credentials(api_key, api_tenant):
     """Set the API credentials to be used for Amber calls
     
@@ -36,7 +45,7 @@ def create_sensor(sensor_id):
         sensor_id (str): sensor identifier
     """
     if not _amber_creds['is_set']:
-        raise BoonException("cannot create sensor: credentials not set")
+        return False, "credentials not set"
 
     url = _AMBER_URL + '/sensor'
     headers = {
@@ -44,12 +53,7 @@ def create_sensor(sensor_id):
         'api-tenant': _amber_creds['api_tenant'],
         'sensor-id': sensor_id
     }
-    response = requests.post(url, headers=headers)
-
-    if response.status_code != 200:
-        return False, '{}: {}'.format(response.status_code, response.json()['body'])
-
-    return True, response.json()['body']
+    return _api_call('POST', url, headers)
 
 
 def delete_sensor(sensor_id):
