@@ -1,9 +1,5 @@
-import sys
 import boonamber as amber
-
-
-"""A basic proof-of-connectivity with the Amber server."""
-
+import sys
 
 # set API credentials
 amber.set_credentials(api_key='api-key', api_tenant='api-tenant')
