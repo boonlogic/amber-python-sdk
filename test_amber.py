@@ -96,19 +96,13 @@ def test_get_status():
     print()
 
 
-def main():
-    amber.set_credentials(api_key='my-key', api_tenant='my-tenant')
-
-    test_create_sensor()
-    test_delete_sensor()
-    test_list_sensors()
-    test_configure_sensor()
-    test_stream_sensor()
-    test_train_sensor()
-    test_get_info()
-    test_get_config()
-    test_get_status()
-
-
-if __name__ == '__main__':
-    main()
+amber.set_credentials('my-key', 'my-tenant')
+test_create_sensor()
+test_delete_sensor()
+test_list_sensors()
+test_configure_sensor()
+test_stream_sensor()
+test_train_sensor()
+test_get_info()
+test_get_config()
+test_get_status()

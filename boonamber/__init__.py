@@ -24,13 +24,16 @@ class BoonException(Exception):
 
 def _api_call(method, url, headers, body=None):
     try:
-        print("request body: {}".format(body))
         response = requests.request(method=method, url=url, headers=headers, json=body)
     except Exception as e:
         return False, "request failed: {}".format(e)
 
     if response.status_code != 200:
         return False, '{}: {}'.format(response.status_code, response.json())
+
+    # backend errors return 200 with errorMessage in response body
+    if 'errorMessage' in response.json():
+        return False, "server error: {}".format(response.json()['errorMessage'])
 
     return True, response.json()['body']
 
@@ -134,14 +137,16 @@ def configure_sensor(sensor_id, feature_count, streaming_window):
         'sensor-id': sensor_id
     }
     body = {
-        'numFeatures': feature_count,
-        'numericFormat': 'float32',
-        'min': [0],
-        'max': [1],
-        'weight': [1],
-        'percent_variation': 0.05,
-        'streaming_window': streaming_window,
         'accuracy': 0.99,
+        'features': [
+            {
+                'minVal': 0,
+                'maxVal': 1,
+                'weight': 1
+            } for f in range(feature_count)],
+        'numericFormat': 'float32',
+        'percentVariation': 0.05,
+        'streamingWindowSize': streaming_window,
     }
     return _api_call('POST', url, headers, body=body)
 
