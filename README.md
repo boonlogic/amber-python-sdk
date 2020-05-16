@@ -1,6 +1,6 @@
 # amber-python-sdk
 
-The Boon Amber SDK is a Python 3 project and can be installed via pip.
+The Boon Amber SDK is a Python 3 project and can be installed via pip. After cloning the `amber-python-sdk` repository to the current directory, run:
 
 ```
 pip install amber-python-sdk
