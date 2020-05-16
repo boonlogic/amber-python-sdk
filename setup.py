@@ -9,10 +9,12 @@ setup(
     author="BoonLogic",
     author_email="luke@boonlogic.com",
     packages=['boonamber'],
+    install_requires=['requests'],
     description="An SDK for Boon Amber sensor analytics",
     long_description=long_description,
     license='MIT',
     long_description_content_type="text/markdown",
+    url=None,
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
