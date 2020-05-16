@@ -10,7 +10,7 @@ pip install amber-python-sdk
 
 An _api-key_ and _api-tenant_ credential pair must be obtained from Boon Logic to use the Amber SDK. These credentials are unique to your obtained license and provide authentication to the Amber server.
 
-After importing the package, you must call `boonamber.set_credentials` to provide the current session with your `api_key` and `api_tenant` credential pair:
+You must call `boonamber.set_credentials` after importing the package to provide the current session with your `api_key` and `api_tenant` credential pair:
 
 ```
 import boonamber as amber
