@@ -8,9 +8,9 @@ pip install amber-python-sdk
 
 # API credentials
 
-An _api-key_ and _api-tenant_ credential pair must be obtained from Boon Logic to use the Amber SDK. These provide authentication to the Amber server and will be unique to your obtained license.
+An _api-key_ and _api-tenant_ credential pair must be obtained from Boon Logic to use the Amber SDK. These credentials are unique to your obtained license and provide authentication to the Amber server.
 
-After importing `boonamber`, you must call `boonamber.set_credentials` to provide the package with your `api_key` and `api_tenant` credential pair:
+After importing the package, you must call `boonamber.set_credentials` to provide the current session with your `api_key` and `api_tenant` credential pair:
 
 ```
 import boonamber as amber
@@ -22,7 +22,7 @@ amber.set_credentials(api_key='my-key', api_tenant='my-tenant')
 
 The following Python script provides a basic proof-of-connectivity:
 
-*connect-example.py*
+**connect-example.py**
 
 ```
 import boonamber as amber
@@ -39,7 +39,7 @@ if not success:
 print("sensors: {}".format(response))
 ```
 
-Running the connect-test.py script should yield something like:
+Running the connect-test.py script should yield output like the following:
 ```
 $ python connect-example.py
 sensors: <list of current sensor-ids in tenant namespace> 
