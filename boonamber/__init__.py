@@ -4,9 +4,9 @@ from numbers import Number
 import requests
 
 
-###########################
-# BoonAmber Python API v1 #
-###########################
+############################
+# Boon Amber Python SDK v1 #
+############################
 
 
 _AMBER_URL = "https://yr15pccsn4.execute-api.us-east-1.amazonaws.com/dev-python"
@@ -158,7 +158,7 @@ def _flatten_data(data):
     if not isinstance(data, Iterable):
         return [data]
 
-    # data is a nested list, flatten using itertools
+    # if data is nested, flatten using itertools
     if any(isinstance(d, Iterable) for d in data):
         if not all(isinstance(d, Iterable) for d in data):
             raise BoonError("bad data: cannot mix nested scalars and iterables")
