@@ -1,108 +1,227 @@
-import time
+import nose
+from nose.tools import assert_equal
+from nose.tools import assert_list_equal
+from nose.tools import assert_dict_equal
+from nose.tools import assert_false
+from nose.tools import assert_raises
 import boonamber as amber
 
 
-def test_create_sensor():
-    print("create_sensor")
-    start = time.time()
-    success, response = amber.create_sensor('my-sensor')
-    end = time.time()
-    print(response)
-    print("time elapsed {:.6f} sec".format(end - start))
-    print()
+class TestCredentials:
+    def test_set_credentials
+        raise NotImplementedError
+
+    def test_set_credentials_negative
+        # set credentials using non-string api_key
+        raise NotImplementedError
+
+        # set credentials using non-string api_tenant
+        raise NotImplementedError
 
 
-def test_delete_sensor():
-    print('delete_sensor')
-    start = time.time()
-    success, response = amber.delete_sensor('my-sensor')
-    end = time.time()
-    print(response)
-    print("time elapsed {:.6f} sec".format(end - start))
-    print()
+class TestEndpoints:
+    def test_create_sensor
+        raise NotImplementedError
+
+    def test_create_sensor_negative
+        # try with unset credentials
+        raise NotImplementedError
+
+        # try with garbage credentials
+        raise NotImplementedError
+
+        # try with already-created sensor-id
+        raise NotImplementedError
 
 
-def test_list_sensors():
-    print('list_sensors')
-    start = time.time()
-    success, response = amber.list_sensors()
-    end = time.time()
-    print(response)
-    print("time elapsed {:.6f} sec".format(end - start))
-    print()
+    def test_delete_sensor
+        raise NotImplementedError
+
+    def test_delete_sensor_negative
+        # try with unset credentials
+        raise NotImplementedError
+
+        # try with garbage credentials
+        raise NotImplementedError
+
+        # try with nonexistent sensor-id
+        raise NotImplementedError
 
 
-def test_configure_sensor():
-    print('configure_sensor')
-    start = time.time()
-    success, response = amber.configure_sensor('my-sensor', feature_count=1, streaming_window=25)
-    end = time.time()
-    print(response)
-    print("time elapsed {:.6f} sec".format(end - start))
-    print()
+    def test_list_sensors
+        raise NotImplementedError
+
+    def test_list_sensors_negative
+        # try with unset credentials
+        raise NotImplementedError
+
+        # try with garbage credentials
+        raise NotImplementedError
+
+    def test_configure_sensor
+        raise NotImplementedError
+
+    def test_configure_sensor_negative
+        # try with unset credentials
+        raise NotImplementedError
+
+        # try with garbage credentials
+        raise NotImplementedError
+
+        # try with nonexistent sensor-id
+        raise NotImplementedError
+
+        # try with bad feature_count
+        raise NotImplementedError
+
+        # try with bad streaming_window
+        raise NotImplementedError
+
+    def test_stream_sensor
+        raise NotImplementedError
+
+    def test_stream_sensor_negative
+        # try with unset credentials
+        raise NotImplementedError
+
+        # try with garbage credentials
+        raise NotImplementedError
+
+        # try with nonexistent sensor-id
+        raise NotImplementedError
+
+        # try with invalid data
+        # bad_shape_data
+        # nonnumeric_data
+        raise NotImplementedError
+        raise NotImplementedError
+
+    def test_train_sensor
+        raise NotImplementedError
+
+    def test_train_sensor_negative
+        # try with unset credentials
+        raise NotImplementedError
+
+        # try with garbage credentials
+        raise NotImplementedError
+
+        # try with nonexistent sensor-id
+        raise NotImplementedError
+
+        # try with invalid data
+        # bad_shape_data
+        # nonnumeric_data
+        raise NotImplementedError
+        raise NotImplementedError
+
+    def test_get_info
+        raise NotImplementedError
+
+    def test_get_info_negative
+        # try with unset credentials
+        raise NotImplementedError
+
+        # try with garbage credentials
+        raise NotImplementedError
+
+        # try with nonexistent sensor-id
+        raise NotImplementedError
+
+    def test_get_config
+        raise NotImplementedError
+
+    def test_get_config_negative
+        # try with unset credentials
+        raise NotImplementedError
+
+        # try with garbage credentials
+        raise NotImplementedError
+
+        # try with nonexistent sensor-id
+        raise NotImplementedError
+
+    def test_get_status
+        raise NotImplementedError
+
+    def test_get_status_negative
+        # try with unset credentials
+        raise NotImplementedError
+
+        # try with garbage credentials
+        raise NotImplementedError
+
+        # try with nonexistent sensor-id
+        raise NotImplementedError
 
 
-def test_stream_sensor():
-    print('stream_sensor')
-    data = [0.1, 0.2, 0.3, 0.4, 0.5]
+class TestAPICall:
+    def test_api_call
+        raise NotImplementedError
 
-    start = time.time()
-    success, response = amber.stream_sensor('my-sensor', data)
-    end = time.time()
-    print(response)
-    print("time elapsed {:.6f} sec".format(end - start))
-    print()
+    def test_api_call_negative
+        # try request with bad HTTP method
+        raise NotImplementedError
 
+        # try request with bad URL
+        raise NotImplementedError
 
-def test_train_sensor():
-    print('train_sensor')
-    data = [0.1, 0.2, 0.3, 0.4, 0.5]
+        # make a request that returns bad (non-200) error code
+        raise NotImplementedError
 
-    start = time.time()
-    success, response = amber.train_sensor('my-sensor', data)
-    end = time.time()
-    print(response)
-    print("time elapsed {:.6f} sec".format(end - start))
-    print()
+        # make a request that returns backend error ('errorMessage' in response body)
+        # todo: will this be possible for an end-user, or is it just a current error behavior of amber server?
+        raise NotImplementedError
 
 
-def test_get_info():
-    print('get_info')
-    start = time.time()
-    success, response = amber.get_info('my-sensor')
-    end = time.time()
-    print(response)
-    print("time elapsed {:.6f} sec".format(end - start))
-    print()
+class TestDataHandling:
+    def test_validate_shape
+        # try with scalar
+        raise NotImplementedError
+
+        # try with list
+        raise NotImplementedError
+
+        # try with valid list-of-lists
+        raise NotImplementedError
+
+    def test_validate_shape_negative
+        # try with empty data
+        # empty_lists
+        # empty_lists_of_lists
+        raise NotImplementedError
+        raise NotImplementedError
+
+        # try with badly-nested data
+        # mixed_nesting
+        # too_deep
+        # ragged_array
+        raise NotImplementedError
+        raise NotImplementedError
+        raise NotImplementedError
+
+    def test_flatten_data
+        # flatten scalar
+        raise NotImplementedError
+
+        # flatten list
+        raise NotImplementedError
+
+        # flatten list-of-lists
+        raise NotImplementedError
+
+    def test_validate_numeric
+        # try with (valid) list of numbers
+        raise NotImplementedError
+
+    def test_validate_numeric_negative
+        # try with list containing non-number
+        raise NotImplementedError
 
 
-def test_get_config():
-    print('get_config')
-    start = time.time()
-    success, response = amber.get_config('my-sensor')
-    end = time.time()
-    print(response)
-    print("time elapsed {:.6f} sec".format(end - start))
-    print()
-
-
-def test_get_status():
-    print('get_status')
-    start = time.time()
-    success, response = amber.get_status('my-sensor')
-    end = time.time()
-    print(response)
-    print("time elapsed {:.6f} sec".format(end - start))
-    print()
-
-
-amber.set_credentials('my-key', 'my-tenant')
-test_create_sensor()
-test_delete_sensor()
-test_list_sensors()
-test_configure_sensor()
-test_stream_sensor()
-test_train_sensor()
-test_get_info()
-test_get_config()
-test_get_status()
+if __name__ == '__main__':
+    myargv = ['nosetests', '--verbosity=2']
+    nose.run(defaultTest=__name__ + ':TestCredentials', argv=myargv)
+    nose.run(defaultTest=__name__ + ':TestAPICall', argv=myargv)
+    nose.run(defaultTest=__name__ + ':TestDataHandling', argv=myargv)
+    nose.run(defaultTest=__name__ + ':TestEndpoints', argv=myargv)

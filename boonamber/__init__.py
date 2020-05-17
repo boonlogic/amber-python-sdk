@@ -1,6 +1,6 @@
 import itertools
 from collections.abc import Iterable
-from numbers import Number
+from numbers import Number, Integral
 import requests
 
 
@@ -45,13 +45,19 @@ def set_credentials(api_key, api_tenant):
         api_key (str): API authentication key
         api_tenant (str): API tenant identifier
     """
+    if not isinstance(api_key, str):
+        raise BoonException("invalid credentials: 'api_key' must be a string")
+
+    if not isinstance(api_tenant, str):
+        raise BoonException("invalid credentials: 'api_tenant' must be a string")
+
     _amber_creds['api_key'] = api_key
     _amber_creds['api_tenant'] = api_tenant
     _amber_creds['is_set'] = True
 
 
 def create_sensor(sensor_id):
-    """Creates new sensor instance
+    """Create a new sensor instance
 
     Args:
         sensor_id (str): sensor identifier
@@ -72,8 +78,9 @@ def create_sensor(sensor_id):
     }
     return _api_call('POST', url, headers)
 
+
 def delete_sensor(sensor_id):
-    """Deletes an amber sensor instance
+    """Delete an amber sensor instance
 
     Args:
         sensor_id (str): sensor identifier
@@ -96,7 +103,7 @@ def delete_sensor(sensor_id):
 
 
 def list_sensors():
-    """Lists all sensor instances associated with current API credentials
+    """List all sensor instances associated with current API credentials
 
     Returns:
         success (bool): True if operation was successful
@@ -115,7 +122,7 @@ def list_sensors():
 
 
 def configure_sensor(sensor_id, feature_count, streaming_window):
-    """Configures an amber sensor instance
+    """Configure an amber sensor instance
 
     Args:
         sensor_id (str): sensor identifier
@@ -126,9 +133,14 @@ def configure_sensor(sensor_id, feature_count, streaming_window):
         success (bool): True if operation was successful
         response (dict): config dict if successful, error string otherwise
     """
-
     if not _amber_creds['is_set']:
         raise BoonException("credentials not set")
+
+    if not feature_count > 0 or not isinstance(feature_count, Integral):
+        raise BoonException("invalid 'feature_count': must be positive integer")
+
+    if not streaming_window > 0 or not isinstance(feature_count, Integral):
+        raise BoonException("invalid 'streaming_window': must be positive integer")
 
     url = _AMBER_URL + '/config'
     headers = {
@@ -151,41 +163,67 @@ def configure_sensor(sensor_id, feature_count, streaming_window):
     return _api_call('POST', url, headers, body=body)
 
 
-def _flatten_data(data):
-    """Turn array-like data into a flat list"""
+def _validate_shape(data):
+    """Validate that data is non-empty and one of the following:
+       scalar value, list-like or list-of-lists-like where all
+       sublists have equal length
+    """
 
-    # if data isn't iterable, treat as a single scalar data point
+    # if not iterable, data is a single scalar data point
+    if not isinstance(data, Iterable):
+        return
+
+    # if iterable and unnested, data is a 1-d array
+    if not any(isinstance(d, Iterable) for d in data):
+        if len(list(data)) == 0:
+            raise BoonError("invalid data: empty")
+
+    # if iterable and nested, data is 2-d array
+    if not all(isinstance(d, Iterable) for d in data):
+        raise BoonError("invalid data: cannot mix nested scalars and iterables")
+
+    depth_2_flattened = itertools.chain.from_iterable(data)
+    if any(isinstance(i, Iterable) for i in depth_2_flattened):
+        raise BoonError("invalid data: cannot be nested deeper than list-of-lists")
+
+    sublengths = [len(list(d)) for d in data]
+    if len(set(sublengths)) > 1:
+        raise BoonError("invalid data: nested sublists must have equal length")
+
+    if sublengths[0] == 0:
+        raise BoonError("invalid data: empty")
+
+
+def _flatten_data(data):
+    """Flatten data, assuming shape was previously validated"""
+
+    # data is scalar
     if not isinstance(data, Iterable):
         return [data]
-
-    # if data is nested, flatten using itertools
-    if any(isinstance(d, Iterable) for d in data):
-        if not all(isinstance(d, Iterable) for d in data):
-            raise BoonError("bad data: cannot mix nested scalars and iterables")
-
-        return list(itertools.chain.from_iterable(data))
-
-    return list(data)
+    # data is 1-d array
+    elif not any(isinstance(d, Iterable) for d in data):
+        return list(data)
+    # data is 2-d array
+    return list(itertools.chain.from_iterable(data))
 
 
 def _validate_numeric(data):
-    """Validate that data (iterable) contains only numerics"""
+    """Validate that flattened data contains only numerics"""
 
     for d in data:
         if not isinstance(d, Number):
-            raise BoonError("bad data: contained {} which is not numeric".format(d.__repr__()))
-
-    return data
+            raise BoonError("invalid data: contained {} which is not numeric".format(d.__repr__()))
 
 
 def stream_sensor(sensor_id, data):
-    """Streams data to an amber sensor and returns the inference result
+    """Stream data to an amber sensor and return the inference result
 
     Args:
         sensor_id (str): sensor identifier
-        data (array-like): data to be inferenced. Must be array-like in
-            that it is a numeric scalar, list-like, or list-of-lists-like
-            which has no side effects if iterated.
+        data (array-like): data to be inferenced. Must be non-empty,
+            entirely numeric and one of the following: scalar value,
+            list-like or list-of-lists-like where all sublists have
+            equal length.
 
     Returns:
         success (bool): True if operation was successful
@@ -195,10 +233,12 @@ def stream_sensor(sensor_id, data):
     if not _amber_creds['is_set']:
         raise BoonException("credentials not set")
 
-    # server expects data flattened as a string of comma-separated values
-    # todo: any check that the data dimensions are sane with feature_count with streaming_window?
+    # Server expects data flattened as a string of comma-separated values.
+    # Note: as in the Boon Nano SDK, there is no check that data dimensions
+    # align with feature_count and streaming_window.
+    _validate_shape(data)
     data = _flatten_data(data)
-    data = _validate_numeric(data)
+    _validate_numeric(data)
     data_csv = ','.join([str(float(d)) for d in data])
 
     url = _AMBER_URL + '/stream'
@@ -214,13 +254,14 @@ def stream_sensor(sensor_id, data):
 
 
 def train_sensor(sensor_id, data):
-    """Trains an amber sensor using a given set of data
+    """Train an amber sensor on given data
 
     Args:        
         sensor_id (str): sensor identifier
-        data (array-like): data to be inferenced. Must be array-like in
-            that it is a numeric scalar, list-like, or list-of-lists-like
-            which has no side effects if iterated.
+        data (array-like): data to be inferenced. Must be non-empty,
+            entirely numeric and one of the following: scalar value,
+            list-like or list-of-lists-like where all sublists have
+            equal length.
     
     Returns:
         succeess (bool): True if operation was successful
@@ -230,10 +271,12 @@ def train_sensor(sensor_id, data):
     if not _amber_creds['is_set']:
         raise BoonException("credentials not set")
 
-    # server expects data flattened as a string of comma-separated values
-    # todo: any check that the data dimensions are sane with feature_count with streaming_window?
+    # Server expects data flattened as a string of comma-separated values.
+    # Note: as in the Boon Nano SDK, there is no check that data dimensions
+    # align with feature_count and streaming_window.
+    _validate_shape(data)
     data = _flatten_data(data)
-    data = _validate_numeric(data)
+    _validate_numeric(data)
     data_csv = ','.join([str(float(d)) for d in data])
 
     url = _AMBER_URL + '/train'
@@ -249,7 +292,7 @@ def train_sensor(sensor_id, data):
 
 
 def get_info(sensor_id):
-    """Gets usage info about a sensor
+    """Get usage info about a sensor
 
     Args:
         sensor_id (str): sensor identifier
@@ -271,7 +314,7 @@ def get_info(sensor_id):
 
 
 def get_config(sensor_id):
-    """Gets current sensor configuration
+    """Get current sensor configuration
 
     Args:
         sensor_id (str): sensor identifier
@@ -293,7 +336,7 @@ def get_config(sensor_id):
 
 
 def get_status(sensor_id):
-    """Gets sensor status
+    """Get sensor status
 
     Args:
         sensor_id (str): sensor identifier
