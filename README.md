@@ -1,4 +1,6 @@
-# amber-python-sdk
+# Boon Amber Python SDK
+
+An SDK for Boon Amber sensor analytics
 
 ## Installation
 
