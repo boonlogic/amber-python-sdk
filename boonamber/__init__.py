@@ -23,6 +23,8 @@ class BoonException(Exception):
 
 
 def _api_call(method, url, headers, body=None):
+    """Make a REST call to the Amber server and handle the response"""
+
     try:
         response = requests.request(method=method, url=url, headers=headers, json=body)
     except Exception as e:
@@ -176,22 +178,22 @@ def _validate_shape(data):
     # if iterable and unnested, data is a 1-d array
     if not any(isinstance(d, Iterable) for d in data):
         if len(list(data)) == 0:
-            raise BoonError("invalid data: empty")
+            raise ValueError("empty")
 
     # if iterable and nested, data is 2-d array
     if not all(isinstance(d, Iterable) for d in data):
-        raise BoonError("invalid data: cannot mix nested scalars and iterables")
+        raise ValueError("cannot mix nested scalars and iterables")
 
     depth_2_flattened = itertools.chain.from_iterable(data)
     if any(isinstance(i, Iterable) for i in depth_2_flattened):
-        raise BoonError("invalid data: cannot be nested deeper than list-of-lists")
+        raise ValueError("cannot be nested deeper than list-of-lists")
 
     sublengths = [len(list(d)) for d in data]
     if len(set(sublengths)) > 1:
-        raise BoonError("invalid data: nested sublists must have equal length")
+        raise ValueError("nested sublists must have equal length")
 
     if sublengths[0] == 0:
-        raise BoonError("invalid data: empty")
+        raise ValueError("empty")
 
 
 def _flatten_data(data):
@@ -212,7 +214,7 @@ def _validate_numeric(data):
 
     for d in data:
         if not isinstance(d, Number):
-            raise BoonError("invalid data: contained {} which is not numeric".format(d.__repr__()))
+            raise ValueError("contained {} which is not numeric".format(d.__repr__()))
 
 
 def stream_sensor(sensor_id, data):
@@ -236,9 +238,13 @@ def stream_sensor(sensor_id, data):
     # Server expects data flattened as a string of comma-separated values.
     # Note: as in the Boon Nano SDK, there is no check that data dimensions
     # align with feature_count and streaming_window.
-    _validate_shape(data)
-    data = _flatten_data(data)
-    _validate_numeric(data)
+    try:
+        _validate_shape(data)
+        data = _flatten_data(data)
+        _validate_numeric(data)
+    except ValueError as e:
+        raise BoonException("invalid data: {}".format(e))
+
     data_csv = ','.join([str(float(d)) for d in data])
 
     url = _AMBER_URL + '/stream'
@@ -274,9 +280,13 @@ def train_sensor(sensor_id, data):
     # Server expects data flattened as a string of comma-separated values.
     # Note: as in the Boon Nano SDK, there is no check that data dimensions
     # align with feature_count and streaming_window.
-    _validate_shape(data)
-    data = _flatten_data(data)
-    _validate_numeric(data)
+    try:
+        _validate_shape(data)
+        data = _flatten_data(data)
+        _validate_numeric(data)
+    except ValueError as e:
+        raise BoonException("invalid data: {}".format(e))
+
     data_csv = ','.join([str(float(d)) for d in data])
 
     url = _AMBER_URL + '/train'
