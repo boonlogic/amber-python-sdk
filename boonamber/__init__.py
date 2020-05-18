@@ -123,7 +123,7 @@ def list_sensors():
     return _api_call('GET', url, headers)
 
 
-def configure_sensor(sensor_id, feature_count, streaming_window):
+def configure_sensor(sensor_id, feature_count=1, streaming_window=25):
     """Configure an amber sensor instance
 
     Args:
@@ -165,57 +165,77 @@ def configure_sensor(sensor_id, feature_count, streaming_window):
     return _api_call('POST', url, headers, body=body)
 
 
-def _validate_shape(data):
+def _isiterable(x):
+    # consider strings non-iterable for shape validation purposes,
+    # then they are printed out whole when caught as nonnumeric
+    if isinstance(x, str):
+        return False
+
+    # collections.abc docs: "The only reliable way to determine
+    # whether an object is iterable is to call iter(obj)."
+    try:
+        iter(x)
+    except TypeError:
+        return False
+
+    return True
+
+
+def _validate_dims(data):
     """Validate that data is non-empty and one of the following:
        scalar value, list-like or list-of-lists-like where all
-       sublists have equal length
+       sublists have equal length. Return 0, 1 or 2 as inferred
+       number of array dimensions
     """
 
-    # if not iterable, data is a single scalar data point
-    if not isinstance(data, Iterable):
-        return
+    # not-iterable data is a single scalar data point
+    if not _isiterable(data):
+        return 0
 
-    # if iterable and unnested, data is a 1-d array
-    if not any(isinstance(d, Iterable) for d in data):
+    # iterable and unnested data is a 1-d array
+    if not any(_isiterable(d) for d in data):
         if len(list(data)) == 0:
             raise ValueError("empty")
-        return
 
-    # if iterable and nested, data is 2-d array
-    if not all(isinstance(d, Iterable) for d in data):
+        return 1
+
+    # iterable and nested data is 2-d array
+    if not all(_isiterable(d) for d in data):
         raise ValueError("cannot mix nested scalars and iterables")
 
     sublengths = [len(list(d)) for d in data]
     if len(set(sublengths)) > 1:
         raise ValueError("nested sublists must have equal length")
 
-    depth_2_flattened = itertools.chain.from_iterable(data)
-    if any(isinstance(i, Iterable) for i in depth_2_flattened):
+    flattened_2d = list(itertools.chain.from_iterable(data))
+
+    if any(isinstance(i, Iterable) for i in flattened_2d):
         raise ValueError("cannot be nested deeper than list-of-lists")
 
     if sublengths[0] == 0:
         raise ValueError("empty")
 
+    return 2
 
-def _flatten_data(data):
-    """Flatten data, assuming shape was previously validated"""
+def _convert_to_csv(data):
+    """Validate data and convert to a comma-separated plaintext string"""
 
-    # data is scalar
-    if not isinstance(data, Iterable):
-        return [data]
-    # data is 1-d array
-    elif not any(isinstance(d, Iterable) for d in data):
-        return list(data)
-    # data is 2-d array
-    return list(itertools.chain.from_iterable(data))
+    # Note: as in the Boon Nano SDK, there is no check that data dimensions
+    # align with feature_count and streaming_window.
+    ndim = _validate_dims(data)
 
+    if ndim == 0:
+        data_flat = [data]
+    elif ndim == 1:
+        data_flat = list(data)
+    elif ndim == 2:
+        data_flat = list(itertools.chain.from_iterable(data))
 
-def _validate_numeric(data):
-    """Validate that flattened data contains only numerics"""
-
-    for d in data:
+    for d in data_flat:
         if not isinstance(d, Number):
             raise ValueError("contained {} which is not numeric".format(d.__repr__()))
+
+    return ','.join([str(float(d)) for d in data_flat])
 
 
 def stream_sensor(sensor_id, data):
@@ -236,19 +256,11 @@ def stream_sensor(sensor_id, data):
     if not _amber_creds['is_set']:
         raise BoonException("credentials not set")
 
-    # Server expects data flattened as a string of comma-separated values.
-    # Note: as in the Boon Nano SDK, there is no check that data dimensions
-    # align with feature_count and streaming_window.
+    # Server expects data as a plaintext string of comma-separated values.
     try:
-        _validate_shape(data)
-        data_flat = _flatten_data(data)
-
-        _validate_numeric(data_flat)
-        data_csv = ','.join([str(float(d)) for d in data_flat])
-
+        data_csv = _convert_to_csv(data)
     except ValueError as e:
         raise BoonException("invalid data: {}".format(e))
-
 
     url = _AMBER_URL + '/stream'
     headers = {
@@ -259,7 +271,12 @@ def stream_sensor(sensor_id, data):
     body = {
         'data': data_csv
     }
-    return _api_call('POST', url, headers, body=body)
+
+    success, results = _api_call('POST', url, headers, body=body)
+    if not success:
+        return success, results
+
+    return success, results['SI']
 
 
 def train_sensor(sensor_id, data):
@@ -280,20 +297,11 @@ def train_sensor(sensor_id, data):
     if not _amber_creds['is_set']:
         raise BoonException("credentials not set")
 
-    # Server expects data flattened as a string of comma-separated values.
-    # Note: as in the Boon Nano SDK, there is no check that data dimensions
-    # align with feature_count and streaming_window.
+    # Server expects data as a plaintext string of comma-separated values.
     try:
-        _validate_shape(data)
-        data_flat = _flatten_data(data)
-
-        _validate_numeric(data_flat)
-        data_csv = ','.join([str(float(d)) for d in data_flat])
-
+        data_csv = _convert_to_csv(data)
     except ValueError as e:
         raise BoonException("invalid data: {}".format(e))
-
-    data_csv = ','.join([str(float(d)) for d in data])
 
     url = _AMBER_URL + '/train'
     headers = {
@@ -304,7 +312,12 @@ def train_sensor(sensor_id, data):
     body = {
         'data': data_csv
     }
-    return _api_call('POST', url, headers, body=body)
+
+    success, results = _api_call('POST', url, headers, body=body)
+    if not success:
+        return success, results
+
+    return success, results['SI']
 
 
 def get_info(sensor_id):
