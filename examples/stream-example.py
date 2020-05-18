@@ -9,7 +9,7 @@ import boonamber as amber
 
 
 IN_FILE = 'data.csv'
-OUT_FILE = 'out.csv'
+OUT_FILE = 'results.csv'
 SENSOR_ID = 'stream-example-sensor'
 
 
@@ -25,7 +25,7 @@ if not success:
 if SENSOR_ID not in current_sensors:
     success, response = amber.create_sensor(SENSOR_ID)
 
-# configure the sensor -- feature_count is 3 since CSV data has three columns
+# configure the sensor -- feature_count is 3 since our CSV data has three columns
 success, response = amber.configure_sensor(SENSOR_ID, feature_count=3, streaming_window=10)
 if not success:
     print("could not configure sensor: {}".format(response))
@@ -42,4 +42,5 @@ with open(OUT_FILE, 'w') as f_out:
                 print("could not stream data: {}".format(result))
                 sys.exit(1)
 
+            print("data: {}, anomaly index: {}".format(data_row, result))
             f_out.write('{}\n'.format(result))
