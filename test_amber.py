@@ -158,6 +158,12 @@ class TestEndpoints:
         assert_raises(amber.BoonException, amber.configure_sensor, TEST_SENSOR, streaming_window=1.5)
 
     def test_stream_sensor(self):
+        # scalar data should return scalar result
+        success, response = amber.stream_sensor(TEST_SENSOR, 1)
+        assert_equal(success, True)
+        assert_is_instance(response, float)
+
+        # array data should return result of same length
         success, response = amber.stream_sensor(TEST_SENSOR, [1, 2, 3, 4, 5])
         assert_equal(success, True)
         assert_true(len(response) == 5)

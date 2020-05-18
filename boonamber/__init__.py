@@ -276,7 +276,13 @@ def stream_sensor(sensor_id, data):
     if not success:
         return success, results
 
-    return success, results['SI']
+    # normalize from the range [0, 1000] to [0.0, 1.0]
+    results = [r / 1000.0 for r in results['SI']]
+
+    # if input data is scalar, results are scalar too
+    if not _isiterable(data):
+        return results[0]
+    return results
 
 
 def train_sensor(sensor_id, data):
@@ -313,11 +319,7 @@ def train_sensor(sensor_id, data):
         'data': data_csv
     }
 
-    success, results = _api_call('POST', url, headers, body=body)
-    if not success:
-        return success, results
-
-    return success, results['SI']
+    return _api_call('POST', url, headers, body=body)
 
 
 def get_info(sensor_id):
