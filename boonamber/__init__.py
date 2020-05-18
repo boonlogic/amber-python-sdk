@@ -185,13 +185,13 @@ def _validate_shape(data):
     if not all(isinstance(d, Iterable) for d in data):
         raise ValueError("cannot mix nested scalars and iterables")
 
-    depth_2_flattened = itertools.chain.from_iterable(data)
-    if any(isinstance(i, Iterable) for i in depth_2_flattened):
-        raise ValueError("cannot be nested deeper than list-of-lists")
-
     sublengths = [len(list(d)) for d in data]
     if len(set(sublengths)) > 1:
         raise ValueError("nested sublists must have equal length")
+
+    depth_2_flattened = itertools.chain.from_iterable(data)
+    if any(isinstance(i, Iterable) for i in depth_2_flattened):
+        raise ValueError("cannot be nested deeper than list-of-lists")
 
     if sublengths[0] == 0:
         raise ValueError("empty")
@@ -241,12 +241,14 @@ def stream_sensor(sensor_id, data):
     # align with feature_count and streaming_window.
     try:
         _validate_shape(data)
-        data = _flatten_data(data)
-        _validate_numeric(data)
+        data_flat = _flatten_data(data)
+
+        _validate_numeric(data_flat)
+        data_csv = ','.join([str(float(d)) for d in data_flat])
+
     except ValueError as e:
         raise BoonException("invalid data: {}".format(e))
 
-    data_csv = ','.join([str(float(d)) for d in data])
 
     url = _AMBER_URL + '/stream'
     headers = {
@@ -283,8 +285,11 @@ def train_sensor(sensor_id, data):
     # align with feature_count and streaming_window.
     try:
         _validate_shape(data)
-        data = _flatten_data(data)
-        _validate_numeric(data)
+        data_flat = _flatten_data(data)
+
+        _validate_numeric(data_flat)
+        data_csv = ','.join([str(float(d)) for d in data_flat])
+
     except ValueError as e:
         raise BoonException("invalid data: {}".format(e))
 

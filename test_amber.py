@@ -8,7 +8,7 @@ import boonamber as amber
 
 class TestCredentials:
     def setUp(self):
-        # unset credentials
+        # un-set credentials
         amber._amber_creds['api_key'] = None
         amber._amber_creds['api_tenant'] = None
         amber._amber_creds['is_set'] = False
@@ -40,7 +40,6 @@ class TestEndpoints:
         # try with already-created sensor-id
         raise NotImplementedError
 
-
     def test_delete_sensor(self):
         raise NotImplementedError
 
@@ -53,7 +52,6 @@ class TestEndpoints:
 
         # try with nonexistent sensor-id
         raise NotImplementedError
-
 
     def test_list_sensors(self):
         raise NotImplementedError
@@ -98,6 +96,7 @@ class TestEndpoints:
         raise NotImplementedError
 
         # try with invalid data
+        # empty_data
         # bad_shape_data
         # nonnumeric_data
         raise NotImplementedError
@@ -117,6 +116,7 @@ class TestEndpoints:
         raise NotImplementedError
 
         # try with invalid data
+        # empty_data
         # bad_shape_data
         # nonnumeric_data
         raise NotImplementedError
@@ -208,11 +208,11 @@ class TestDataHandling:
 
         # try with badly-nested data
         mixed_nesting = [1, [2, 3], 4]
+        jagged_array = [[1, 2], [3, 4, 5]]
         too_deep = [[[1], [2]], [[3], [4]]]
-        ragged_array = [[1, 2], [3, 4, 5]]
         assert_raises(ValueError, amber._validate_shape, mixed_nesting)
+        assert_raises(ValueError, amber._validate_shape, jagged_array)
         assert_raises(ValueError, amber._validate_shape, too_deep)
-        assert_raises(ValueError, amber._validate_shape, ragged_array)
 
     def test_flatten_data(self):
         # try with scalar
@@ -235,7 +235,8 @@ class TestDataHandling:
 
     def test_validate_numeric_negative(self):
         # try with list containing non-number
-        assert_raises(ValueError, amber._validate_shape, [1, '2', 3])
+        assert_raises(ValueError, amber._validate_numeric, [1, '2', 3])
+        assert_raises(ValueError, amber._validate_numeric, [1, None, 3])
 
 
 if __name__ == '__main__':
