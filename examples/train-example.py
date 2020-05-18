@@ -7,7 +7,7 @@ import boonamber as amber
 
 
 DATA_FILE = 'data.csv'
-SENSOR_ID = 'stream-example-sensor'
+SENSOR_ID = 'train-example-sensor'
 
 
 # set API credentials

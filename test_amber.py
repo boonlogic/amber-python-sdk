@@ -338,6 +338,6 @@ class TestDataHandling:
 if __name__ == '__main__':
     myargv = ['nosetests', '--verbosity=2']
     nose.run(defaultTest=__name__ + ':TestCredentials', argv=myargv)
-    # nose.run(defaultTest=__name__ + ':TestAPICall', argv=myargv)
+    nose.run(defaultTest=__name__ + ':TestAPICall', argv=myargv)
     nose.run(defaultTest=__name__ + ':TestDataHandling', argv=myargv)
-    # nose.run(defaultTest=__name__ + ':TestEndpoints', argv=myargv)
+    nose.run(defaultTest=__name__ + ':TestEndpoints', argv=myargv)
