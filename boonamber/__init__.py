@@ -179,6 +179,7 @@ def _validate_shape(data):
     if not any(isinstance(d, Iterable) for d in data):
         if len(list(data)) == 0:
             raise ValueError("empty")
+        return
 
     # if iterable and nested, data is 2-d array
     if not all(isinstance(d, Iterable) for d in data):
