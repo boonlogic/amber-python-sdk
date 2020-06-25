@@ -3,35 +3,33 @@ from nose.tools import assert_equal
 from nose.tools import assert_true
 from nose.tools import assert_raises
 from nose.tools import assert_is_instance
-import boonamber as amber
+from boonamber import AmberClient, BoonException
 
 
-# sensor-id reserved for testing -- is created and destroyed during tests
-TEST_SENSOR = 'my-test-sensor'
+# todo: make test user and fill in these credentials
+TEST_USER = 'amber-test-user'
+TEST_PASSWORD = r'UFGdMzt*P1Zv*4%b'
 
 
-class TestCredentials:
+class TestAuth:
     def setUp(self):
-        # un-set credentials
-        amber._amber_creds['api_key'] = None
-        amber._amber_creds['api_tenant'] = None
-        amber._amber_creds['is_set'] = False
+        self.amber = AmberClient()
 
-    def test_set_credentials(self):
-        amber.set_credentials(api_key='api-key', api_tenant='api-tenant')
-        assert_equal(amber._amber_creds['api_key'], 'api-key')
-        assert_equal(amber._amber_creds['api_tenant'], 'api-tenant')
+    def test_authenticate(self):
+        # todo: make test user and fill in valid credentials
+        success, response = self.amber.authenticate(TEST_USER, TEST_PASSWORD)
+        assert_equal(success, True)
 
-    def test_set_credentials_negative(self):
-        # non-string api_key or api_tenant
-        assert_raises(amber.BoonException, amber.set_credentials, api_key=None, api_tenant='api-tenant')
-        assert_raises(amber.BoonException, amber.set_credentials, api_key=12345, api_tenant='api-tenant')
-        assert_raises(amber.BoonException, amber.set_credentials, api_key='api-key', api_tenant=None)
-        assert_raises(amber.BoonException, amber.set_credentials, api_key='api-key', api_tenant=12345)
-
+    def test_authenticate_negative(self):
+        success, response = self.amber.authenticate('garbage-user', 'garbage-password')
+        assert_equal(success, False)
+        assert_true(response.startswith('401:'))
 
 class TestEndpoints:
     def setUp(self):
+        self.amber = AmberClient()
+        self.amber.authenticate()
+
         amber.set_credentials(api_key='api-key', api_tenant='api-tenant')
         success, current_sensors = amber.list_sensors()
         if not success:
@@ -271,25 +269,29 @@ class TestEndpoints:
 
 class TestAPICall:
     def setUp(self):
+        self.amber = AmberClient()
+
+        self.amber.authenticate(TEST_USER, TEST_PASSWORD)
+        self.token = self.amber.token
+
+        self.url = self.amber.url
         self.headers = {
-            'x-token': 'api-key',
-            'api-tenant': 'api-tenant',
+            'Content-Type': 'application/json',
         }
 
     def test_api_call(self):
-        success, response = amber._api_call('GET', amber._AMBER_URL + '/sensors', self.headers)
+        self.headers['Authorization'] = 'Bearer {}'.format(self.token)
+        success, response = self.amber._api_call('GET', self.url + '/sensors', self.headers)
         assert_equal(success, True)
 
     def test_api_call_negative(self):
-        success, response = amber._api_call('GET', 'BADURL', self.headers)
+        self.headers['Authorization'] = 'Bearer garbage-token'
+        success, response = self.amber._api_call('GET', self.url + '/sensors', self.headers)
         assert_equal(success, False)
-        assert_true(response.startswith("request failed:"))
-
-        # todo: request that returns bad (non-200) error code
-        # raise NotImplementedError
+        assert_true(response.startswith("401:"))
 
         # todo: request that returns backend error ('errorMessage' in response body)
-        # todo: is this just a current error behavior of amber server?
+        # todo: how to reliably generate these?
         # raise NotImplementedError
 
 
@@ -336,8 +338,8 @@ class TestDataHandling:
 
 
 if __name__ == '__main__':
-    myargv = ['nosetests', '--verbosity=2']
-    nose.run(defaultTest=__name__ + ':TestCredentials', argv=myargv)
-    nose.run(defaultTest=__name__ + ':TestAPICall', argv=myargv)
-    nose.run(defaultTest=__name__ + ':TestDataHandling', argv=myargv)
-    nose.run(defaultTest=__name__ + ':TestEndpoints', argv=myargv)
+    argv = ['nosetests', '--verbosity=2']
+    nose.run(defaultTest=__name__ + ':TestAuth', argv=argv)
+    nose.run(defaultTest=__name__ + ':TestAPICall', argv=argv)
+    # nose.run(defaultTest=__name__ + ':TestDataHandling', argv=argv)
+    # nose.run(defaultTest=__name__ + ':TestEndpoints', argv=argv)
