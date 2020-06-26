@@ -6,9 +6,9 @@ from nose.tools import assert_is_instance
 from boonamber import AmberClient, BoonException
 
 
-# todo: make test user and fill in these credentials
 TEST_USER = 'amber-test-user'
 TEST_PASSWORD = r'UFGdMzt*P1Zv*4%b'
+TEST_SENSOR_ID = 'dca492f2b8a67697'
 
 
 class TestAuth:
@@ -28,241 +28,213 @@ class TestAuth:
 class TestEndpoints:
     def setUp(self):
         self.amber = AmberClient()
-        self.amber.authenticate()
-
-        amber.set_credentials(api_key='api-key', api_tenant='api-tenant')
-        success, current_sensors = amber.list_sensors()
-        if not success:
-            raise RuntimeError("setup failed")
-
-        if TEST_SENSOR in current_sensors:
-            success, response = amber.delete_sensor(TEST_SENSOR)
-            if not success:
-                raise RuntimeError("setup failed")
-
-        success, response = amber.create_sensor(TEST_SENSOR)
-        if not success:
-            raise RuntimeError("setup failed")
+        self.amber.authenticate(TEST_USER, TEST_PASSWORD)
 
     def setup_unset_credentials(self):
-        amber._amber_creds['api_key'] = None
-        amber._amber_creds['api_tenant'] = None
-        amber._amber_creds['is_set'] = False
+        self.amber = AmberClient()
 
-    def setup_garbage_credentials(self):
-        amber.set_credentials(api_key='garbage-credential', api_tenant='garbage-credential')
+    def setup_expired_token(self):
+        self.amber = AmberClient()
+        self.amber.token = 'expired-token'
 
-    def setup_nonexistent_sensor(self):
-        amber.set_credentials(api_key='api-key', api_tenant='api-tenant')
-        success, current_sensors = amber.list_sensors()
+    def setup_created_sensor(self):
+        success, sensor_id = self.amber.create_sensor('test-sensor')
         if not success:
             raise RuntimeError("setup failed")
-
-        if TEST_SENSOR in current_sensors:
-            success, response = amber.delete_sensor(TEST_SENSOR)
-            if not success:
-                raise RuntimeError("setup failed")
+        self.sensor_id = sensor_id
 
     def test_create_sensor(self):
-        self.setup_uncreated()
-        success, response = amber.create_sensor(TEST_SENSOR)
+        success, sensor_id = self.amber.create_sensor('test-sensor')
         assert_equal(success, True)
-        assert_equal(response, "sensor created")
+
+        success, response = self.amber.delete_sensor(sensor_id)
+        if not success:
+            raise RuntimeError("teardown failed, sensor was not deleted")
 
     def test_create_sensor_negative(self):
         self.setup_unset_credentials()
-        assert_raises(amber.BoonException, amber.create_sensor, TEST_SENSOR)
+        assert_raises(BoonException, self.amber.create_sensor, 'test-sensor')
 
-        self.setup_garbage_credentials()
-        success, response = amber.create_sensor(TEST_SENSOR)
+        self.setup_expired_token()
+        success, response = self.amber.create_sensor('test-sensor')
+        assert_equal(success, False)
+        assert_true(response.startswith('401:'))
+
+    def test_delete_sensor(self):
+        self.setup_created_sensor()
+        success, response = self.amber.delete_sensor(self.sensor_id)
+        assert_equal(success, True)
+
+    def test_delete_sensor_negative(self):
+        self.setup_unset_credentials()
+        assert_raises(BoonException, self.amber.delete_sensor, 'sensor-id-filler')
+
+        self.setup_expired_token()
+        success, response = self.amber.delete_sensor('sensor-id-filler')
+        assert_equal(success, False)
+        assert_true(response.startswith('401:'))
+
+        # nonexistent sensor
+        self.setUp()
+        success, response = self.amber.delete_sensor('nonexistent-sensor-id')
+        assert_equal(success, False)
+        assert_true(response.startswith('404:'))
+
+    def test_get_sensor(self):
+        success, response = self.amber.get_sensor(TEST_SENSOR_ID)
+        assert_equal(success, True)
+        assert_true(response['sensor-id'] == TEST_SENSOR_ID)
+
+    def test_get_sensor_negative(self):
+        self.setup_unset_credentials()
+        assert_raises(BoonException, self.amber.get_sensor, TEST_SENSOR_ID)
+
+        self.setup_expired_token()
+        success, response = self.amber.get_sensor(TEST_SENSOR_ID)
         assert_equal(success, False)
         assert_true(response.startswith('401:'))
 
         self.setUp()
-        success, response = amber.create_sensor(TEST_SENSOR)
-        assert_equal(success, False)
-        assert_true(response.startswith('400:'))
-
-    def test_delete_sensor(self):
-        success, response = amber.delete_sensor(TEST_SENSOR)
-        assert_equal(success, True)
-        assert_equal(response, "sensor deleted")
-
-    def test_delete_sensor_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(amber.BoonException, amber.delete_sensor, TEST_SENSOR)
-
-        self.setup_garbage_credentials()
-        success, response = amber.delete_sensor(TEST_SENSOR)
-        assert_equal(success, False)
-        assert_true(response.startswith('401:'))
-
-        self.setup_nonexistent_sensor(TEST_SENSOR)
-        success, response = amber.delete_sensor(TEST_SENSOR)
+        success, response = self.amber.get_sensor('nonexistent-sensor-id')
         assert_equal(success, False)
         assert_true(response.startswith('404:'))
 
     def test_list_sensors(self):
-        success, response = amber.list_sensors()
+        success, response = self.amber.list_sensors()
         assert_equal(success, True)
-        assert_is_instance(response, list)
+        assert_true(TEST_SENSOR_ID in response.keys())
 
     def test_list_sensors_negative(self):
         self.setup_unset_credentials()
-        assert_raises(amber.BoonException, amber.list_sensors)
+        assert_raises(BoonException, self.amber.list_sensors)
 
-        self.setup_garbage_credentials()
-        success, response = amber.list_sensors()
+        self.setup_expired_token()
+        success, response = self.amber.list_sensors()
         assert_equal(success, False)
         assert_true(response.startswith('401:'))
 
     def test_configure_sensor(self):
-        target_response = {
-            'accuracy': 0.99,
-            'features': [
-                {
-                    'minVal': 0,
-                    'maxVal': 1,
-                    'weight': 1
-                }
-            ],
-            'numericFormat': 'float32',
-            'percentVariation': 0.05,
+        expected_response = {
+            'features': [{'maxVal': 1, 'minVal': 0}],
             'streamingWindowSize': 25,
+            'enableAutoTuning': True,
+            'samplesToBuffer': 10000,
+            'learningGraduation': True,
+            'learningRateNumerator': 10,
+            'learningRateDenominator': 10000,
+            'learningMaxClusters': 1000,
+            'learningMaxSamples': 1000000,
+            'percentVariation': 0.05
         }
-        success, response = amber.configure_sensor(TEST_SENSOR, feature_count=1, streaming_window=25)
+        success, response = self.amber.configure_sensor(TEST_SENSOR_ID, features=1, streaming_window_size=25,
+                                                        samples_to_buffer=10000,
+                                                        learning_graduation=True,
+                                                        learning_rate_numerator=10,
+                                                        learning_rate_denominator=10000,
+                                                        learning_max_clusters=1000,
+                                                        learning_max_samples=1000000)
         assert_equal(success, True)
-        assert_dict_equal(response.json(), target_response)
-        success, response = amber.configure_sensor(TEST_SENSOR, feature_count=1.0, streaming_window=25.0)
-        assert_equal(success, True)
-        assert_dict_equal(response.json(), target_response)
+        assert_equal(response, expected_response)
 
     def test_configure_sensor_negative(self):
         self.setup_unset_credentials()
-        assert_raises(amber.BoonException, amber.configure_sensor, TEST_SENSOR)
+        assert_raises(BoonException, self.amber.configure_sensor, TEST_SENSOR_ID)
 
-        self.setup_garbage_credentials()
-        assert_raises(amber.BoonException, amber.configure_sensor, TEST_SENSOR)
+        self.setup_expired_token()
+        success, response = self.amber.configure_sensor(TEST_SENSOR_ID)
+        assert_equal(success, False)
+        assert_true(response.startswith('401:'))
 
-        self.setup_nonexistent_sensor()
-        success, response = amber.configure_sensor(TEST_SENSOR)
+        self.setUp()
+        success, response = self.amber.configure_sensor('nonexistent-sensor-id')
         assert_equal(success, False)
         assert_true(response.startswith('404:'))
 
         # invalid feature_count or streaming_window
-        assert_raises(amber.BoonException, amber.configure_sensor, TEST_SENSOR, feature_count=-1)
-        assert_raises(amber.BoonException, amber.configure_sensor, TEST_SENSOR, feature_count=1.5)
-        assert_raises(amber.BoonException, amber.configure_sensor, TEST_SENSOR, streaming_window=-1)
-        assert_raises(amber.BoonException, amber.configure_sensor, TEST_SENSOR, streaming_window=1.5)
+        assert_raises(BoonException, self.amber.configure_sensor, TEST_SENSOR_ID, features=-1)
+        assert_raises(BoonException, self.amber.configure_sensor, TEST_SENSOR_ID, features=1.5)
+        assert_raises(BoonException, self.amber.configure_sensor, TEST_SENSOR_ID, streaming_window_size=-1)
+        assert_raises(BoonException, self.amber.configure_sensor, TEST_SENSOR_ID, streaming_window_size=1.5)
 
-    def test_stream_sensor(self):
-        # scalar data should return scalar result
-        success, response = amber.stream_sensor(TEST_SENSOR, 1)
+    def test_get_config(self):
+        expected_response = {
+            'features': [{'maxVal': 1, 'minVal': 0}],
+            'streamingWindowSize': 25,
+            'enableAutoTuning': True,
+            'samplesToBuffer': 10000,
+            'learningGraduation': True,
+            'learningRateNumerator': 10,
+            'learningRateDenominator': 10000,
+            'learningMaxClusters': 1000,
+            'learningMaxSamples': 1000000,
+            'percentVariation': 0.05
+        }
+        success, response = self.amber.get_config(TEST_SENSOR_ID)
         assert_equal(success, True)
-        assert_is_instance(response, float)
-
-        # array data should return result of same length
-        success, response = amber.stream_sensor(TEST_SENSOR, [1, 2, 3, 4, 5])
-        assert_equal(success, True)
-        assert_true(len(response) == 5)
-
-    def test_stream_sensor_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(amber.BoonException, amber.stream_sensor, TEST_SENSOR, [1, 2, 3, 4, 5])
-
-        self.setup_garbage_credentials()
-        assert_raises(amber.BoonException, amber.stream_sensor, TEST_SENSOR, [1, 2, 3, 4, 5])
-
-        self.setup_nonexistent_sensor()
-        success, response = amber.stream_sensor(TEST_SENSOR, [1, 2, 3, 4, 5])
-        assert_equal(success, False)
-        assert_true(response.startswith('404:'))
-
-        # invalid data
-        assert_raises(amber.BoonException, amber.stream_sensor, TEST_SENSOR, [])
-        assert_raises(amber.BoonException, amber.stream_sensor, TEST_SENSOR, [1, '2', 3])
-        assert_raises(amber.BoonException, amber.stream_sensor, TEST_SENSOR, [1, [2, 3], 4])
-
-    # def test_train_sensor(self):
-    #     # todo: what will response look like?
-    #     success, response = amber.train_sensor(TEST_SENSOR, [1, 2, 3, 4, 5])
-    #     assert_equal(success, True)
-    #     assert_equal(response, "train successful")
-
-    def test_train_sensor_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(amber.BoonException, amber.train_sensor, TEST_SENSOR, [1, 2, 3, 4, 5])
-
-        self.setup_garbage_credentials()
-        assert_raises(amber.BoonException, amber.train_sensor, TEST_SENSOR, [1, 2, 3, 4, 5])
-
-        self.setup_nonexistent_sensor()
-        success, response = amber.train_sensor(TEST_SENSOR, [1, 2, 3, 4, 5])
-        assert_equal(success, False)
-        assert_true(response.startswith('404:'))
-
-        # invalid data
-        assert_raises(amber.BoonException, amber.train_sensor, TEST_SENSOR, [])
-        assert_raises(amber.BoonException, amber.train_sensor, TEST_SENSOR, [1, '2', 3])
-        assert_raises(amber.BoonException, amber.train_sensor, TEST_SENSOR, [1, [2, 3], 4])
-
-    # def test_get_info(self):
-    #     # todo: more stringent check once response is better defined
-    #     success, response = amber.get_info(TEST_SENSOR)
-    #     assert_equal(success, True)
-    #     assert_true('sensor-id' in response)
-
-    def test_get_info_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(amber.BoonException, amber.get_info, TEST_SENSOR)
-
-        self.setup_garbage_credentials()
-        success, response = amber.get_info(TEST_SENSOR)
-        assert_equal(success, False)
-        assert_true(response.startswith('401:'))
-
-        self.setup_nonexistent_sensor(TEST_SENSOR)
-        success, response = amber.get_info(TEST_SENSOR)
-        assert_equal(success, False)
-        assert_true(response.startswith('404:'))
-
-    # def test_get_config(self):
-    #     # todo: more stringent check once response is better defined
-    #     success, response = amber.get_config(TEST_SENSOR)
-    #     assert_equal(success, True)
-    #     assert_is_instance(response, dict)
+        assert_equal(response, expected_response)
 
     def test_get_config_negative(self):
         self.setup_unset_credentials()
-        assert_raises(amber.BoonException, amber.get_config, TEST_SENSOR)
+        assert_raises(BoonException, self.amber.get_config, TEST_SENSOR_ID)
 
-        self.setup_garbage_credentials()
-        success, response = amber.get_config(TEST_SENSOR)
+        self.setup_expired_token()
+        success, response = self.amber.get_config(TEST_SENSOR_ID)
         assert_equal(success, False)
         assert_true(response.startswith('401:'))
 
-        self.setup_nonexistent_sensor(TEST_SENSOR)
-        success, response = amber.get_config(TEST_SENSOR)
+        self.setUp()
+        success, response = self.amber.get_config('nonexistent-sensor-id')
         assert_equal(success, False)
         assert_true(response.startswith('404:'))
 
-    # def test_get_status(self):
-    #     # todo: more stringent check once response is better defined
-    #     success, response = amber.get_config(TEST_SENSOR)
-    #     assert_equal(success, True)
-    #     assert_is_instance(response, dict)
+    def test_stream_sensor(self):
+        # scalar data should return SI of length 1
+        success, response = self.amber.stream_sensor(TEST_SENSOR_ID, 1)
+        assert_equal(success, True)
+        assert_true('state' in response)
+        assert_true(len(response['SI']) == 1)
 
-    def test_get_status_negative(self):
+        # array data should return SI of same length
+        success, response = self.amber.stream_sensor(TEST_SENSOR_ID, [1, 2, 3, 4, 5])
+        assert_equal(success, True)
+        assert_true('state' in response)
+        assert_true(len(response['SI']) == 5)
+
+    def test_stream_sensor_negative(self):
         self.setup_unset_credentials()
-        assert_raises(amber.BoonException, amber.get_config, TEST_SENSOR)
+        assert_raises(BoonException, self.amber.stream_sensor, TEST_SENSOR_ID, [1, 2, 3, 4, 5])
 
-        self.setup_garbage_credentials()
-        success, response = amber.get_config(TEST_SENSOR)
+        self.setup_expired_token()
+        success, response = self.amber.stream_sensor(TEST_SENSOR_ID, [1, 2, 3, 4, 5])
         assert_equal(success, False)
         assert_true(response.startswith('401:'))
 
-        self.setup_nonexistent_sensor(TEST_SENSOR)
-        success, response = amber.get_config(TEST_SENSOR)
+        self.setUp()
+        success, response = self.amber.stream_sensor('nonexistent-sensor-id', [1, 2, 3, 4, 5])
+        assert_equal(success, False)
+        assert_true(response.startswith('404:'))
+
+        # invalid data
+        assert_raises(BoonException, self.amber.stream_sensor, TEST_SENSOR_ID, [])
+        assert_raises(BoonException, self.amber.stream_sensor, TEST_SENSOR_ID, [1, '2', 3])
+        assert_raises(BoonException, self.amber.stream_sensor, TEST_SENSOR_ID, [1, [2, 3], 4])
+
+    def test_get_status(self):
+        success, response = self.amber.get_config(TEST_SENSOR_ID)
+        assert_equal(success, True)
+        assert_is_instance(response, dict)
+
+    def test_get_status_negative(self):
+        self.setup_unset_credentials()
+        assert_raises(BoonException, self.amber.get_config, TEST_SENSOR_ID)
+
+        self.setup_expired_token()
+        success, response = self.amber.get_config(TEST_SENSOR_ID)
+        assert_equal(success, False)
+        assert_true(response.startswith('401:'))
+
+        self.setUp()
+        success, response = self.amber.get_config('nonexistent-sensor-id')
         assert_equal(success, False)
         assert_true(response.startswith('404:'))
 
@@ -296,50 +268,53 @@ class TestAPICall:
 
 
 class TestDataHandling:
+    def setUp(self):
+        self.amber = AmberClient()
+
     def test_convert_to_csv(self):
         # valid scalar inputs
-        assert_equal("1.0", amber._convert_to_csv(1))
-        assert_equal("1.0", amber._convert_to_csv(1.0))
+        assert_equal("1.0", self.amber._convert_to_csv(1))
+        assert_equal("1.0", self.amber._convert_to_csv(1.0))
 
         # valid 1d inputs
-        assert_equal("1.0,2.0,3.0", amber._convert_to_csv([1, 2, 3]))
-        assert_equal("1.0,2.0,3.0", amber._convert_to_csv([1, 2, 3.0]))
-        assert_equal("1.0,2.0,3.0", amber._convert_to_csv([1.0, 2.0, 3.0]))
+        assert_equal("1.0,2.0,3.0", self.amber._convert_to_csv([1, 2, 3]))
+        assert_equal("1.0,2.0,3.0", self.amber._convert_to_csv([1, 2, 3.0]))
+        assert_equal("1.0,2.0,3.0", self.amber._convert_to_csv([1.0, 2.0, 3.0]))
 
         # valid 2d inputs
-        assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1, 2], [3, 4]]))
-        assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1, 2, 3, 4]]))
-        assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1], [2], [3], [4]]))
-        assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1, 2], [3, 4.0]]))
-        assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1.0, 2.0], [3.0, 4.0]]))
+        assert_equal("1.0,2.0,3.0,4.0", self.amber._convert_to_csv([[1, 2], [3, 4]]))
+        assert_equal("1.0,2.0,3.0,4.0", self.amber._convert_to_csv([[1, 2, 3, 4]]))
+        assert_equal("1.0,2.0,3.0,4.0", self.amber._convert_to_csv([[1], [2], [3], [4]]))
+        assert_equal("1.0,2.0,3.0,4.0", self.amber._convert_to_csv([[1, 2], [3, 4.0]]))
+        assert_equal("1.0,2.0,3.0,4.0", self.amber._convert_to_csv([[1.0, 2.0], [3.0, 4.0]]))
 
     def test_convert_to_csv_negative(self):
         # empty data
-        assert_raises(ValueError, amber._convert_to_csv, [])
-        assert_raises(ValueError, amber._convert_to_csv, [[]])
-        assert_raises(ValueError, amber._convert_to_csv, [[], []])
+        assert_raises(ValueError, self.amber._convert_to_csv, [])
+        assert_raises(ValueError, self.amber._convert_to_csv, [[]])
+        assert_raises(ValueError, self.amber._convert_to_csv, [[], []])
 
         # non-numeric data
-        assert_raises(ValueError, amber._convert_to_csv, None)
-        assert_raises(ValueError, amber._convert_to_csv, 'a')
-        assert_raises(ValueError, amber._convert_to_csv, 'abc')
-        assert_raises(ValueError, amber._convert_to_csv, [1, None, 3])
-        assert_raises(ValueError, amber._convert_to_csv, [1, 'a', 3])
-        assert_raises(ValueError, amber._convert_to_csv, [1, 'abc', 3])
-        assert_raises(ValueError, amber._convert_to_csv, [[1, None], [3, 4]])
-        assert_raises(ValueError, amber._convert_to_csv, [[1, 'a'], [3, 4]])
-        assert_raises(ValueError, amber._convert_to_csv, [[1, 'abc'], [3, 4]])
+        assert_raises(ValueError, self.amber._convert_to_csv, None)
+        assert_raises(ValueError, self.amber._convert_to_csv, 'a')
+        assert_raises(ValueError, self.amber._convert_to_csv, 'abc')
+        assert_raises(ValueError, self.amber._convert_to_csv, [1, None, 3])
+        assert_raises(ValueError, self.amber._convert_to_csv, [1, 'a', 3])
+        assert_raises(ValueError, self.amber._convert_to_csv, [1, 'abc', 3])
+        assert_raises(ValueError, self.amber._convert_to_csv, [[1, None], [3, 4]])
+        assert_raises(ValueError, self.amber._convert_to_csv, [[1, 'a'], [3, 4]])
+        assert_raises(ValueError, self.amber._convert_to_csv, [[1, 'abc'], [3, 4]])
 
         # badly-shaped data
-        assert_raises(ValueError, amber._convert_to_csv, [1, [2, 3], 4])            # mixed nesting
-        assert_raises(ValueError, amber._convert_to_csv, [[1, 2], [3, 4, 5]])       # ragged array
-        assert_raises(ValueError, amber._convert_to_csv, [[[1, 2, 3, 4]]])          # nested too deep
-        assert_raises(ValueError, amber._convert_to_csv, [[[1], [2], [3], [4]]])
+        assert_raises(ValueError, self.amber._convert_to_csv, [1, [2, 3], 4])            # mixed nesting
+        assert_raises(ValueError, self.amber._convert_to_csv, [[1, 2], [3, 4, 5]])       # ragged array
+        assert_raises(ValueError, self.amber._convert_to_csv, [[[1, 2, 3, 4]]])          # nested too deep
+        assert_raises(ValueError, self.amber._convert_to_csv, [[[1], [2], [3], [4]]])
 
 
 if __name__ == '__main__':
     argv = ['nosetests', '--verbosity=2']
     nose.run(defaultTest=__name__ + ':TestAuth', argv=argv)
     nose.run(defaultTest=__name__ + ':TestAPICall', argv=argv)
-    # nose.run(defaultTest=__name__ + ':TestDataHandling', argv=argv)
-    # nose.run(defaultTest=__name__ + ':TestEndpoints', argv=argv)
+    nose.run(defaultTest=__name__ + ':TestDataHandling', argv=argv)
+    nose.run(defaultTest=__name__ + ':TestEndpoints', argv=argv)

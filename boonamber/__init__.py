@@ -31,7 +31,7 @@ class AmberClient():
 
         Returns:
             success (bool): True if operation was successful
-            response (str): amber server response
+            response (None): None if successful, error string otherwise
         """
 
         url = self.url + '/oauth2'
@@ -63,12 +63,16 @@ class AmberClient():
         if response.status_code != 200:
             return False, '{}: {}'.format(response.status_code, response.json())
 
+        # todo: why are 404 errors returning 200 status codes with error
+        # codes/message in body instead? this if block should not be needed
+        if 'code' in response.json() and response.json()['code'] != 200:
+            return False, '{}: {}'.format(response.json()['code'], response.json()['message'])
+
         # lambda runtime errors return 200 with errorMessage in response body
         if 'errorMessage' in response.json():
             return False, "500: {}".format(response.json()['errorMessage'])
 
         return True, response.json()
-
 
     def create_sensor(self, label=''):
         """Create a new sensor instance
@@ -78,7 +82,7 @@ class AmberClient():
 
         Returns:
             success (bool): True if operation was successful
-            response (str): amber server response, sensor-id if successful
+            response (str): sensor-id if successful, error string otherwise
         """
 
         if self.token is None:
@@ -99,7 +103,6 @@ class AmberClient():
 
         return True, response['sensor-id']
 
-
     def delete_sensor(self, sensor_id):
         """Delete an amber sensor instance
 
@@ -116,19 +119,23 @@ class AmberClient():
 
         url = self.url + '/sensor'
         headers = {
-            'x-token': _amber_creds['api_key'],
-            'api-tenant': _amber_creds['api_tenant'],
+            'Authorization': 'Bearer {}'.format(self.token),
             'sensor-id': sensor_id
         }
-        return _api_call('DELETE', url, headers)
+        success, response = self._api_call('DELETE', url, headers)
 
+        if not success:
+            return False, response
+
+        return True, response['message']
 
     def list_sensors(self):
         """List all sensor instances associated with current API credentials
 
         Returns:
             success (bool): True if operation was successful
-            response (list): list of sensor-ids if successful, error string otherwise
+            response (dict): dict mapping sensor-ids to corresponding labels if
+                successful, error string otherwise
         """
 
         if self.token is None:
@@ -136,19 +143,38 @@ class AmberClient():
 
         url = self.url + '/sensors'
         headers = {
-            'x-token': _amber_creds['api_key'],
-            'api-tenant': _amber_creds['api_tenant'],
+            'Authorization': 'Bearer {}'.format(self.token),
         }
-        return _api_call('GET', url, headers)
+        success, response = self._api_call('GET', url, headers)
 
+        if not success:
+            return False, response
 
-    def configure_sensor(self, sensor_id, feature_count=1, streaming_window=25):
+        response = {s['sensor-id']: s['label'] for s in response}
+        return True, response
+
+    def configure_sensor(self, sensor_id, features=1, streaming_window_size=25,
+                         samples_to_buffer=10000,
+                         learning_graduation=True,
+                         learning_rate_numerator=10,
+                         learning_rate_denominator=10000,
+                         learning_max_clusters=1000,
+                         learning_max_samples=1000000):
         """Configure an amber sensor instance
 
         Args:
             sensor_id (str): sensor identifier
-            feature_count (int): number of features (dimensionality of each data sample)
-            streaming_window (int): streaming window size (number of samples)
+            features (int): number of features (dimensionality of each data sample)
+            streaming_window_size (int): streaming window size (number of samples)
+            samples_to_buffer (int): number of samples to load before autotuning
+            learning_graduation (bool): whether to "graduate", i.e. transition
+                from learning to monitoring mode
+            learning_rate_numerator (int): sensor graduates if fewer than
+                learning_rate_numerator new clusters are opened in the last 
+                learning_rate_denominator samples
+            learning_rate_denominator (int): see larning_rate_numerator
+            learning_max_clusters: sensor graduates if this many clusters are created
+            learning_max_samples: sensor graduates if this many samples are processed
 
         Returns:
             success (bool): True if operation was successful
@@ -157,34 +183,32 @@ class AmberClient():
         if self.token is None:
             raise BoonException("authentication required")
 
-        if not feature_count > 0 or not isinstance(feature_count, Integral):
+        if not features > 0 or not isinstance(features, Integral):
             raise BoonException("invalid 'feature_count': must be positive integer")
 
-        if not streaming_window > 0 or not isinstance(feature_count, Integral):
-            raise BoonException("invalid 'streaming_window': must be positive integer")
+        if not streaming_window_size > 0 or not isinstance(streaming_window_size, Integral):
+            raise BoonException("invalid 'streaming_window_size': must be positive integer")
 
         url = self.url + '/config'
         headers = {
-            'x-token': _amber_creds['api_key'],
-            'api-tenant': _amber_creds['api_tenant'],
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.token),
             'sensor-id': sensor_id
         }
         body = {
-            'accuracy': 0.99,
-            'features': [
-                {
-                    'minVal': 0,
-                    'maxVal': 1,
-                    'weight': 1
-                } for f in range(feature_count)],
-            'numericFormat': 'float32',
-            'percentVariation': 0.05,
-            'streamingWindowSize': streaming_window,
+            'features': features,
+            'streamingWindowSize': streaming_window_size,
+            'enableAutoTuning': True,
+            'samplesToBuffer': samples_to_buffer,
+            'learningGraduation': learning_graduation,
+            'learningRateNumerator': learning_rate_numerator,
+            'learningRateDenominator': learning_rate_denominator,
+            'learningMaxClusters': learning_max_clusters,
+            'learningMaxSamples': learning_max_samples
         }
-        return _api_call('POST', url, headers, body=body)
+        return self._api_call('POST', url, headers, body=body)
 
-
-    def _isiterable(x):
+    def _isiterable(self, x):
         # consider strings non-iterable for shape validation purposes,
         # then they are printed out whole when caught as nonnumeric
         if isinstance(x, str):
@@ -199,8 +223,7 @@ class AmberClient():
 
         return True
 
-
-    def _validate_dims(data):
+    def _validate_dims(self, data):
         """Validate that data is non-empty and one of the following:
            scalar value, list-like or list-of-lists-like where all
            sublists have equal length. Return 0, 1 or 2 as inferred
@@ -208,18 +231,18 @@ class AmberClient():
         """
 
         # not-iterable data is a single scalar data point
-        if not _isiterable(data):
+        if not self._isiterable(data):
             return 0
 
         # iterable and unnested data is a 1-d array
-        if not any(_isiterable(d) for d in data):
+        if not any(self._isiterable(d) for d in data):
             if len(list(data)) == 0:
                 raise ValueError("empty")
 
             return 1
 
         # iterable and nested data is 2-d array
-        if not all(_isiterable(d) for d in data):
+        if not all(self._isiterable(d) for d in data):
             raise ValueError("cannot mix nested scalars and iterables")
 
         sublengths = [len(list(d)) for d in data]
@@ -236,12 +259,12 @@ class AmberClient():
 
         return 2
 
-    def _convert_to_csv(data):
+    def _convert_to_csv(self, data):
         """Validate data and convert to a comma-separated plaintext string"""
 
         # Note: as in the Boon Nano SDK, there is no check that data dimensions
-        # align with feature_count and streaming_window.
-        ndim = _validate_dims(data)
+        # align with number of features and streaming window size.
+        ndim = self._validate_dims(data)
 
         if ndim == 0:
             data_flat = [data]
@@ -256,7 +279,6 @@ class AmberClient():
 
         return ','.join([str(float(d)) for d in data_flat])
 
-
     def stream_sensor(self, sensor_id, data):
         """Stream data to an amber sensor and return the inference result
 
@@ -269,7 +291,16 @@ class AmberClient():
 
         Returns:
             success (bool): True if operation was successful
-            response (dict): results dict if successful, error string otherwise
+            response (dict): results dict if successful, error string otherwise:
+                'state' (str): state of the sensor. "Starting" = gathering initial
+                    sensor data, "Autotuning" = autotuning configuration in progress,
+                    "Learning" = sensor is active and learning, "Monitoring" = sensor
+                    is active but monitoring only (learning disabled)
+                'SI' (list): smoothed anomaly index. The values in this list correspond
+                    one-for-one with input samples and range between 0.0 and 1.0. Values
+                    closer to 0 represent input patterns which are ordinary given the data
+                    seen so far on this sensor. Values closer to 1 represent novel patterns
+                    which are anomalous with respect to data seen before.
         """
 
         if self.token is None:
@@ -277,54 +308,48 @@ class AmberClient():
 
         # Server expects data as a plaintext string of comma-separated values.
         try:
-            data_csv = _convert_to_csv(data)
+            data_csv = self._convert_to_csv(data)
         except ValueError as e:
             raise BoonException("invalid data: {}".format(e))
 
         url = self.url + '/stream'
         headers = {
-            'x-token': _amber_creds['api_key'],
-            'api-tenant': _amber_creds['api_tenant'],
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.token),
             'sensor-id': sensor_id
         }
         body = {
             'data': data_csv
         }
 
-        success, results = _api_call('POST', url, headers, body=body)
+        success, response = self._api_call('POST', url, headers, body=body)
         if not success:
-            return success, results
+            return False, response
 
-        # normalize from the range [0, 1000] to [0.0, 1.0]
-        results = [r / 1000.0 for r in results['SI']]
+        # normalize smooth index from the range [0, 1000] to [0.0, 1.0]
+        response['SI'] = [r / 1000.0 for r in response['SI']]
+        return success, response
 
-        # if input data is scalar, results are scalar too
-        if not _isiterable(data):
-            return results[0]
-        return results
-
-
-    def get_info(self, sensor_id):
-        """Get usage info about a sensor
+    def get_sensor(self, sensor_id):
+        """Get info about a sensor
 
         Args:
             sensor_id (str): sensor identifier
 
         Returns:
             succeess (bool): True if operation was successful
-            response (dict): config dict if successful, error string otherwise
+            response (dict): sensor info dict if successful, error string otherwise
         """
-        if not _amber_creds['is_set']:
-            raise BoonException("credentials not set")
+        if self.token is None:
+            raise BoonException("authentication required")
 
-        url = _AMBER_URL + '/sensor'
+        url = self.url + '/sensor'
         headers = {
-            'x-token': _amber_creds['api_key'],
-            'api-tenant': _amber_creds['api_tenant'],
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.token),
             'sensor-id': sensor_id
         }
-        return _api_call('GET', url, headers)
-
+        return self._api_call('GET', url, headers)
 
     def get_config(self, sensor_id):
         """Get current sensor configuration
@@ -336,17 +361,16 @@ class AmberClient():
             succeess (bool): True if operation was successful
             response (dict): config dict if successul, error string otherwise
         """
-        if not _amber_creds['is_set']:
-            raise BoonException("credentials not set")
+        if self.token is None:
+            raise BoonException("authentication required")
 
-        url = _AMBER_URL + '/config'
+        url = self.url + '/config'
         headers = {
-            'x-token': _amber_creds['api_key'],
-            'api-tenant': _amber_creds['api_tenant'],
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.token),
             'sensor-id': sensor_id
         }
-        return _api_call('GET', url, headers)
-
+        return self._api_call('GET', url, headers)
 
     def get_status(self, sensor_id):
         """Get sensor status
@@ -356,16 +380,26 @@ class AmberClient():
 
         Returns:
             succeess (bool): True if operation was successful
-            response (dict): status dict if successful, error string otherwise
-        """
-        if not _amber_creds['is_set']:
-            raise BoonException("credentials not set")
+            response (dict): status dict if successful, error string otherwise:
+                'pca' (list): list of length-3 vectors representing cluster centroids
+                    with dimensionality reduced to 3 principal components
+                'cluster-growth' (list): list of sample indexes at which new clusters were created
+                'cluster-sizes' (list): list containing the number of samples in each cluster
+                'anomaly-indexes' (list): list containing the anomaly index associated with each cluster
+                'frequency-indexes' (list): list containing the frequency index associated with each cluster
+                'distance-indexes' (list): list containing the distance index associated with each cluster
+                'total-inferences' (int): total number of inferences performed so far
+                'average-inference-time' (float): average inference time in microseconds
+                'num-clusters' (int): number of clusters created so far
 
-        url = _AMBER_URL + '/status'
+        """
+        if self.token is None:
+            raise BoonException("authentication required")
+
+        url = self.url + '/status'
         headers = {
-            'x-token': _amber_creds['api_key'],
-            'api-tenant': _amber_creds['api_tenant'],
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.token),
             'sensor-id': sensor_id
         }
-        return _api_call('GET', url, headers)
-
+        return self._api_call('GET', url, headers)

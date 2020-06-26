@@ -1,121 +1,58 @@
-import time
-from boonamber import AmberClient, BoonException
+from boonamber import AmberClient
 
 
 amber = AmberClient()
 
 # authenticate
 print("authenticating")
-success, response = amber.authenticate('', '')
+success, response = amber.authenticate('amber-test-user', r'UFGdMzt*P1Zv*4%b')
 print("success: {}, response: {}".format(success, response))
+print()
 
-# # create sensor
-# print("creating sensor")
-# success, response = amber.create_sensor('test-sensor')
-# print("success: {}, response: {}".format(success, response))
+# list sensors
+print("listing sensors")
+success, response = amber.list_sensors()
+print("success: {}, response: {}".format(success, response))
+print()
 
+# create sensor
+print("creating sensor")
+success, sensor_id = amber.create_sensor('test-sensor')
+print("success: {}, response: {}".format(success, sensor_id))
+print()
 
-# def run_create_sensor():
-#     print("create_sensor")
-#     start = time.time()
-#     success, response = amber.create_sensor('my-sensor')
-#     end = time.time()
-#     print(response)
-#     print("time elapsed {:.6f} sec".format(end - start))
-#     print()
+# delete sensor
+print("deleting sensor")
+success, response = amber.delete_sensor(sensor_id)
+print("success: {}, response: {}".format(success, response))
+print()
 
+# getting sensor
+print("getting sensor")
+success, response = amber.get_sensor(sensor_id)
+print("success: {}, response: {}".format(success, response))
+print()
 
-# def run_delete_sensor():
-#     print('delete_sensor')
-#     start = time.time()
-#     success, response = amber.delete_sensor('my-sensor')
-#     end = time.time()
-#     print(response)
-#     print("time elapsed {:.6f} sec".format(end - start))
-#     print()
+# configure sensor
+print("configuring sensor")
+success, response = amber.configure_sensor(sensor_id, features=1, streaming_window_size=25)
+print("success: {}, response: {}".format(success, response))
+print()
 
+# get configuration
+print("getting configuration")
+success, response = amber.get_config(sensor_id)
+print("success: {}, response: {}".format(success, response))
+print()
 
-# def run_list_sensors():
-#     print('list_sensors')
-#     start = time.time()
-#     success, response = amber.list_sensors()
-#     end = time.time()
-#     print(response)
-#     print("time elapsed {:.6f} sec".format(end - start))
-#     print()
+# stream data
+print("streaming data")
+success, response = amber.stream_sensor(sensor_id, [0, 1, 2, 3, 4])
+print("success: {}, response: {}".format(success, response))
+print()
 
-
-# def run_configure_sensor():
-#     print('configure_sensor')
-#     start = time.time()
-#     success, response = amber.configure_sensor('my-sensor', feature_count=1, streaming_window=25)
-#     end = time.time()
-#     print(response)
-#     print("time elapsed {:.6f} sec".format(end - start))
-#     print()
-
-
-# def run_stream_sensor():
-#     print('stream_sensor')
-#     data = [0.1, 0.2, 0.3, 0.4, 0.5]
-
-#     start = time.time()
-#     success, response = amber.stream_sensor('my-sensor', data)
-#     end = time.time()
-#     print(response)
-#     print("time elapsed {:.6f} sec".format(end - start))
-#     print()
-
-
-# def run_train_sensor():
-#     print('train_sensor')
-#     data = [0.1, 0.2, 0.3, 0.4, 0.5]
-
-#     start = time.time()
-#     success, response = amber.train_sensor('my-sensor', data)
-#     end = time.time()
-#     print(response)
-#     print("time elapsed {:.6f} sec".format(end - start))
-#     print()
-
-
-# def run_get_info():
-#     print('get_info')
-#     start = time.time()
-#     success, response = amber.get_info('my-sensor')
-#     end = time.time()
-#     print(response)
-#     print("time elapsed {:.6f} sec".format(end - start))
-#     print()
-
-
-# def run_get_config():
-#     print('get_config')
-#     start = time.time()
-#     success, response = amber.get_config('my-sensor')
-#     end = time.time()
-#     print(response)
-#     print("time elapsed {:.6f} sec".format(end - start))
-#     print()
-
-
-# def run_get_status():
-#     print('get_status')
-#     start = time.time()
-#     success, response = amber.get_status('my-sensor')
-#     end = time.time()
-#     print(response)
-#     print("time elapsed {:.6f} sec".format(end - start))
-#     print()
-
-
-# amber.set_credentials('my-key', 'my-tenant')
-# run_create_sensor()
-# run_delete_sensor()
-# run_list_sensors()
-# run_configure_sensor()
-# run_stream_sensor()
-# run_train_sensor()
-# run_get_info()
-# run_get_config()
-# run_get_status()
+# get status
+print("getting status")
+success, response = amber.get_status(sensor_id)
+print("success: {}, response: {}".format(success, response))
+print()
