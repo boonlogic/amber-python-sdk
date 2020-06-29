@@ -126,7 +126,7 @@ class TestEndpoints:
         expected = {
             'label': 'test-sensor',
             'sensor-id': TEST_SENSOR_ID,
-            'tenant-id': TEST_USER
+            'tenant-id': 'amber-test-user'
         }
         sensor = self.amber.get_sensor(TEST_SENSOR_ID)
         assert_equal(sensor, expected)
@@ -286,18 +286,18 @@ class TestAPICall:
         self.amber.authenticate()
         self.token = self.amber.token
 
-        self.url = self.amber.url
+        self.server = self.amber.server
         self.headers = {
             'Content-Type': 'application/json',
         }
 
     def test_api_call(self):
         self.headers['Authorization'] = 'Bearer {}'.format(self.token)
-        self.amber._api_call('GET', self.url + '/sensors', self.headers)
+        self.amber._api_call('GET', self.server + '/sensors', self.headers)
 
     def test_api_call_negative(self):
         self.headers['Authorization'] = 'Bearer garbage-token'
-        assert_raises(AmberCloudError, self.amber._api_call, 'GET', self.url + '/sensors', self.headers)
+        assert_raises(AmberCloudError, self.amber._api_call, 'GET', self.server + '/sensors', self.headers)
 
         # todo: request that returns backend error ('errorMessage' in response body)
         # todo: how to reliably generate these?
@@ -353,6 +353,6 @@ if __name__ == '__main__':
     argv = ['nosetests', '--verbosity=2']
     nose.run(defaultTest=__name__ + ':TestInit', argv=argv)
     nose.run(defaultTest=__name__ + ':TestAuth', argv=argv)
-    # nose.run(defaultTest=__name__ + ':TestAPICall', argv=argv)
-    # nose.run(defaultTest=__name__ + ':TestDataHandling', argv=argv)
-    # nose.run(defaultTest=__name__ + ':TestEndpoints', argv=argv)
+    nose.run(defaultTest=__name__ + ':TestAPICall', argv=argv)
+    nose.run(defaultTest=__name__ + ':TestDataHandling', argv=argv)
+    nose.run(defaultTest=__name__ + ':TestEndpoints', argv=argv)

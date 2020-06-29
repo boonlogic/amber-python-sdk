@@ -117,10 +117,10 @@ class AmberClient():
             raise AmberCloudError(response.status_code, response.json()['message'])
 
         # invalid credentials are a 200 but token is an empty string
-        if not response.json()['id-token']:
+        if not response.json()['idToken']:
             raise AmberCloudError(401, "invalid credentials")
 
-        self.token = response.json()['id-token']
+        self.token = response.json()['idToken']
 
     def _api_call(self, method, url, headers, body=None):
         """Make a REST call to the Amber server and handle the response"""
