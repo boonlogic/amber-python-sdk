@@ -21,12 +21,6 @@ success, sensor_id = amber.create_sensor('test-sensor')
 print("success: {}, response: {}".format(success, sensor_id))
 print()
 
-# delete sensor
-print("deleting sensor")
-success, response = amber.delete_sensor(sensor_id)
-print("success: {}, response: {}".format(success, response))
-print()
-
 # getting sensor
 print("getting sensor")
 success, response = amber.get_sensor(sensor_id)
@@ -54,5 +48,11 @@ print()
 # get status
 print("getting status")
 success, response = amber.get_status(sensor_id)
+print("success: {}, response: {}".format(success, response))
+print()
+
+# delete sensor
+print("deleting sensor")
+success, response = amber.delete_sensor(sensor_id)
 print("success: {}, response: {}".format(success, response))
 print()
