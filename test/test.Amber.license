@@ -2,23 +2,15 @@
     "default": {
         "username": "amber-test-user",
         "password": "UFGdMzt*P1Zv*4%b",
-        "server": "https://amber-local.boonlogic.com/dev"
     },
     "missing-username": {
         "password": "UFGdMzt*P1Zv*4%b",
-        "server": "https://amber-local.boonlogic.com/dev"
     },
     "missing-password": {
         "username": "amber-test-user",
-        "server": "https://amber-local.boonlogic.com/dev"
-    },
-    "missing-server": {
-        "username": "amber-test-user",
-        "password": "UFGdMzt*P1Zv*4%b"
     },
     "garbage": {
         "username": "garbage-username",
         "password": "garbage-password",
-        "server": "https://amber-local.boonlogic.com/dev"
     }
 }

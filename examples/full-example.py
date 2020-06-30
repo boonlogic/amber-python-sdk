@@ -1,70 +1,66 @@
-import sys
-import boonamber as amber
+from boonamber import AmberClient
 
+"""Demonstrates usage of all Amber SDK endpoints."""
 
-"""Example usage of each Amber SDK endpoint."""
+amber = AmberClient()
 
+# authenticate client
+print("authenticating")
+amber.authenticate()
+print("succeeded")
+print()
 
-# set API credentials
-amber.set_credentials(api_key='api-key', api_tenant='api-tenant')
-
-# list all sensors in tenant namespace
-success, response = amber.list_sensors()
-if not success:
-    print("could not list sensors: {}".format(response))
-    sys.exit(1)
-print("current sensors: {}".format(response))
+# list all sensors belonging to current user
+print("listing sensors")
+sensors = amber.list_sensors()
+print("sensors: {}".format(sensors))
+print()
 
 # create a new sensor
-success, response = amber.create_sensor('sample-sensor')
-if not success:
-    print("could not create sensor: {}".format(response))
-    sys.exit(1)
+print("creating sensor")
+sensor_id = amber.create_sensor('new-test-sensor')
+print("sensor-id: {}".format(sensor_id))
+print()
 
-# get usage info on a sensor
-success, response = amber.get_info('sample-sensor')
-if not success:
-    print("could not get sensor info: {}".format(response))
-    sys.exit(1)
-print("sample-sensor usage info: {}".format(response))
+# get sensor info
+print("getting sensor")
+sensor = amber.get_sensor(sensor_id)
+print("sensor: {}".format(sensor))
+print()
+
+# update the label of a sensor
+print("updating label")
+label = amber.update_label(sensor_id, 'test-sensor')
+print("sensor: {}".format(label))
+print()
 
 # configure a sensor
-success, response = amber.configure_sensor('sample-sensor', feature_count=1, streaming_window=25)
-if not success:
-    print("could not configure sensor: {}".format(response))
-    sys.exit(1)
+print("configuring sensor")
+config = amber.configure_sensor(sensor_id, features=1, streaming_window_size=25)
+print("config: {}".format(config))
+print()
 
 # get sensor configuration
-success, response = amber.get_config('sample-sensor')
-if not success:
-    print("could not get configuration: {}".format(response))
-    sys.exit(1)
-print("sample-sensor config: {}".format(response))
-
-# train a sensor on some historical data
-data = [0.1, 0.2, 0.3, 0.4, 0.5]
-success, response = amber.train_sensor('sample-sensor', data)
-if not success:
-    print("could not train sensor: {}".format(response))
-    sys.exit(1)
+print("getting configuration")
+config = amber.get_config(sensor_id)
+print("config: {}".format(config))
+print()
 
 # stream data to a sensor
-data = [0.1, 0.2, 0.3, 0.4, 0.5]
-success, response = amber.stream_sensor('sample-sensor', data)
-if not success:
-    print("could not stream data: {}".format(response))
-    sys.exit(1)
-print("streamed data: {} -> {}".format(data, results['SI']))
+print("streaming data")
+data = [0, 1, 2, 3, 4]
+results = amber.stream_sensor(sensor_id, data)
+print("results: {},".format(results))
+print()
 
-# get clustering status info from a sensor
-success, response = amber.get_status('sample-sensor')
-if not success:
-    print("could not get sensor status: {}".format(response))
-    sys.exit(1)
-print("sample-sensor clustering status: {}".format(response))
+# get clustering status from a sensor
+print("getting status")
+status = amber.get_status(sensor_id)
+print("status: {}".format(status))
+print()
 
 # delete a sensor instance
-success, response = amber.delete_sensor('sample-sensor')
-if not success:
-    print(response)
-    sys.exit(1)
+print("deleting sensor")
+amber.delete_sensor(sensor_id)
+print("succeeded")
+print()

@@ -28,10 +28,12 @@ class AmberCloudError(Exception):
 
 class AmberClient():
     def __init__(self, license_id='default', license_file="~/.Amber.license"):
-        """Main client which interfaces with the Amber cloud
+        """Main client which interfaces with the Amber cloud. Amber account
+        credentials are discovered within a .Amber.license file located in the
+        home directory, or optionally overridden using environment variables.
 
         Args:
-            license_id (str): license identifier label found within .Amber.license configuration file
+            license_id (str): license identifier label found within .Amber.license file
             license_file (str): path to .Amber.license file
         
         Environment:
@@ -39,26 +41,26 @@ class AmberClient():
             AMBER_LICENSE_ID: sets license_id
             AMBER_USERNAME: overrides the username as found in .Amber.license file
             AMBER_PASSWORD: overrides the password as found in .Amber.license file
-            AMBER_SERVER: overrides the server as found in .Amber.license file
+
+        Raises:
+            AmberUserError: if error supplying authentication credentials
         """
 
         self.server = "https://amber-local.boonlogic.com/dev"
         self.token = None
 
-        env_license_file = os.environ['AMBER_LICENSE_FILE']
-        env_license_id = os.environ['AMBER_LICENSE_ID']
-        env_username = os.environ['AMBER_USERNAME']
-        env_password = os.environ['AMBER_PASSWORD']
-        env_server = os.environ['AMBER_SERVER']
+        env_license_file = os.environ.get('AMBER_LICENSE_FILE', None)
+        env_license_id = os.environ.get('AMBER_LICENSE_ID', None)
+        env_username = os.environ.get('AMBER_USERNAME', None)
+        env_password = os.environ.get('AMBER_PASSWORD', None)
 
-        # if username, password and server are all specified via environment, we're done here
-        if all([env_username, env_password, env_server]):
+        # if username and password are both specified via environment, we're done here
+        if env_username and env_password:
             self.username = env_username
             self.password = env_password
-            self.server = env_server
             return
 
-        # otherwise, we acquire some or all of them from license file
+        # otherwise we acquire either or both of them from license file
         license_file = env_license_file if env_license_file else license_file
         license_id = env_license_id if env_license_id else license_id
 
@@ -77,7 +79,7 @@ class AmberClient():
         except KeyError:
             raise AmberUserError("license_id '{}' not found in license file".format(license_id))
 
-        # load the username, password and server, still giving precedence to environment
+        # load the username and password, still giving precedence to environment
         try:
             self.username = env_username if env_username else license_data['username']
         except KeyError:
@@ -87,11 +89,6 @@ class AmberClient():
             self.password = env_password if env_password else license_data['password']
         except KeyError:
             raise AmberUserError("'password' is missing from the specified license in license file")
-
-        try:
-            self.server = env_server if env_server else license_data['server']
-        except KeyError:
-            raise AmberUserError("'server' is missing from the specified license in license file")
 
     def authenticate(self):
         """Authenticate client for the next hour using the credentials given at
@@ -161,7 +158,7 @@ class AmberClient():
         url = self.server + '/sensor'
         headers = {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer {}'.format(self.token),
+            'Authorization': 'Bearer {}'.format(self.token)
         }
         body = {
             'label': label
@@ -170,6 +167,39 @@ class AmberClient():
         sensor_id = response['sensor-id']
 
         return sensor_id
+
+    def update_label(self, sensor_id, label):
+        """Update the label of a sensor instance
+
+        Args:
+            sensor_id (str): sensor identifier
+            label (str): new label to assign to sensor
+
+        Returns:
+            label (str): new label assigned to sensor
+
+        Raises:
+            AmberUserError: if client is not authenticated
+            AmberCloudError: if Amber cloud gives non-200 response
+        """
+
+        if self.token is None:
+            raise AmberUserError("authentication required")
+
+        url = self.server + '/sensor'
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.token),
+            'sensorId': sensor_id
+        }
+        body = {
+            'label': label
+        }
+        response = self._api_call('POST', url, headers, body=body)
+        label = response['label']
+
+        return label
+
 
     def delete_sensor(self, sensor_id):
         """Delete an amber sensor instance
@@ -188,7 +218,7 @@ class AmberClient():
         url = self.server + '/sensor'
         headers = {
             'Authorization': 'Bearer {}'.format(self.token),
-            'sensor-id': sensor_id
+            'sensorId': sensor_id
         }
         response = self._api_call('DELETE', url, headers)
 
@@ -212,12 +242,12 @@ class AmberClient():
             'Authorization': 'Bearer {}'.format(self.token),
         }
         response = self._api_call('GET', url, headers)
-        sensors = {s['sensor-id']: s['label'] for s in response}
+        sensors = {s['sensorId']: s['label'] for s in response}
 
         return sensors
 
     def configure_sensor(self, sensor_id, features=1, streaming_window_size=25,
-                         samples_to_buffer=10000,
+                         samples_to_buffer=1000,
                          learning_rate_numerator=10,
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
@@ -256,14 +286,12 @@ class AmberClient():
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(self.token),
-            'sensor-id': sensor_id
+            'sensorId': sensor_id
         }
         body = {
             'features': features,
             'streamingWindowSize': streaming_window_size,
-            'enableAutoTuning': True,
             'samplesToBuffer': samples_to_buffer,
-            'learningGraduation': True,
             'learningRateNumerator': learning_rate_numerator,
             'learningRateDenominator': learning_rate_denominator,
             'learningMaxClusters': learning_max_clusters,
@@ -384,7 +412,7 @@ class AmberClient():
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(self.token),
-            'sensor-id': sensor_id
+            'sensorId': sensor_id
         }
         body = {
             'data': data_csv
@@ -406,8 +434,8 @@ class AmberClient():
         Returns:
             sensor (dict): sensor info dict. Contains:
                 'label': sensor label
-                'sensor-id': sensor identifier
-                'tenant-id': username of associated Amber account
+                'sensorId': sensor identifier
+                'tenantId': username of associated Amber account
 
         Raises:
             AmberUserError: if client is not authenticated
@@ -420,7 +448,7 @@ class AmberClient():
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(self.token),
-            'sensor-id': sensor_id
+            'sensorId': sensor_id
         }
         sensor = self._api_call('GET', url, headers)
 
@@ -433,7 +461,18 @@ class AmberClient():
             sensor_id (str): sensor identifier
 
         Returns:
-            config (dict): current sensor configuration
+            config (dict): current sensor configuration. Contains:
+                'features' (int): number of features (dimensionality of each data sample)
+                'streamingWindowSize' (int): streaming window size (number of samples)
+                'samplesToBuffer' (int): number of samples to load before autotuning
+                'learningRateNumerator' (int): sensor "graduates" (i.e. transitions from
+                    learning to monitoring mode) if fewer than learning_rate_numerator
+                    new clusters are opened in the last learning_rate_denominator samples
+                'learningRateDenominator' (int): see learning_rate_numerator
+                'learningMaxClusters' (int): sensor graduates if this many clusters are created
+                'learningMaxSamples' (int): sensor graduates if this many samples are processed
+                'percentVariation' (float): percent variation parameter discovered by autotuning
+                'featureConfig' (list): min/max values per feature discovered by autotuning
 
         Raises:
             AmberUserError: if client is not authenticated
@@ -446,7 +485,7 @@ class AmberClient():
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(self.token),
-            'sensor-id': sensor_id
+            'sensorId': sensor_id
         }
         config = self._api_call('GET', url, headers)
 
@@ -459,17 +498,19 @@ class AmberClient():
             sensor_id (str): sensor identifier
 
         Returns:
-            status (dict): status dict if successful, error string otherwise:
+            status (dict): clustering status. Contains:
                 'pca' (list): list of length-3 vectors representing cluster centroids
-                    with dimensionality reduced to 3 principal components
-                'cluster-growth' (list): list of sample indexes at which new clusters were created
-                'cluster-sizes' (list): list containing the number of samples in each cluster
-                'anomaly-indexes' (list): list containing the anomaly index associated with each cluster
-                'frequency-indexes' (list): list containing the frequency index associated with each cluster
-                'distance-indexes' (list): list containing the distance index associated with each cluster
-                'total-inferences' (int): total number of inferences performed so far
-                'average-inference-time' (float): average inference time in microseconds
-                'num-clusters' (int): number of clusters created so far
+                    with dimensionality reduced to 3 principal components. List length
+                    is one plus the maximum cluster ID, with element 0 corresponding
+                    to the "zero" cluster, element 1 corresponding to cluster ID 1, etc.
+                'clusterGrowth' (list): sample index at which each new cluster was created.
+                    Elements for this and other list results are ordered as in 'pca'.
+                'clusterSizes' (list): number of samples in each cluster
+                'anomalyIndexes' (list): anomaly index associated with each cluster
+                'frequencyIndexes' (list): frequency index associated with each cluster
+                'distanceIndexes' (list): distance index associated with each cluster
+                'totalInferences' (int): total number of inferences performed so far
+                'numClusters' (int): number of clusters created so far (includes zero cluster)
 
         Raises:
             AmberUserError: if client is not authenticated
@@ -482,7 +523,7 @@ class AmberClient():
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(self.token),
-            'sensor-id': sensor_id
+            'sensorId': sensor_id
         }
         status = self._api_call('GET', url, headers)
 

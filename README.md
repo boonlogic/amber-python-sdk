@@ -10,41 +10,48 @@ The Boon Amber SDK is a Python 3 project and can be installed via pip. After clo
 pip install amber-python-sdk
 ```
 
-## API credentials
+## Credentials setup
 
-An _api-key_ and _api-tenant_ credential pair must be obtained from Boon Logic to use the Amber SDK. These credentials are unique to your obtained license and provide authentication to the Amber server.
+Note: An account in the Boon Amber cloud must be obtained from Boon Logic to use the Amber SDK.
 
-You must call `boonamber.set_credentials` after importing the package to provide the current session with your `api_key` and `api_tenant` credential pair:
+The account credentials should be placed in a file named _~/.Amber.license_:
 
 ```
-import boonamber as amber
-
-amber.set_credentials(api_key='my-key', api_tenant='my-tenant')
+{
+    "default": {
+        "username": "AMBER-ACCOUNT-USERNAME",
+        "password": "AMBER-ACCOUNT-PASSWORD"
+    }
+}
 ```
 
-### Connectivity test
+The _~/.Amber.license_ file will be consulted by the Amber SDK to successfully find and authenticate with your Amber account credentials. Credentials may optionally be provided instead via the environment variables `AMBER_USERNAME` and `AMBER_PASSWORD`.
+
+## Connectivity test
 
 The following Python script provides a basic proof-of-connectivity:
 
 **connect-example.py**
 
 ```
-import boonamber as amber
-import sys
+from boonamber import AmberClient
 
-# set API credentials
-amber.set_credentials(api_key='api-key', api_tenant='api-tenant')
+# At initialization the client discovers Amber account credentials
+# under the "default" entry in the ~/.Amber.license file.
+amber = AmberClient()
 
-# list current sensors in tenant namespace
-success, response = amber.list_sensors()
-if not success:
-    print("could not list sensors: {}".format(response))
-    sys.exit(1)
-print("sensors: {}".format(response))
+# These credentials are used to authenticate against the Amber cloud.
+amber.authenticate()
+
+# The client is then authenticated for one hour of use, and may
+# re-authenticate at any time with another call to authenticate().
+sensors = amber.list_sensors()
+print("sensors: {}".format(sensors))
 ```
 
-Running the connect-test.py script should yield output like the following:
+Running the connect-example.py script should yield output like the following:
 ```
 $ python connect-example.py
-sensors: <list of current sensor-ids in tenant namespace> 
+sensors: {}
 ```
+where the dictionary `{}` lists all sensors that currently exist under the given Boon Amber account.

@@ -1,12 +1,13 @@
-import boonamber as amber
-import sys
+from boonamber import AmberClient
 
-# set API credentials
-amber.set_credentials(api_key='api-key', api_tenant='api-tenant')
+# At initialization the client discovers Amber account credentials
+# under the "default" entry in the ~/.Amber.license file.
+amber = AmberClient()
 
-# list current sensors in tenant namespace
-success, response = amber.list_sensors()
-if not success:
-    print("could not list sensors: {}".format(response))
-    sys.exit(1)
-print("sensors: {}".format(response))
+# These credentials are used to authenticate against the Amber cloud.
+amber.authenticate()
+
+# The client is then authenticated for one hour of use, and may
+# re-authenticate at any time with another call to authenticate().
+sensors = amber.list_sensors()
+print("sensors: {}".format(sensors))

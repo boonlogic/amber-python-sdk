@@ -6,7 +6,6 @@ from nose.tools import assert_raises
 from nose.tools import assert_is_instance
 from boonamber import AmberClient, AmberUserError, AmberCloudError
 
-
 TEST_SENSOR_ID = 'dca492f2b8a67697'
 
 
@@ -16,7 +15,6 @@ class TestInit:
         os.environ['AMBER_LICENSE_ID'] = ''
         os.environ['AMBER_USERNAME'] = ''
         os.environ['AMBER_PASSWORD'] = ''
-        os.environ['AMBER_SERVER'] = ''
 
     def test_init(self):
         self.unset_environment_variables()
@@ -32,7 +30,6 @@ class TestInit:
         # set credentials directly using environment variables
         os.environ['AMBER_USERNAME'] = "amber-test-user"
         os.environ['AMBER_PASSWORD'] = r"UFGdMzt*P1Zv*4%b"
-        os.environ['AMBER_SERVER'] = "amber-local.boonlogic.com/dev"
         amber = AmberClient(license_id=None, license_file=None)
 
         self.unset_environment_variables()
@@ -43,7 +40,6 @@ class TestInit:
         assert_raises(AmberUserError, AmberClient, "nonexistent-license-id", "test.Amber.license")
         assert_raises(AmberUserError, AmberClient, "missing-username", "test.Amber.license")
         assert_raises(AmberUserError, AmberClient, "missing-password", "test.Amber.license")
-        assert_raises(AmberUserError, AmberClient, "missing-server", "test.Amber.license")
 
 
 class TestAuth:
@@ -54,9 +50,7 @@ class TestAuth:
         self.amber = AmberClient(license_id="garbage", license_file="test.Amber.license")
 
     def test_authenticate(self):
-        # todo: make test user and fill in valid credentials
         result = self.amber.authenticate()
-        assert_equal(result, None)
 
     def test_authenticate_negative(self):
         self.setup_garbage_credentials()
@@ -122,6 +116,29 @@ class TestEndpoints:
             self.amber.delete_sensor('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
+    def test_update_label(self):
+        label = self.amber.update_label('new-label')
+        assert_equal(label, 'new-label')
+
+        try:
+            self.amber.update_label('test-sensor')
+        except Exception as e:
+            raise RuntimeError("teardown failed, label was not changed back to 'test-sensor': {}".format(e))
+
+    def test_update_label_negative(self):
+        self.setup_unset_credentials()
+        assert_raises(AmberUserError, self.amber.update_label, 'test-sensor')
+
+        self.setup_expired_token()
+        with assert_raises(AmberCloudError) as context:
+            sensor_id = self.amber.update_label('test-sensor')
+        assert_equal(context.exception.code, 401)
+
+        self.setUp()
+        with assert_raises(AmberCloudError) as context:
+            sensor_id = self.amber.update_label('test-sensor')
+        assert_equal(context.exception.code, 404)
+
     def test_get_sensor(self):
         expected = {
             'label': 'test-sensor',
@@ -160,19 +177,16 @@ class TestEndpoints:
 
     def test_configure_sensor(self):
         expected = {
-            'features': [{'maxVal': 1, 'minVal': 0}],
+            'features': 1,
             'streamingWindowSize': 25,
-            'enableAutoTuning': True,
-            'samplesToBuffer': 10000,
-            'learningGraduation': True,
+            'samplesToBuffer': 1000,
             'learningRateNumerator': 10,
             'learningRateDenominator': 10000,
             'learningMaxClusters': 1000,
             'learningMaxSamples': 1000000,
-            'percentVariation': 0.05
         }
         config = self.amber.configure_sensor(TEST_SENSOR_ID, features=1, streaming_window_size=25,
-                                             samples_to_buffer=10000,
+                                             samples_to_buffer=1000,
                                              learning_rate_numerator=10,
                                              learning_rate_denominator=10000,
                                              learning_max_clusters=1000,
@@ -203,9 +217,7 @@ class TestEndpoints:
         expected = {
             'features': [{'maxVal': 1, 'minVal': 0}],
             'streamingWindowSize': 25,
-            'enableAutoTuning': True,
-            'samplesToBuffer': 10000,
-            'learningGraduation': True,
+            'samplesToBuffer': 1000,
             'learningRateNumerator': 10,
             'learningRateDenominator': 10000,
             'learningMaxClusters': 1000,
