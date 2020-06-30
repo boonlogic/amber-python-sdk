@@ -117,33 +117,33 @@ class TestEndpoints:
         assert_equal(context.exception.code, 404)
 
     def test_update_label(self):
-        label = self.amber.update_label('new-label')
+        label = self.amber.update_label(TEST_SENSOR_ID, 'new-label')
         assert_equal(label, 'new-label')
 
         try:
-            self.amber.update_label('test-sensor')
+            self.amber.update_label(TEST_SENSOR_ID, 'test-sensor')
         except Exception as e:
             raise RuntimeError("teardown failed, label was not changed back to 'test-sensor': {}".format(e))
 
     def test_update_label_negative(self):
         self.setup_unset_credentials()
-        assert_raises(AmberUserError, self.amber.update_label, 'test-sensor')
+        assert_raises(AmberUserError, self.amber.update_label, TEST_SENSOR_ID, 'test-sensor')
 
         self.setup_expired_token()
         with assert_raises(AmberCloudError) as context:
-            sensor_id = self.amber.update_label('test-sensor')
+            label = self.amber.update_label(TEST_SENSOR_ID, 'test-sensor')
         assert_equal(context.exception.code, 401)
 
         self.setUp()
         with assert_raises(AmberCloudError) as context:
-            sensor_id = self.amber.update_label('test-sensor')
+            label = self.amber.update_label('nonexistent-sensor-id', 'test-sensor')
         assert_equal(context.exception.code, 404)
 
     def test_get_sensor(self):
         expected = {
             'label': 'test-sensor',
-            'sensor-id': TEST_SENSOR_ID,
-            'tenant-id': 'amber-test-user'
+            'sensorId': TEST_SENSOR_ID,
+            'tenantId': 'amber-test-user'
         }
         sensor = self.amber.get_sensor(TEST_SENSOR_ID)
         assert_equal(sensor, expected)
@@ -177,7 +177,7 @@ class TestEndpoints:
 
     def test_configure_sensor(self):
         expected = {
-            'features': 1,
+            'featureCount': 1,
             'streamingWindowSize': 25,
             'samplesToBuffer': 1000,
             'learningRateNumerator': 10,
@@ -185,7 +185,7 @@ class TestEndpoints:
             'learningMaxClusters': 1000,
             'learningMaxSamples': 1000000,
         }
-        config = self.amber.configure_sensor(TEST_SENSOR_ID, features=1, streaming_window_size=25,
+        config = self.amber.configure_sensor(TEST_SENSOR_ID, feature_count=1, streaming_window_size=25,
                                              samples_to_buffer=1000,
                                              learning_rate_numerator=10,
                                              learning_rate_denominator=10000,
@@ -208,21 +208,22 @@ class TestEndpoints:
         assert_equal(context.exception.code, 404)
 
         # invalid feature_count or streaming_window
-        assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, features=-1)
-        assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, features=1.5)
+        assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, feature_count=-1)
+        assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, feature_count=1.5)
         assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, streaming_window_size=-1)
         assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, streaming_window_size=1.5)
 
     def test_get_config(self):
         expected = {
-            'features': [{'maxVal': 1, 'minVal': 0}],
+            'featureCount': 1,
             'streamingWindowSize': 25,
             'samplesToBuffer': 1000,
             'learningRateNumerator': 10,
             'learningRateDenominator': 10000,
             'learningMaxClusters': 1000,
             'learningMaxSamples': 1000000,
-            'percentVariation': 0.05
+            'percentVariation': 0.05,
+            'features': [{'minVal': 0, 'maxVal': 1}]
         }
         config = self.amber.get_config(TEST_SENSOR_ID)
         assert_equal(config, expected)
@@ -274,7 +275,7 @@ class TestEndpoints:
     def test_get_status(self):
         status = self.amber.get_status(TEST_SENSOR_ID)
         assert_true('pca' in status)
-        assert_true('num-clusters' in status)
+        assert_true('numClusters' in status)
 
     def test_get_status_negative(self):
         self.setup_unset_credentials()

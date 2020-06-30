@@ -21,13 +21,19 @@ else:
 print("using sensor {}".format(sensor_id))
 
 # configure the sensor: feature_count is 3 since our CSV data has three columns
-config = amber.configure_sensor(sensor_id, features=3, streaming_window_size=25)
+config = amber.configure_sensor(sensor_id, feature_count=3, streaming_window_size=25)
 print("config: {}".format(config))
 
 # open data file and begin streaming!
 with open('data.csv', 'r') as f:
     reader = csv.reader(f, delimiter=',')
 
-    for data_row in reader:
-        result = amber.stream_sensor(sensor_id, data_row)
-        print("data: [ {}\t]\tSI: {}".format('\t'.join(str(d) for d in data_row), result))
+    for row in reader:
+        data = [float(d) for d in row]
+
+        result = amber.stream_sensor(sensor_id, data)
+        state = result['state']
+        anomaly_index = result['SI'][0]
+
+        data_pretty = ' '.join("{:5.2f}".format(d) for d in data)
+        print("{} [{}] -> {}".format(state, data_pretty, anomaly_index))

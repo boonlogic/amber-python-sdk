@@ -145,7 +145,7 @@ class AmberClient():
             label (str): label to assign to created sensor
 
         Returns:
-            sensor_id (str): sensor-id of newly created sensor
+            sensor_id (str): sensor ID of newly created sensor
 
         Raises:
             AmberUserError: if client is not authenticated
@@ -164,7 +164,7 @@ class AmberClient():
             'label': label
         }
         response = self._api_call('POST', url, headers, body=body)
-        sensor_id = response['sensor-id']
+        sensor_id = response['sensorId']
 
         return sensor_id
 
@@ -195,7 +195,7 @@ class AmberClient():
         body = {
             'label': label
         }
-        response = self._api_call('POST', url, headers, body=body)
+        response = self._api_call('PUT', url, headers, body=body)
         label = response['label']
 
         return label
@@ -226,7 +226,7 @@ class AmberClient():
         """List all sensor instances currently associated with Amber account
 
         Returns:
-            sensors (dict): dict mapping sensor-ids to corresponding labels if
+            sensors (dict): dict mapping sensor IDs to corresponding labels if
                 successful, error string otherwise
 
         Raises:
@@ -246,7 +246,7 @@ class AmberClient():
 
         return sensors
 
-    def configure_sensor(self, sensor_id, features=1, streaming_window_size=25,
+    def configure_sensor(self, sensor_id, feature_count=1, streaming_window_size=25,
                          samples_to_buffer=1000,
                          learning_rate_numerator=10,
                          learning_rate_denominator=10000,
@@ -256,7 +256,7 @@ class AmberClient():
 
         Args:
             sensor_id (str): sensor identifier
-            features (int): number of features (dimensionality of each data sample)
+            feature_count (int): number of features (dimensionality of each data sample)
             streaming_window_size (int): streaming window size (number of samples)
             samples_to_buffer (int): number of samples to load before autotuning
             learning_rate_numerator (int): sensor "graduates" (i.e. transitions from
@@ -276,7 +276,7 @@ class AmberClient():
         if self.token is None:
             raise AmberUserError("authentication required")
 
-        if not features > 0 or not isinstance(features, Integral):
+        if not feature_count > 0 or not isinstance(feature_count, Integral):
             raise AmberUserError("invalid 'feature_count': must be positive integer")
 
         if not streaming_window_size > 0 or not isinstance(streaming_window_size, Integral):
@@ -289,7 +289,7 @@ class AmberClient():
             'sensorId': sensor_id
         }
         body = {
-            'features': features,
+            'featureCount': feature_count,
             'streamingWindowSize': streaming_window_size,
             'samplesToBuffer': samples_to_buffer,
             'learningRateNumerator': learning_rate_numerator,
@@ -462,7 +462,7 @@ class AmberClient():
 
         Returns:
             config (dict): current sensor configuration. Contains:
-                'features' (int): number of features (dimensionality of each data sample)
+                'featureCount' (int): number of features (dimensionality of each data sample)
                 'streamingWindowSize' (int): streaming window size (number of samples)
                 'samplesToBuffer' (int): number of samples to load before autotuning
                 'learningRateNumerator' (int): sensor "graduates" (i.e. transitions from
@@ -472,7 +472,7 @@ class AmberClient():
                 'learningMaxClusters' (int): sensor graduates if this many clusters are created
                 'learningMaxSamples' (int): sensor graduates if this many samples are processed
                 'percentVariation' (float): percent variation parameter discovered by autotuning
-                'featureConfig' (list): min/max values per feature discovered by autotuning
+                'features' (list): min/max values per feature discovered by autotuning
 
         Raises:
             AmberUserError: if client is not authenticated

@@ -31,12 +31,12 @@ print()
 # update the label of a sensor
 print("updating label")
 label = amber.update_label(sensor_id, 'test-sensor')
-print("sensor: {}".format(label))
+print("label: {}".format(label))
 print()
 
 # configure a sensor
 print("configuring sensor")
-config = amber.configure_sensor(sensor_id, features=1, streaming_window_size=25)
+config = amber.configure_sensor(sensor_id, feature_count=1, streaming_window_size=25)
 print("config: {}".format(config))
 print()
 

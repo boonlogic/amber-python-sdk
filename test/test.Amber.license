@@ -1,16 +1,16 @@
 {
     "default": {
         "username": "amber-test-user",
-        "password": "UFGdMzt*P1Zv*4%b",
+        "password": "UFGdMzt*P1Zv*4%b"
     },
     "missing-username": {
-        "password": "UFGdMzt*P1Zv*4%b",
+        "password": "UFGdMzt*P1Zv*4%b"
     },
     "missing-password": {
-        "username": "amber-test-user",
+        "username": "amber-test-user"
     },
     "garbage": {
         "username": "garbage-username",
-        "password": "garbage-password",
+        "password": "garbage-password"
     }
 }
