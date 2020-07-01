@@ -1,10 +1,10 @@
 {
     "default": {
         "username": "amber-test-user",
-        "password": "UFGdMzt*P1Zv*4%b"
+        "password": "02cEGYVKjEav3N#3"
     },
     "missing-username": {
-        "password": "UFGdMzt*P1Zv*4%b"
+        "password": "02cEGYVKjEav3N#3"
     },
     "missing-password": {
         "username": "amber-test-user"

@@ -433,9 +433,18 @@ class AmberClient():
 
         Returns:
             sensor (dict): sensor info dict. Contains:
-                'label': sensor label
-                'sensorId': sensor identifier
-                'tenantId': username of associated Amber account
+                'label' (str): sensor label
+                'sensorId' (str): sensor identifier
+                'tenantId' (str): username of associated Amber account
+                'usageInfo' (dict): sensor usage info. Keys are:
+                    'putSensor', 'getSensor', 'postConfig', 'getConfig', 'postStream', 'getStatus'.
+                    Each value is a dict containing:
+                        'callsTotal': total number of calls to this endpoint
+                        'callsThisPeriod': calls this billing period to this endpoint
+                        'lastCalled': ISO formatted time of last call to this endpoint
+                    The 'postStream' endpoint dict also contains:
+                        'inferencesTotal': total number of inferences performed
+                        'inferencesThisPeriod': number of inferences this billing period
 
         Raises:
             AmberUserError: if client is not authenticated

@@ -6,7 +6,7 @@ from nose.tools import assert_raises
 from nose.tools import assert_is_instance
 from boonamber import AmberClient, AmberUserError, AmberCloudError
 
-TEST_SENSOR_ID = 'dca492f2b8a67697'
+TEST_SENSOR_ID = '52fa82fbf86758bf'
 
 
 class TestInit:
@@ -146,7 +146,10 @@ class TestEndpoints:
             'tenantId': 'amber-test-user'
         }
         sensor = self.amber.get_sensor(TEST_SENSOR_ID)
-        assert_equal(sensor, expected)
+        assert_equal(sensor['label'], 'test-sensor')
+        assert_equal(sensor['sensorId'], TEST_SENSOR_ID)
+        assert_equal(sensor['tenantId'], 'amber-test-user')
+        assert_true('usageInfo' in sensor)
 
     def test_get_sensor_negative(self):
         self.setup_unset_credentials()
