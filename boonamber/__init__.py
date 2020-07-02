@@ -22,8 +22,7 @@ class AmberCloudError(Exception):
     """Raised upon any non-200 response from the Amber cloud"""
 
     def __init__(self, code, message):
-        self.code = code
-        self.mesage = message
+        super().__init__("{}: {}".format(code, message))
 
 
 class AmberClient():
@@ -303,7 +302,7 @@ class AmberClient():
 
     def _isiterable(self, x):
         # consider strings non-iterable for shape validation purposes,
-        # then they are printed out whole when caught as nonnumeric
+        # that way they are printed out whole when caught as nonnumeric
         if isinstance(x, str):
             return False
 
@@ -384,15 +383,26 @@ class AmberClient():
 
         Returns:
             results (dict): resulting inferences. Contains:
-                'state' (str): state of the sensor. "Starting" = gathering initial
-                    sensor data, "Autotuning" = autotuning configuration in progress,
-                    "Learning" = sensor is active and learning, "Monitoring" = sensor
-                    is active but monitoring only (learning disabled)
                 'SI' (list): smoothed anomaly index. The values in this list correspond
                     one-for-one with input samples and range between 0.0 and 1.0. Values
                     closer to 0 represent input patterns which are ordinary given the data
                     seen so far on this sensor. Values closer to 1 represent novel patterns
                     which are anomalous with respect to data seen before.
+                'state' (str): current state of the sensor. One of:
+                    "Buffering": gathering initial sensor data
+                    "Autotuning": autotuning configuration in progress
+                    "Learning": sensor is active and learning
+                    "Monitoring": sensor is active but monitoring only (learning disabled)
+                    "Error": fatal error has occurred
+                'message' (str): accompanying message for current sensor state
+                'progress' (int): progress as a percentage value (applicable for
+                    "Buffering" and "Autotuning" states)
+                'clusterCount (int)': number of clusters created so far
+                'totalInferences (int)': number of samples inferenced so far
+                'retryCount (int)': number of times autotuning was re-attempted to tune streamingWindowSize
+                'streamingWindowSize (int)': streaming window size of sensor (may differ from
+                    value given at configuration if window size was adjusted during autotune)
+                'computedDetectionThreshold' (float): auto-discovered SI detection threshold
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid data
@@ -420,8 +430,9 @@ class AmberClient():
 
         results = self._api_call('POST', url, headers, body=body)
 
-        # normalize smooth index from the range [0, 1000] to [0.0, 1.0]
+        # normalize index values from the range [0, 1000] to [0.0, 1.0]
         results['SI'] = [r / 1000.0 for r in results['SI']]
+        results['computedDetectionThreshold'] /= 1000.0
 
         return results
 
