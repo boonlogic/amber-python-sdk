@@ -22,6 +22,8 @@ class AmberCloudError(Exception):
     """Raised upon any non-200 response from the Amber cloud"""
 
     def __init__(self, code, message):
+        self.code = code
+        self.message = message
         super().__init__("{}: {}".format(code, message))
 
 
@@ -398,7 +400,6 @@ class AmberClient():
                 'progress' (int): progress as a percentage value (applicable for
                     "Buffering" and "Autotuning" states)
                 'clusterCount (int)': number of clusters created so far
-                'totalInferences (int)': number of samples inferenced so far
                 'retryCount (int)': number of times autotuning was re-attempted to tune streamingWindowSize
                 'streamingWindowSize (int)': streaming window size of sensor (may differ from
                     value given at configuration if window size was adjusted during autotune)
@@ -454,8 +455,8 @@ class AmberClient():
                         'callsThisPeriod': calls this billing period to this endpoint
                         'lastCalled': ISO formatted time of last call to this endpoint
                     The 'postStream' endpoint dict also contains:
-                        'inferencesTotal': total number of inferences performed
-                        'inferencesThisPeriod': number of inferences this billing period
+                        'samplesTotal': total number of samples processed
+                        'samplesThisPeriod': number of samples processed this billing period
 
         Raises:
             AmberUserError: if client is not authenticated

@@ -315,10 +315,6 @@ class TestAPICall:
         self.headers['Authorization'] = 'Bearer garbage-token'
         assert_raises(AmberCloudError, self.amber._api_call, 'GET', self.server + '/sensors', self.headers)
 
-        # todo: request that returns backend error ('errorMessage' in response body)
-        # todo: how to reliably generate these?
-        # raise NotImplementedError
-
 
 class TestDataHandling:
     def setUp(self):
