@@ -29,9 +29,10 @@
 <pre><code class="python">import itertools
 import json
 import os
+import requests
+import time
 from collections.abc import Iterable
 from numbers import Number, Integral
-import requests
 
 
 ############################
@@ -75,22 +76,25 @@ class AmberClient():
 
             `AMBER_PASSWORD`: overrides the password as found in .Amber.license file
 
+            `AMBER_SERVER`: overrides the server as found in .Amber.license file
+
         Raises:
             AmberUserError: if error supplying authentication credentials
         &#34;&#34;&#34;
 
-        self.server = &#34;https://amber-local.boonlogic.com/dev&#34;
         self.token = None
 
         env_license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, None)
         env_license_id = os.environ.get(&#39;AMBER_LICENSE_ID&#39;, None)
         env_username = os.environ.get(&#39;AMBER_USERNAME&#39;, None)
         env_password = os.environ.get(&#39;AMBER_PASSWORD&#39;, None)
+        env_server = os.environ.get(&#39;AMBER_SERVER&#39;, None)
 
-        # if username and password are both specified via environment, we&#39;re done here
-        if env_username and env_password:
+        # if username, password and server are all specified via environment, we&#39;re done here
+        if env_username and env_password and env_server:
             self.username = env_username
             self.password = env_password
+            self.server = env_server
             return
 
         # otherwise we acquire either or both of them from license file
@@ -111,20 +115,27 @@ class AmberClient():
         try:
             license_data = file_data[license_id]
         except KeyError:
-            raise AmberUserError(&#34;license_id &#39;{}&#39; not found in license file&#34;.format(license_id))
+            raise AmberUserError(&#34;license_id \&#34;{}\&#34; not found in license file&#34;.format(license_id))
 
-        # load the username and password, still giving precedence to environment
+        # load the username, password and server, still giving precedence to environment
         try:
             self.username = env_username if env_username else license_data[&#39;username&#39;]
         except KeyError:
-            raise AmberUserError(&#34;&#39;username&#39; is missing from the specified license in license file&#34;)
+            raise AmberUserError(&#34;\&#34;username\&#34; is missing from the specified license in license file&#34;)
 
         try:
             self.password = env_password if env_password else license_data[&#39;password&#39;]
         except KeyError:
-            raise AmberUserError(&#34;&#39;password&#39; is missing from the specified license in license file&#34;)
+            raise AmberUserError(&#34;\&#34;password\&#34; is missing from the specified license in license file&#34;)
 
-    def authenticate(self):
+        try:
+            self.server = env_server if env_server else license_data[&#39;server&#39;]
+        except KeyError:
+            raise AmberUserError(&#34;\&#34;server\&#34; is missing from the specified license in license file&#34;)
+
+        self.reauth_time = time.time()
+
+    def _authenticate(self):
         &#34;&#34;&#34;Authenticate client for the next hour using the credentials given at
         initialization. This acquires and stores an oauth2 token which remains
         valid for one hour and is used to authenticate all other API requests.
@@ -145,24 +156,31 @@ class AmberClient():
         response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body)
 
         if response.status_code != 200:
-            raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
+            message = &#34;authentication failed: {}&#34;.format(response.json()[&#39;message&#39;])
+            raise AmberCloudError(response.status_code, message)
 
-        # invalid credentials are a 200 but token is an empty string
+        # invalid credentials return a 200 where token is an empty string
         if not response.json()[&#39;idToken&#39;]:
-            raise AmberCloudError(401, &#34;invalid credentials&#34;)
+            raise AmberCloudError(401, &#34;authentication failed: invalid credentials&#34;)
 
         self.token = response.json()[&#39;idToken&#39;]
+
+        expire_secs = int(response.json()[&#39;expiresIn&#39;])
+        self.reauth_time = time.time() + expire_secs - 60
 
     def _api_call(self, method, url, headers, body=None):
         &#34;&#34;&#34;Make a REST call to the Amber server and handle the response&#34;&#34;&#34;
 
+        if time.time() &gt; self.reauth_time:
+            self._authenticate()
+
+        headers[&#39;Authorization&#39;] = &#39;Bearer {}&#39;.format(self.token)
         response = requests.request(method=method, url=url, headers=headers, json=body)
 
         if response.status_code != 200:
-            raise AmberCloudError(response.status_code, response.json())
+            raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
 
-        # todo: why are 404 errors returning 200 status codes with error
-        # codes/message in body instead? this if block should not be needed
+        # todo: why 200 status codes with error codes/message in body instead?
         if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != 200:
             raise AmberCloudError(response.json()[&#39;code&#39;], response.json()[&#39;message&#39;])
 
@@ -173,26 +191,22 @@ class AmberClient():
         return response.json()
 
     def create_sensor(self, label=&#39;&#39;):
-        &#34;&#34;&#34;Create a new sensor instance.
+        &#34;&#34;&#34;Create a new sensor instance
 
         Args:
             label (str): label to assign to created sensor
 
         Returns:
-            A string containing the `sensor_id` that was created.
+            A string containing the `sensor_id` that was created
 
         Raises:
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         url = self.server + &#39;/sensor&#39;
         headers = {
-            &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token)
+            &#39;Content-Type&#39;: &#39;application/json&#39;
         }
         body = {
             &#39;label&#39;: label
@@ -210,20 +224,16 @@ class AmberClient():
             label (str): new label to assign to sensor
 
         Returns:
-            label (str): new label assigned to sensor
+            A string containing the new label assigned to sensor
 
         Raises:
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         url = self.server + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         body = {
@@ -245,12 +255,8 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         url = self.server + &#39;/sensor&#39;
         headers = {
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         response = self._api_call(&#39;DELETE&#39;, url, headers)
@@ -259,21 +265,15 @@ class AmberClient():
         &#34;&#34;&#34;List all sensor instances currently associated with Amber account
 
         Returns:
-            sensors (dict): dict mapping sensor IDs to corresponding labels if
-                successful, error string otherwise
+            A dictionary mapping sensor IDs to corresponding labels
 
         Raises:
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         url = self.server + &#39;/sensors&#39;
-        headers = {
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
-        }
+        headers = {}
         response = self._api_call(&#39;GET&#39;, url, headers)
         sensors = {s[&#39;sensorId&#39;]: s[&#39;label&#39;] for s in response}
 
@@ -316,9 +316,6 @@ class AmberClient():
             AmberUserError: if client is not authenticated or supplies invalid options
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         if not feature_count &gt; 0 or not isinstance(feature_count, Integral):
             raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
 
@@ -328,7 +325,6 @@ class AmberClient():
         url = self.server + &#39;/config&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         body = {
@@ -462,9 +458,6 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         # Server expects data as a plaintext string of comma-separated values.
         try:
             data_csv = self._convert_to_csv(data)
@@ -474,7 +467,6 @@ class AmberClient():
         url = self.server + &#39;/stream&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         body = {
@@ -546,13 +538,10 @@ class AmberClient():
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
 
         url = self.server + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         sensor = self._api_call(&#39;GET&#39;, url, headers)
@@ -601,13 +590,10 @@ class AmberClient():
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
 
         url = self.server + &#39;/config&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         config = self._api_call(&#39;GET&#39;, url, headers)
@@ -624,8 +610,8 @@ class AmberClient():
             A dictionary containing the clustering status for a sensor:
 
                 {
-                    &#39;pca&#39; [(int,int,int)),
-                    &#39;clusterGrowth&#39; (int),
+                    &#39;pca&#39; [(int,int,int)],
+                    &#39;clusterGrowth&#39; [int],
                     &#39;clusterSizes&#39; [int],
                     &#39;anomalyIndexes&#39; [int],
                     &#39;frequencyIndexes&#39; [int],
@@ -651,13 +637,10 @@ class AmberClient():
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
 
         url = self.server + &#39;/status&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         status = self._api_call(&#39;GET&#39;, url, headers)
@@ -694,6 +677,7 @@ home directory, or optionally overridden using environment variables.</p>
 <p><code>AMBER_LICENSE_ID</code>: sets license_id</p>
 <p><code>AMBER_USERNAME</code>: overrides the username as found in .Amber.license file</p>
 <p><code>AMBER_PASSWORD</code>: overrides the password as found in .Amber.license file</p>
+<p><code>AMBER_SERVER</code>: overrides the server as found in .Amber.license file</p>
 <h2 id="raises">Raises</h2>
 <dl>
 <dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
@@ -723,22 +707,25 @@ home directory, or optionally overridden using environment variables.</p>
 
             `AMBER_PASSWORD`: overrides the password as found in .Amber.license file
 
+            `AMBER_SERVER`: overrides the server as found in .Amber.license file
+
         Raises:
             AmberUserError: if error supplying authentication credentials
         &#34;&#34;&#34;
 
-        self.server = &#34;https://amber-local.boonlogic.com/dev&#34;
         self.token = None
 
         env_license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, None)
         env_license_id = os.environ.get(&#39;AMBER_LICENSE_ID&#39;, None)
         env_username = os.environ.get(&#39;AMBER_USERNAME&#39;, None)
         env_password = os.environ.get(&#39;AMBER_PASSWORD&#39;, None)
+        env_server = os.environ.get(&#39;AMBER_SERVER&#39;, None)
 
-        # if username and password are both specified via environment, we&#39;re done here
-        if env_username and env_password:
+        # if username, password and server are all specified via environment, we&#39;re done here
+        if env_username and env_password and env_server:
             self.username = env_username
             self.password = env_password
+            self.server = env_server
             return
 
         # otherwise we acquire either or both of them from license file
@@ -759,20 +746,27 @@ home directory, or optionally overridden using environment variables.</p>
         try:
             license_data = file_data[license_id]
         except KeyError:
-            raise AmberUserError(&#34;license_id &#39;{}&#39; not found in license file&#34;.format(license_id))
+            raise AmberUserError(&#34;license_id \&#34;{}\&#34; not found in license file&#34;.format(license_id))
 
-        # load the username and password, still giving precedence to environment
+        # load the username, password and server, still giving precedence to environment
         try:
             self.username = env_username if env_username else license_data[&#39;username&#39;]
         except KeyError:
-            raise AmberUserError(&#34;&#39;username&#39; is missing from the specified license in license file&#34;)
+            raise AmberUserError(&#34;\&#34;username\&#34; is missing from the specified license in license file&#34;)
 
         try:
             self.password = env_password if env_password else license_data[&#39;password&#39;]
         except KeyError:
-            raise AmberUserError(&#34;&#39;password&#39; is missing from the specified license in license file&#34;)
+            raise AmberUserError(&#34;\&#34;password\&#34; is missing from the specified license in license file&#34;)
 
-    def authenticate(self):
+        try:
+            self.server = env_server if env_server else license_data[&#39;server&#39;]
+        except KeyError:
+            raise AmberUserError(&#34;\&#34;server\&#34; is missing from the specified license in license file&#34;)
+
+        self.reauth_time = time.time()
+
+    def _authenticate(self):
         &#34;&#34;&#34;Authenticate client for the next hour using the credentials given at
         initialization. This acquires and stores an oauth2 token which remains
         valid for one hour and is used to authenticate all other API requests.
@@ -793,24 +787,31 @@ home directory, or optionally overridden using environment variables.</p>
         response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body)
 
         if response.status_code != 200:
-            raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
+            message = &#34;authentication failed: {}&#34;.format(response.json()[&#39;message&#39;])
+            raise AmberCloudError(response.status_code, message)
 
-        # invalid credentials are a 200 but token is an empty string
+        # invalid credentials return a 200 where token is an empty string
         if not response.json()[&#39;idToken&#39;]:
-            raise AmberCloudError(401, &#34;invalid credentials&#34;)
+            raise AmberCloudError(401, &#34;authentication failed: invalid credentials&#34;)
 
         self.token = response.json()[&#39;idToken&#39;]
+
+        expire_secs = int(response.json()[&#39;expiresIn&#39;])
+        self.reauth_time = time.time() + expire_secs - 60
 
     def _api_call(self, method, url, headers, body=None):
         &#34;&#34;&#34;Make a REST call to the Amber server and handle the response&#34;&#34;&#34;
 
+        if time.time() &gt; self.reauth_time:
+            self._authenticate()
+
+        headers[&#39;Authorization&#39;] = &#39;Bearer {}&#39;.format(self.token)
         response = requests.request(method=method, url=url, headers=headers, json=body)
 
         if response.status_code != 200:
-            raise AmberCloudError(response.status_code, response.json())
+            raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
 
-        # todo: why are 404 errors returning 200 status codes with error
-        # codes/message in body instead? this if block should not be needed
+        # todo: why 200 status codes with error codes/message in body instead?
         if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != 200:
             raise AmberCloudError(response.json()[&#39;code&#39;], response.json()[&#39;message&#39;])
 
@@ -821,26 +822,22 @@ home directory, or optionally overridden using environment variables.</p>
         return response.json()
 
     def create_sensor(self, label=&#39;&#39;):
-        &#34;&#34;&#34;Create a new sensor instance.
+        &#34;&#34;&#34;Create a new sensor instance
 
         Args:
             label (str): label to assign to created sensor
 
         Returns:
-            A string containing the `sensor_id` that was created.
+            A string containing the `sensor_id` that was created
 
         Raises:
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         url = self.server + &#39;/sensor&#39;
         headers = {
-            &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token)
+            &#39;Content-Type&#39;: &#39;application/json&#39;
         }
         body = {
             &#39;label&#39;: label
@@ -858,20 +855,16 @@ home directory, or optionally overridden using environment variables.</p>
             label (str): new label to assign to sensor
 
         Returns:
-            label (str): new label assigned to sensor
+            A string containing the new label assigned to sensor
 
         Raises:
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         url = self.server + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         body = {
@@ -893,12 +886,8 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         url = self.server + &#39;/sensor&#39;
         headers = {
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         response = self._api_call(&#39;DELETE&#39;, url, headers)
@@ -907,21 +896,15 @@ home directory, or optionally overridden using environment variables.</p>
         &#34;&#34;&#34;List all sensor instances currently associated with Amber account
 
         Returns:
-            sensors (dict): dict mapping sensor IDs to corresponding labels if
-                successful, error string otherwise
+            A dictionary mapping sensor IDs to corresponding labels
 
         Raises:
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         url = self.server + &#39;/sensors&#39;
-        headers = {
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
-        }
+        headers = {}
         response = self._api_call(&#39;GET&#39;, url, headers)
         sensors = {s[&#39;sensorId&#39;]: s[&#39;label&#39;] for s in response}
 
@@ -964,9 +947,6 @@ home directory, or optionally overridden using environment variables.</p>
             AmberUserError: if client is not authenticated or supplies invalid options
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         if not feature_count &gt; 0 or not isinstance(feature_count, Integral):
             raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
 
@@ -976,7 +956,6 @@ home directory, or optionally overridden using environment variables.</p>
         url = self.server + &#39;/config&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         body = {
@@ -1110,9 +1089,6 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
-
         # Server expects data as a plaintext string of comma-separated values.
         try:
             data_csv = self._convert_to_csv(data)
@@ -1122,7 +1098,6 @@ home directory, or optionally overridden using environment variables.</p>
         url = self.server + &#39;/stream&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         body = {
@@ -1194,13 +1169,10 @@ home directory, or optionally overridden using environment variables.</p>
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
 
         url = self.server + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         sensor = self._api_call(&#39;GET&#39;, url, headers)
@@ -1249,13 +1221,10 @@ home directory, or optionally overridden using environment variables.</p>
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
 
         url = self.server + &#39;/config&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         config = self._api_call(&#39;GET&#39;, url, headers)
@@ -1272,8 +1241,8 @@ home directory, or optionally overridden using environment variables.</p>
             A dictionary containing the clustering status for a sensor:
 
                 {
-                    &#39;pca&#39; [(int,int,int)),
-                    &#39;clusterGrowth&#39; (int),
+                    &#39;pca&#39; [(int,int,int)],
+                    &#39;clusterGrowth&#39; [int],
                     &#39;clusterSizes&#39; [int],
                     &#39;anomalyIndexes&#39; [int],
                     &#39;frequencyIndexes&#39; [int],
@@ -1299,13 +1268,10 @@ home directory, or optionally overridden using environment variables.</p>
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
-        if self.token is None:
-            raise AmberUserError(&#34;authentication required&#34;)
 
         url = self.server + &#39;/status&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
-            &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
             &#39;sensorId&#39;: sensor_id
         }
         status = self._api_call(&#39;GET&#39;, url, headers)
@@ -1314,52 +1280,6 @@ home directory, or optionally overridden using environment variables.</p>
 </details>
 <h3>Methods</h3>
 <dl>
-<dt id="boonamber.AmberClient.authenticate"><code class="name flex">
-<span>def <span class="ident">authenticate</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Authenticate client for the next hour using the credentials given at
-initialization. This acquires and stores an oauth2 token which remains
-valid for one hour and is used to authenticate all other API requests.</p>
-<h2 id="raises">Raises</h2>
-<dl>
-<dt><code><a title="boonamber.AmberCloudError" href="#boonamber.AmberCloudError">AmberCloudError</a></code></dt>
-<dd>if Amber cloud gives non-200 response</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def authenticate(self):
-    &#34;&#34;&#34;Authenticate client for the next hour using the credentials given at
-    initialization. This acquires and stores an oauth2 token which remains
-    valid for one hour and is used to authenticate all other API requests.
-
-    Raises:
-        AmberCloudError: if Amber cloud gives non-200 response
-    &#34;&#34;&#34;
-
-    url = self.server + &#39;/oauth2&#39;
-    headers = {
-        &#39;Content-Type&#39;: &#39;application/json&#39;
-    }
-    body = {
-        &#39;username&#39;: self.username,
-        &#39;password&#39;: self.password
-    }
-
-    response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body)
-
-    if response.status_code != 200:
-        raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
-
-    # invalid credentials are a 200 but token is an empty string
-    if not response.json()[&#39;idToken&#39;]:
-        raise AmberCloudError(401, &#34;invalid credentials&#34;)
-
-    self.token = response.json()[&#39;idToken&#39;]</code></pre>
-</details>
-</dd>
 <dt id="boonamber.AmberClient.configure_sensor"><code class="name flex">
 <span>def <span class="ident">configure_sensor</span></span>(<span>self, sensor_id, feature_count=1, streaming_window_size=25, samples_to_buffer=1000, learning_rate_numerator=10, learning_rate_denominator=10000, learning_max_clusters=1000, learning_max_samples=1000000)</span>
 </code></dt>
@@ -1446,9 +1366,6 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberUserError: if client is not authenticated or supplies invalid options
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
-    if self.token is None:
-        raise AmberUserError(&#34;authentication required&#34;)
-
     if not feature_count &gt; 0 or not isinstance(feature_count, Integral):
         raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
 
@@ -1458,7 +1375,6 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     url = self.server + &#39;/config&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
-        &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
         &#39;sensorId&#39;: sensor_id
     }
     body = {
@@ -1479,14 +1395,14 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <span>def <span class="ident">create_sensor</span></span>(<span>self, label='')</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create a new sensor instance.</p>
+<div class="desc"><p>Create a new sensor instance</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>label</code></strong> :&ensp;<code>str</code></dt>
 <dd>label to assign to created sensor</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>A string containing the <code>sensor_id</code> that was created.</p>
+<p>A string containing the <code>sensor_id</code> that was created</p>
 <h2 id="raises">Raises</h2>
 <dl>
 <dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
@@ -1499,26 +1415,22 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def create_sensor(self, label=&#39;&#39;):
-    &#34;&#34;&#34;Create a new sensor instance.
+    &#34;&#34;&#34;Create a new sensor instance
 
     Args:
         label (str): label to assign to created sensor
 
     Returns:
-        A string containing the `sensor_id` that was created.
+        A string containing the `sensor_id` that was created
 
     Raises:
         AmberUserError: if client is not authenticated
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    if self.token is None:
-        raise AmberUserError(&#34;authentication required&#34;)
-
     url = self.server + &#39;/sensor&#39;
     headers = {
-        &#39;Content-Type&#39;: &#39;application/json&#39;,
-        &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token)
+        &#39;Content-Type&#39;: &#39;application/json&#39;
     }
     body = {
         &#39;label&#39;: label
@@ -1561,12 +1473,8 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    if self.token is None:
-        raise AmberUserError(&#34;authentication required&#34;)
-
     url = self.server + &#39;/sensor&#39;
     headers = {
-        &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
         &#39;sensorId&#39;: sensor_id
     }
     response = self._api_call(&#39;DELETE&#39;, url, headers)</code></pre>
@@ -1667,13 +1575,10 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberUserError: if client is not authenticated
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
-    if self.token is None:
-        raise AmberUserError(&#34;authentication required&#34;)
 
     url = self.server + &#39;/config&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
-        &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
         &#39;sensorId&#39;: sensor_id
     }
     config = self._api_call(&#39;GET&#39;, url, headers)
@@ -1805,13 +1710,10 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberUserError: if client is not authenticated
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
-    if self.token is None:
-        raise AmberUserError(&#34;authentication required&#34;)
 
     url = self.server + &#39;/sensor&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
-        &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
         &#39;sensorId&#39;: sensor_id
     }
     sensor = self._api_call(&#39;GET&#39;, url, headers)
@@ -1832,8 +1734,8 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <h2 id="returns">Returns</h2>
 <p>A dictionary containing the clustering status for a sensor:</p>
 <pre><code>{
-    'pca' [(int,int,int)),
-    'clusterGrowth' (int),
+    'pca' [(int,int,int)],
+    'clusterGrowth' [int],
     'clusterSizes' [int],
     'anomalyIndexes' [int],
     'frequencyIndexes' [int],
@@ -1876,8 +1778,8 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         A dictionary containing the clustering status for a sensor:
 
             {
-                &#39;pca&#39; [(int,int,int)),
-                &#39;clusterGrowth&#39; (int),
+                &#39;pca&#39; [(int,int,int)],
+                &#39;clusterGrowth&#39; [int],
                 &#39;clusterSizes&#39; [int],
                 &#39;anomalyIndexes&#39; [int],
                 &#39;frequencyIndexes&#39; [int],
@@ -1903,13 +1805,10 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberUserError: if client is not authenticated
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
-    if self.token is None:
-        raise AmberUserError(&#34;authentication required&#34;)
 
     url = self.server + &#39;/status&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
-        &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
         &#39;sensorId&#39;: sensor_id
     }
     status = self._api_call(&#39;GET&#39;, url, headers)
@@ -1923,8 +1822,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>
 <div class="desc"><p>List all sensor instances currently associated with Amber account</p>
 <h2 id="returns">Returns</h2>
-<p>sensors (dict): dict mapping sensor IDs to corresponding labels if
-successful, error string otherwise</p>
+<p>A dictionary mapping sensor IDs to corresponding labels</p>
 <h2 id="raises">Raises</h2>
 <dl>
 <dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
@@ -1940,21 +1838,15 @@ successful, error string otherwise</p>
     &#34;&#34;&#34;List all sensor instances currently associated with Amber account
 
     Returns:
-        sensors (dict): dict mapping sensor IDs to corresponding labels if
-            successful, error string otherwise
+        A dictionary mapping sensor IDs to corresponding labels
 
     Raises:
         AmberUserError: if client is not authenticated
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    if self.token is None:
-        raise AmberUserError(&#34;authentication required&#34;)
-
     url = self.server + &#39;/sensors&#39;
-    headers = {
-        &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
-    }
+    headers = {}
     response = self._api_call(&#39;GET&#39;, url, headers)
     sensors = {s[&#39;sensorId&#39;]: s[&#39;label&#39;] for s in response}
 
@@ -2065,9 +1957,6 @@ equal length.</dd>
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    if self.token is None:
-        raise AmberUserError(&#34;authentication required&#34;)
-
     # Server expects data as a plaintext string of comma-separated values.
     try:
         data_csv = self._convert_to_csv(data)
@@ -2077,7 +1966,6 @@ equal length.</dd>
     url = self.server + &#39;/stream&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
-        &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
         &#39;sensorId&#39;: sensor_id
     }
     body = {
@@ -2106,7 +1994,7 @@ equal length.</dd>
 <dd>new label to assign to sensor</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>label (str): new label assigned to sensor</p>
+<p>A string containing the new label assigned to sensor</p>
 <h2 id="raises">Raises</h2>
 <dl>
 <dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
@@ -2126,20 +2014,16 @@ equal length.</dd>
         label (str): new label to assign to sensor
 
     Returns:
-        label (str): new label assigned to sensor
+        A string containing the new label assigned to sensor
 
     Raises:
         AmberUserError: if client is not authenticated
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    if self.token is None:
-        raise AmberUserError(&#34;authentication required&#34;)
-
     url = self.server + &#39;/sensor&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
-        &#39;Authorization&#39;: &#39;Bearer {}&#39;.format(self.token),
         &#39;sensorId&#39;: sensor_id
     }
     body = {
@@ -2213,7 +2097,6 @@ equal length.</dd>
 <li>
 <h4><code><a title="boonamber.AmberClient" href="#boonamber.AmberClient">AmberClient</a></code></h4>
 <ul class="two-column">
-<li><code><a title="boonamber.AmberClient.authenticate" href="#boonamber.AmberClient.authenticate">authenticate</a></code></li>
 <li><code><a title="boonamber.AmberClient.configure_sensor" href="#boonamber.AmberClient.configure_sensor">configure_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.create_sensor" href="#boonamber.AmberClient.create_sensor">create_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.delete_sensor" href="#boonamber.AmberClient.delete_sensor">delete_sensor</a></code></li>

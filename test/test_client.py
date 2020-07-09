@@ -1,5 +1,6 @@
 import os
 import nose
+import time
 from nose.tools import assert_equal
 from nose.tools import assert_true
 from nose.tools import assert_raises
@@ -15,6 +16,7 @@ class TestInit:
         os.environ['AMBER_LICENSE_ID'] = ''
         os.environ['AMBER_USERNAME'] = ''
         os.environ['AMBER_PASSWORD'] = ''
+        os.environ['AMBER_SERVER'] = ''
 
     def test_init(self):
         self.unset_environment_variables()
@@ -29,7 +31,8 @@ class TestInit:
 
         # set credentials directly using environment variables
         os.environ['AMBER_USERNAME'] = "amber-test-user"
-        os.environ['AMBER_PASSWORD'] = r"GJKDKJLKJLKJDLKJL"
+        os.environ['AMBER_PASSWORD'] = "filler-password"
+        os.environ['AMBER_SERVER'] = "https://amber-local.boonlogic.com/dev"
         amber = AmberClient(license_id=None, license_file=None)
 
         self.unset_environment_variables()
@@ -40,36 +43,32 @@ class TestInit:
         assert_raises(AmberUserError, AmberClient, "nonexistent-license-id", "test.Amber.license")
         assert_raises(AmberUserError, AmberClient, "missing-username", "test.Amber.license")
         assert_raises(AmberUserError, AmberClient, "missing-password", "test.Amber.license")
+        assert_raises(AmberUserError, AmberClient, "missing-server", "test.Amber.license")
 
 
 class TestAuth:
     def setUp(self):
         self.amber = AmberClient(license_file="test.Amber.license")
+        self.amber.password = os.environ['AMBER_TEST_PASSWORD']
 
     def setup_garbage_credentials(self):
         self.amber = AmberClient(license_id="garbage", license_file="test.Amber.license")
 
     def test_authenticate(self):
-        result = self.amber.authenticate()
+        result = self.amber._authenticate()
 
     def test_authenticate_negative(self):
         self.setup_garbage_credentials()
         with assert_raises(AmberCloudError) as context:
-            self.amber.authenticate()
+            self.amber._authenticate()
         assert_equal(context.exception.code, 401)
 
 
 class TestEndpoints:
     def setUp(self):
         self.amber = AmberClient(license_file="test.Amber.license")
-        self.amber.authenticate()
-
-    def setup_unset_credentials(self):
-        self.amber = AmberClient(license_file="test.Amber.license")
-
-    def setup_expired_token(self):
-        self.amber = AmberClient(license_file="test.Amber.license")
-        self.amber.token = 'expired-token'
+        self.amber.password = os.environ['AMBER_TEST_PASSWORD']
+        self.amber._authenticate()
 
     def setup_created_sensor(self):
         try:
@@ -88,30 +87,11 @@ class TestEndpoints:
         sensor_id = self.amber.create_sensor('test-sensor')
         self.teardown_created_sensor(sensor_id)
 
-    def test_create_sensor_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(AmberUserError, self.amber.create_sensor, 'test-sensor')
-
-        self.setup_expired_token()
-        with assert_raises(AmberCloudError) as context:
-            sensor_id = self.amber.create_sensor('test-sensor')
-        assert_equal(context.exception.code, 401)
-
     def test_delete_sensor(self):
         self.setup_created_sensor()
         self.amber.delete_sensor(self.sensor_id)
 
     def test_delete_sensor_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(AmberUserError, self.amber.delete_sensor, 'sensor-id-filler')
-
-        self.setup_expired_token()
-        with assert_raises(AmberCloudError) as context:
-            self.amber.delete_sensor('sensor-id-filler')
-        assert_equal(context.exception.code, 401)
-
-        # nonexistent sensor
-        self.setUp()
         with assert_raises(AmberCloudError) as context:
             self.amber.delete_sensor('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
@@ -126,15 +106,6 @@ class TestEndpoints:
             raise RuntimeError("teardown failed, label was not changed back to 'test-sensor': {}".format(e))
 
     def test_update_label_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(AmberUserError, self.amber.update_label, TEST_SENSOR_ID, 'test-sensor')
-
-        self.setup_expired_token()
-        with assert_raises(AmberCloudError) as context:
-            label = self.amber.update_label(TEST_SENSOR_ID, 'test-sensor')
-        assert_equal(context.exception.code, 401)
-
-        self.setUp()
         with assert_raises(AmberCloudError) as context:
             label = self.amber.update_label('nonexistent-sensor-id', 'test-sensor')
         assert_equal(context.exception.code, 404)
@@ -152,15 +123,6 @@ class TestEndpoints:
         assert_true('usageInfo' in sensor)
 
     def test_get_sensor_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(AmberUserError, self.amber.get_sensor, TEST_SENSOR_ID)
-
-        self.setup_expired_token()
-        with assert_raises(AmberCloudError) as context:
-            sensor = self.amber.get_sensor(TEST_SENSOR_ID)
-        assert_equal(context.exception.code, 401)
-
-        self.setUp()
         with assert_raises(AmberCloudError) as context:
             sensor = self.amber.get_sensor('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
@@ -168,15 +130,6 @@ class TestEndpoints:
     def test_list_sensors(self):
         sensors = self.amber.list_sensors()
         assert_true(TEST_SENSOR_ID in sensors.keys())
-
-    def test_list_sensors_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(AmberUserError, self.amber.list_sensors)
-
-        self.setup_expired_token()
-        with assert_raises(AmberCloudError) as context:
-            sensors = self.amber.list_sensors()
-        assert_equal(context.exception.code, 401)
 
     def test_configure_sensor(self):
         expected = {
@@ -197,20 +150,11 @@ class TestEndpoints:
         assert_equal(config, expected)
 
     def test_configure_sensor_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID)
-
-        self.setup_expired_token()
-        with assert_raises(AmberCloudError) as context:
-            config = self.amber.configure_sensor(TEST_SENSOR_ID)
-        assert_equal(context.exception.code, 401)
-
-        self.setUp()
         with assert_raises(AmberCloudError) as context:
             config = self.amber.configure_sensor('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-        # invalid feature_count or streaming_window
+        # invalid feature_count or streaming_window_size
         assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, feature_count=-1)
         assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, feature_count=1.5)
         assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, streaming_window_size=-1)
@@ -232,15 +176,6 @@ class TestEndpoints:
         assert_equal(config, expected)
 
     def test_get_config_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(AmberUserError, self.amber.get_config, TEST_SENSOR_ID)
-
-        self.setup_expired_token()
-        with assert_raises(AmberCloudError) as context:
-            config = self.amber.get_config(TEST_SENSOR_ID)
-        assert_equal(context.exception.code, 401)
-
-        self.setUp()
         with assert_raises(AmberCloudError) as context:
             config = self.amber.get_config('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
@@ -257,15 +192,6 @@ class TestEndpoints:
         assert_true(len(results['SI']) == 5)
 
     def test_stream_sensor_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(AmberUserError, self.amber.stream_sensor, TEST_SENSOR_ID, [1, 2, 3, 4, 5])
-
-        self.setup_expired_token()
-        with assert_raises(AmberCloudError) as context:
-            results = self.amber.stream_sensor(TEST_SENSOR_ID, [1, 2, 3, 4, 5])
-        assert_equal(context.exception.code, 401)
-
-        self.setUp()
         with assert_raises(AmberCloudError) as context:
             results = self.amber.stream_sensor('nonexistent-sensor-id', [1, 2, 3, 4, 5])
         assert_equal(context.exception.code, 404)
@@ -281,15 +207,6 @@ class TestEndpoints:
         assert_true('numClusters' in status)
 
     def test_get_status_negative(self):
-        self.setup_unset_credentials()
-        assert_raises(AmberUserError, self.amber.get_config, TEST_SENSOR_ID)
-
-        self.setup_expired_token()
-        with assert_raises(AmberCloudError) as context:
-            status = self.amber.get_status(TEST_SENSOR_ID)
-        assert_equal(context.exception.code, 401)
-
-        self.setUp()
         with assert_raises(AmberCloudError) as context:
             status = self.amber.get_status('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
@@ -298,9 +215,7 @@ class TestEndpoints:
 class TestAPICall:
     def setUp(self):
         self.amber = AmberClient(license_file="test.Amber.license")
-
-        self.amber.authenticate()
-        self.token = self.amber.token
+        self.amber.password = os.environ['AMBER_TEST_PASSWORD']
 
         self.server = self.amber.server
         self.headers = {
@@ -308,11 +223,14 @@ class TestAPICall:
         }
 
     def test_api_call(self):
-        self.headers['Authorization'] = 'Bearer {}'.format(self.token)
+        # first call covers reauth case, second call covers no reauth case
+        self.amber._api_call('GET', self.server + '/sensors', self.headers)
         self.amber._api_call('GET', self.server + '/sensors', self.headers)
 
     def test_api_call_negative(self):
-        self.headers['Authorization'] = 'Bearer garbage-token'
+        # call that fails due to a garbage internal token
+        self.amber.reauth_time = time.time() + 60
+        self.amber.token = 'garbage-token'
         assert_raises(AmberCloudError, self.amber._api_call, 'GET', self.server + '/sensors', self.headers)
 
 
