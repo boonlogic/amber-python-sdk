@@ -2,6 +2,10 @@
 
 An SDK for Boon Amber sensor analytics
 
+- __Website__: [boonlogic.com](https://boonlogic.com)
+- __Documentation__: [Boon Docs Main Page](https://docs.boonlogic.com)
+- __SDK Functional Breakdown__: [amber-python-sdk classes and methods](docs/boonamber/index.html)
+
 ## Installation
 
 The Boon Amber SDK is a Python 3 project and can be installed via pip. After cloning the `amber-python-sdk` repository to the current directory, run:
