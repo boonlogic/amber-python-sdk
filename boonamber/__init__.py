@@ -38,10 +38,14 @@ class AmberClient():
             license_file (str): path to .Amber.license file
         
         Environment:
-            AMBER_LICENSE_FILE: sets license_file path
-            AMBER_LICENSE_ID: sets license_id
-            AMBER_USERNAME: overrides the username as found in .Amber.license file
-            AMBER_PASSWORD: overrides the password as found in .Amber.license file
+
+            `AMBER_LICENSE_FILE`: sets license_file path
+
+            `AMBER_LICENSE_ID`: sets license_id
+
+            `AMBER_USERNAME`: overrides the username as found in .Amber.license file
+
+            `AMBER_PASSWORD`: overrides the password as found in .Amber.license file
 
         Raises:
             AmberUserError: if error supplying authentication credentials
@@ -73,7 +77,8 @@ class AmberClient():
             with open(license_path, 'r') as f:
                 file_data = json.load(f)
         except json.JSONDecodeError as e:
-            raise AmberUserError("JSON formatting error in license file: {}, line: {}, col: {}".format(e.msg, e.lineno, e.colno))
+            raise AmberUserError(
+                "JSON formatting error in license file: {}, line: {}, col: {}".format(e.msg, e.lineno, e.colno))
 
         try:
             license_data = file_data[license_id]
@@ -140,13 +145,13 @@ class AmberClient():
         return response.json()
 
     def create_sensor(self, label=''):
-        """Create a new sensor instance
+        """Create a new sensor instance.
 
         Args:
             label (str): label to assign to created sensor
 
         Returns:
-            sensor_id (str): sensor ID of newly created sensor
+            A string containing the `sensor_id` that was created.
 
         Raises:
             AmberUserError: if client is not authenticated
@@ -200,7 +205,6 @@ class AmberClient():
         label = response['label']
 
         return label
-
 
     def delete_sensor(self, sensor_id):
         """Delete an amber sensor instance
@@ -264,11 +268,21 @@ class AmberClient():
                 learning to monitoring mode) if fewer than learning_rate_numerator
                 new clusters are opened in the last learning_rate_denominator samples
             learning_rate_denominator (int): see learning_rate_numerator
-            learning_max_clusters: sensor graduates if this many clusters are created
-            learning_max_samples: sensor graduates if this many samples are processed
+            learning_max_clusters (int): sensor graduates if this many clusters are created
+            learning_max_samples (int): sensor graduates if this many samples are processed
 
         Returns:
-            config (dict): newly applied configuration
+            A dictionary containing:
+
+                {
+                    'feature_count': int,
+                    'streaming_window_size': int,
+                    'samples_to_buffer': int
+                    'learning_rate_numerator': int
+                    'learning_rate_denominator': int
+                    'learning_max_clusters': int
+                    'learning_max_samples': int
+                }
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid options
@@ -384,26 +398,36 @@ class AmberClient():
                 equal length.
 
         Returns:
-            results (dict): resulting inferences. Contains:
-                'SI' (list): smoothed anomaly index. The values in this list correspond
+            A dictionary containing inferencing results:
+
+                {
+                    'SI': [int],
+                    'state': str,
+                    'message': str,
+                    'progress': int,
+                    'clusterCount': int,
+                    'retryCount': int,
+                    'streamingWindowSize': int,
+                    'computedDetectionThreshold': int
+                }
+
+                'SI': smoothed anomaly index. The values in this list correspond
                     one-for-one with input samples and range between 0.0 and 1.0. Values
                     closer to 0 represent input patterns which are ordinary given the data
                     seen so far on this sensor. Values closer to 1 represent novel patterns
                     which are anomalous with respect to data seen before.
-                'state' (str): current state of the sensor. One of:
+                'state': current state of the sensor. One of:
                     "Buffering": gathering initial sensor data
                     "Autotuning": autotuning configuration in progress
                     "Learning": sensor is active and learning
                     "Monitoring": sensor is active but monitoring only (learning disabled)
                     "Error": fatal error has occurred
-                'message' (str): accompanying message for current sensor state
-                'progress' (int): progress as a percentage value (applicable for
-                    "Buffering" and "Autotuning" states)
-                'clusterCount (int)': number of clusters created so far
-                'retryCount (int)': number of times autotuning was re-attempted to tune streamingWindowSize
-                'streamingWindowSize (int)': streaming window size of sensor (may differ from
-                    value given at configuration if window size was adjusted during autotune)
-                'computedDetectionThreshold' (float): auto-discovered SI detection threshold
+                'message': accompanying message for current sensor state
+                'progress' progress as a percentage value (applicable for "Buffering" and "Autotuning" states)
+                'clusterCount' number of clusters created so far
+                'retryCount' number of times autotuning was re-attempted to tune streamingWindowSize
+                'streamingWindowSize': streaming window size of sensor (may differ from value given at configuration if window size was adjusted during autotune)
+                'computedDetectionThreshold': auto-discovered SI detection threshold
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid data
@@ -444,19 +468,51 @@ class AmberClient():
             sensor_id (str): sensor identifier
 
         Returns:
-            sensor (dict): sensor info dict. Contains:
+            A dictionary containing sensor information:
+
+                {
+                    'label': str,
+                    'sensorId': str,
+                    'tenantId': str,
+                    'usageInfo': {
+                        putSensor {
+                            'callsTotal': int
+                            'callsThisPeriod': int
+                            'lastCalled': str
+                        },
+                        getSensor {
+                            'callsTotal': int
+                            'callsThisPeriod': int
+                            'lastCalled': str
+                        },
+                        getConfig {
+                            'callsTotal': int
+                            'callsThisPeriod': int
+                            'lastCalled': str
+                        },
+                        postStream {
+                            'callsTotal': int
+                            'callsThisPeriod': int
+                            'lastCalled': int
+                            'samplesTotal': int
+                            'samplesThisPeriod': int
+                        }
+                        getStatus {
+                            'callsTotal': int
+                            'callsThisPeriod': int
+                            'lastCalled': str
+                        }
+                    }
+                }
+
                 'label' (str): sensor label
                 'sensorId' (str): sensor identifier
                 'tenantId' (str): username of associated Amber account
-                'usageInfo' (dict): sensor usage info. Keys are:
-                    'putSensor', 'getSensor', 'postConfig', 'getConfig', 'postStream', 'getStatus'.
-                    Each value is a dict containing:
-                        'callsTotal': total number of calls to this endpoint
-                        'callsThisPeriod': calls this billing period to this endpoint
-                        'lastCalled': ISO formatted time of last call to this endpoint
-                    The 'postStream' endpoint dict also contains:
-                        'samplesTotal': total number of samples processed
-                        'samplesThisPeriod': number of samples processed this billing period
+                'callsTotal': total number of calls to this endpoint
+                'callsThisPeriod': calls this billing period to this endpoint
+                'lastCalled': ISO formatted time of last call to this endpoint
+                'samplesTotal': total number of samples processed
+                'samplesThisPeriod': number of samples processed this billing period
 
         Raises:
             AmberUserError: if client is not authenticated
@@ -482,19 +538,37 @@ class AmberClient():
             sensor_id (str): sensor identifier
 
         Returns:
-            config (dict): current sensor configuration. Contains:
-                'featureCount' (int): number of features (dimensionality of each data sample)
-                'streamingWindowSize' (int): streaming window size (number of samples)
-                'samplesToBuffer' (int): number of samples to load before autotuning
-                'learningRateNumerator' (int): sensor "graduates" (i.e. transitions from
+            A dictionary containing the current sensor configuration:
+
+                {
+                    'featureCount': int,
+                    'streamingWindowSize': int,
+                    'samplesToBuffer': int,
+                    'learningRateNumerator': int,
+                    'learningRateDenominator': int,
+                    'learningMaxClusters': int,
+                    'learningMaxSamples': int,
+                    'percentVariation': float,
+                    'features':
+                    [
+                        {
+                            'min': float,
+                            'max': float
+                        }
+                    ]
+                }
+
+                'featureCount': number of features (dimensionality of each data sample)
+                'streamingWindowSize': streaming window size (number of samples)
+                'samplesToBuffer': number of samples to load before autotuning
+                'learningRateNumerator': sensor "graduates" (i.e. transitions from
                     learning to monitoring mode) if fewer than learning_rate_numerator
                     new clusters are opened in the last learning_rate_denominator samples
-                'learningRateDenominator' (int): see learning_rate_numerator
-                'learningMaxClusters' (int): sensor graduates if this many clusters are created
-                'learningMaxSamples' (int): sensor graduates if this many samples are processed
-                'percentVariation' (float): percent variation parameter discovered by autotuning
-                'features' (list): min/max values per feature discovered by autotuning
-
+                'learningRateDenominator': see learning_rate_numerator
+                'learningMaxClusters': sensor graduates if this many clusters are created
+                'learningMaxSamples': sensor graduates if this many samples are processed
+                'percentVariation': percent variation parameter discovered by autotuning
+                'features': min/max values per feature discovered by autotuning
         Raises:
             AmberUserError: if client is not authenticated
             AmberCloudError: if Amber cloud gives non-200 response
@@ -519,19 +593,31 @@ class AmberClient():
             sensor_id (str): sensor identifier
 
         Returns:
-            status (dict): clustering status. Contains:
-                'pca' (list): list of length-3 vectors representing cluster centroids
+            A dictionary containing the clustering status for a sensor:
+
+                {
+                    'pca' [(int,int,int)),
+                    'clusterGrowth' (int),
+                    'clusterSizes' [int],
+                    'anomalyIndexes' [int],
+                    'frequencyIndexes' [int],
+                    'distanceIndexes' [int],
+                    'totalInferences' [int],
+                    'numClusters' [int],
+                }
+
+                'pca': list of length-3 vectors representing cluster centroids
                     with dimensionality reduced to 3 principal components. List length
                     is one plus the maximum cluster ID, with element 0 corresponding
                     to the "zero" cluster, element 1 corresponding to cluster ID 1, etc.
-                'clusterGrowth' (list): sample index at which each new cluster was created.
+                'clusterGrowth': sample index at which each new cluster was created.
                     Elements for this and other list results are ordered as in 'pca'.
-                'clusterSizes' (list): number of samples in each cluster
-                'anomalyIndexes' (list): anomaly index associated with each cluster
-                'frequencyIndexes' (list): frequency index associated with each cluster
-                'distanceIndexes' (list): distance index associated with each cluster
-                'totalInferences' (int): total number of inferences performed so far
-                'numClusters' (int): number of clusters created so far (includes zero cluster)
+                'clusterSizes': number of samples in each cluster
+                'anomalyIndexes': anomaly index associated with each cluster
+                'frequencyIndexes': frequency index associated with each cluster
+                'distanceIndexes': distance index associated with each cluster
+                'totalInferences': total number of inferences performed so far
+                'numClusters': number of clusters created so far (includes zero cluster)
 
         Raises:
             AmberUserError: if client is not authenticated
