@@ -5,11 +5,10 @@ from boonamber import AmberClient
    from a CSV file, inference the data line by line, and print results.
 """
 
-# initialize and authenticate client
+# initialize client
 amber = AmberClient()
-amber.authenticate()
 
-# look for sensor labeled 'stream-example-sensor'; if not there, create it
+# look for a sensor labeled 'stream-example-sensor'; if not there, create it
 sensors = amber.list_sensors()
 for sensor_id, label in sensors.items():
     if label == 'stream-example-sensor':

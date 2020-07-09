@@ -1,5 +1,6 @@
 import argparse
 import math
+import os
 import random
 from boonamber import AmberClient
 
@@ -44,7 +45,7 @@ def main():
                              noise=args.noise)
 
     amber = AmberClient(license_file="test.Amber.license")
-    amber.authenticate()
+    amber.password = os.environ['AMBER_TEST_PASSWORD']
 
     sensors = amber.list_sensors()
     for sensor_id, label in sensors.items():

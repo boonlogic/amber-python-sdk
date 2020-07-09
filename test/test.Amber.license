@@ -1,16 +1,24 @@
 {
     "default": {
         "username": "amber-test-user",
-        "password": "xxxxxxxxxxxxxx"
+        "password": "filler-password",
+        "server": "https://amber-local.boonlogic.com/dev"
     },
     "missing-username": {
-        "password": "ykdjkdVKjEav3N#3"
+        "password": "filler-password",
+        "server": "https://amber-local.boonlogic.com/dev"
     },
     "missing-password": {
-        "username": "amber-test-user"
+        "username": "amber-test-user",
+        "server": "https://amber-local.boonlogic.com/dev"
+    },
+    "missing-server": {
+        "username": "amber-test-user",
+        "password": "filler-password"
     },
     "garbage": {
         "username": "garbage-username",
-        "password": "garbage-password"
+        "password": "garbage-password",
+        "server": "https://amber-local.boonlogic.com/dev"
     }
 }

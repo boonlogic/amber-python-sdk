@@ -4,12 +4,6 @@ from boonamber import AmberClient
 
 amber = AmberClient()
 
-# authenticate client
-print("authenticating")
-amber.authenticate()
-print("succeeded")
-print()
-
 # list all sensors belonging to current user
 print("listing sensors")
 sensors = amber.list_sensors()
