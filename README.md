@@ -2,41 +2,35 @@
 
 An SDK for Boon Amber sensor analytics
 
-<<<<<<< HEAD
-=======
 - __Website__: [boonlogic.com](https://boonlogic.com)
 - __Documentation__: [Boon Docs Main Page](https://docs.boonlogic.com)
 - __SDK Functional Breakdown__: [amber-python-sdk classes and methods](docs/boonamber/index.html)
 
->>>>>>> ca1ded7fcd564f159b54993bdf564d61b8bd906e
 ## Installation
 
 The Boon Amber SDK is a Python 3 project and can be installed via pip. After cloning the `amber-python-sdk` repository to the current directory, run:
 
 ```
-<<<<<<< HEAD
 pip install amber-python-sdk
-=======
-pip install boonamber
->>>>>>> ca1ded7fcd564f159b54993bdf564d61b8bd906e
 ```
 
 ## Credentials setup
 
 Note: An account in the Boon Amber cloud must be obtained from Boon Logic to use the Amber SDK.
 
-The account credentials should be placed in a file named _~/.Amber.license_:
+The username and password should be placed in a file named _~/.Amber.license_ whose contents are the following:
 
 ```
 {
     "default": {
         "username": "AMBER-ACCOUNT-USERNAME",
         "password": "AMBER-ACCOUNT-PASSWORD"
+        "server": "https://amber.boonlogic.com/v1"
     }
 }
 ```
 
-The _~/.Amber.license_ file will be consulted by the Amber SDK to successfully find and authenticate with your Amber account credentials. Credentials may optionally be provided instead via the environment variables `AMBER_USERNAME` and `AMBER_PASSWORD`.
+The _~/.Amber.license_ file will be consulted by the Amber SDK to find and authenticate your account credentials with the Amber server. Credentials may optionally be provided instead via the environment variables `AMBER_USERNAME` and `AMBER_PASSWORD`.
 
 ## Connectivity test
 
@@ -51,7 +45,7 @@ from boonamber import AmberClient
 # under the "default" entry in the ~/.Amber.license file.
 amber = AmberClient()
 
-# These credentials are used to authenticate against the Amber cloud.
+# These credentials are used to authenticate with the Amber cloud.
 amber.authenticate()
 
 # The client is then authenticated for one hour of use, and may
