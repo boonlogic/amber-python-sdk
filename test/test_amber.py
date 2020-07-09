@@ -29,7 +29,7 @@ class TestInit:
 
         # set credentials directly using environment variables
         os.environ['AMBER_USERNAME'] = "amber-test-user"
-        os.environ['AMBER_PASSWORD'] = r"UFGdMzt*P1Zv*4%b"
+        os.environ['AMBER_PASSWORD'] = "xxxxxxxxxxxxxxxx"
         amber = AmberClient(license_id=None, license_file=None)
 
         self.unset_environment_variables()
