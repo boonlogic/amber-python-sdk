@@ -397,21 +397,19 @@ class AmberClient():
             A dictionary containing inferencing results:
 
                 {
-                    'SI': [int],
                     'state': str,
                     'message': str,
                     'progress': int,
                     'clusterCount': int,
                     'retryCount': int,
                     'streamingWindowSize': int,
-                    'computedDetectionThreshold': int
+                    'SI': [float],
+                    'AD': [int],
+                    'AH': [int],
+                    'AD': [float],
+                    'AW': [int]
                 }
 
-                'SI': smoothed anomaly index. The values in this list correspond
-                    one-for-one with input samples and range between 0.0 and 1.0. Values
-                    closer to 0 represent input patterns which are ordinary given the data
-                    seen so far on this sensor. Values closer to 1 represent novel patterns
-                    which are anomalous with respect to data seen before.
                 'state': current state of the sensor. One of:
                     "Buffering": gathering initial sensor data
                     "Autotuning": autotuning configuration in progress
@@ -423,7 +421,32 @@ class AmberClient():
                 'clusterCount' number of clusters created so far
                 'retryCount' number of times autotuning was re-attempted to tune streamingWindowSize
                 'streamingWindowSize': streaming window size of sensor (may differ from value given at configuration if window size was adjusted during autotune)
-                'computedDetectionThreshold': auto-discovered SI detection threshold
+                'SI': smoothed anomaly index. The values in this list correspond
+                    one-for-one with input samples and range between 0.0 and 1.0. Values
+                    closer to 0 represent input patterns which are ordinary given the data
+                    seen so far on this sensor. Values closer to 1 represent novel patterns
+                    which are anomalous with respect to data seen before.
+                'AD': list of binary anomaly detection values. These correspond one-to-one
+                    with input samples and are produced by thresholding the smoothed anomaly
+                    index (SI). The threshold is determined automatically from the SI values.
+                    A value of 0 indicates that the SI has not exceeded the anomaly detection
+                    threshold. A value of 1 indicates it has, signaling an anomaly at the
+                    corresponding input sample.
+                'AH': list of anomaly history values. These values are a moving-window sum of
+                    the AD value, giving the number of anomaly detections (1's) present in the
+                    AD signal over a "recent history" window whose length is the buffer size.
+                'AM': list of "Amber Metric" values. These are floating point values between
+                    0.0 and 1.0 indicating the extent to which each corresponding AH value
+                    shows an unusually high number of anomalies in recent history. The values
+                    are derived statistically from a Poisson model, with values close to 0.0
+                    signaling a lower, and values close to 1.0 signaling a higher, frequency
+                    of anomalies than usual.
+                'AW': list of "Amber Warning Level" values. This index is produced by thresholding
+                    the Amber Metric (AM) and takes on the values 0, 1 or 2 representing a discrete
+                    "warning level" for an asset based on the frequency of anomalies within recent
+                    history. 0 = normal, 1 = asset changing, 2 = asset critical. The default
+                    thresholds for the two warning levels are the standard statistical values
+                    of 0.95 (outlier, asset changing) and 0.997 (extreme outlier, asset critical).
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid data
@@ -449,7 +472,6 @@ class AmberClient():
 
         # normalize index values from the range [0, 1000] to [0.0, 1.0]
         results['SI'] = [r / 1000.0 for r in results['SI']]
-        results['computedDetectionThreshold'] /= 1000.0
 
         return results
 
