@@ -406,7 +406,7 @@ class AmberClient():
                     'SI': [float],
                     'AD': [int],
                     'AH': [int],
-                    'AD': [float],
+                    'AM': [float],
                     'AW': [int]
                 }
 

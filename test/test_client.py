@@ -181,14 +181,24 @@ class TestEndpoints:
         assert_equal(context.exception.code, 404)
 
     def test_stream_sensor(self):
-        # scalar data should return SI of length 1
         results = self.amber.stream_sensor(TEST_SENSOR_ID, 1)
         assert_true('state' in results)
+        assert_true('message' in results)
+        assert_true('progress' in results)
+        assert_true('clusterCount' in results)
+        assert_true('retryCount' in results)
+        assert_true('streamingWindowSize' in results)
+        assert_true('SI' in results)
+        assert_true('AD' in results)
+        assert_true('AH' in results)
+        assert_true('AM' in results)
+        assert_true('AW' in results)
+
+        # scalar data should return SI of length 1
         assert_true(len(results['SI']) == 1)
 
         # array data should return SI of same length
         results = self.amber.stream_sensor(TEST_SENSOR_ID, [1, 2, 3, 4, 5])
-        assert_true('state' in results)
         assert_true(len(results['SI']) == 5)
 
     def test_stream_sensor_negative(self):
