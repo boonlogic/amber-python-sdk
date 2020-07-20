@@ -403,6 +403,7 @@ class AmberClient():
                     'clusterCount': int,
                     'retryCount': int,
                     'streamingWindowSize': int,
+                    'ID': [int],
                     'SI': [float],
                     'AD': [int],
                     'AH': [int],
@@ -421,6 +422,9 @@ class AmberClient():
                 'clusterCount' number of clusters created so far
                 'retryCount' number of times autotuning was re-attempted to tune streamingWindowSize
                 'streamingWindowSize': streaming window size of sensor (may differ from value given at configuration if window size was adjusted during autotune)
+                'ID': list of cluster IDs. The values in this list correspond one-to-one
+                    with input samples, indicating the cluster to which each input pattern
+                    was assigned.
                 'SI': smoothed anomaly index. The values in this list correspond
                     one-for-one with input samples and range between 0.0 and 1.0. Values
                     closer to 0 represent input patterns which are ordinary given the data
