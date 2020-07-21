@@ -275,7 +275,7 @@ class AmberClient():
         url = self.server + &#39;/sensors&#39;
         headers = {}
         response = self._api_call(&#39;GET&#39;, url, headers)
-        sensors = {s[&#39;sensorId&#39;]: s[&#39;label&#39;] for s in response}
+        sensors = {s[&#39;sensorId&#39;]: s.get(&#39;label&#39;, None) for s in response}
 
         return sensors
 
@@ -932,7 +932,7 @@ home directory, or optionally overridden using environment variables.</p>
         url = self.server + &#39;/sensors&#39;
         headers = {}
         response = self._api_call(&#39;GET&#39;, url, headers)
-        sensors = {s[&#39;sensorId&#39;]: s[&#39;label&#39;] for s in response}
+        sensors = {s[&#39;sensorId&#39;]: s.get(&#39;label&#39;, None) for s in response}
 
         return sensors
 
@@ -1900,7 +1900,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     url = self.server + &#39;/sensors&#39;
     headers = {}
     response = self._api_call(&#39;GET&#39;, url, headers)
-    sensors = {s[&#39;sensorId&#39;]: s[&#39;label&#39;] for s in response}
+    sensors = {s[&#39;sensorId&#39;]: s.get(&#39;label&#39;, None) for s in response}
 
     return sensors</code></pre>
 </details>
