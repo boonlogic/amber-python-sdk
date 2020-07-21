@@ -247,7 +247,7 @@ class AmberClient():
         url = self.server + '/sensors'
         headers = {}
         response = self._api_call('GET', url, headers)
-        sensors = {s['sensorId']: s['label'] for s in response}
+        sensors = {s['sensorId']: s.get('label', None) for s in response}
 
         return sensors
 

@@ -2,7 +2,8 @@ import argparse
 import math
 import os
 import random
-from boonamber import AmberClient
+import sys
+from boonamber import AmberClient, AmberCloudError
 
 
 def SignalGenerator(wave='sine', samplerate=1.0, amp=1.0, freq=0.01, phase=0.0, noise=0.0):
@@ -47,18 +48,19 @@ def main():
     amber = AmberClient(license_file="test.Amber.license")
     amber.password = os.environ['AMBER_TEST_PASSWORD']
 
-    sensors = amber.list_sensors()
-    for sensor_id, label in sensors.items():
-        if label == 'stream-test-sensor':
-            break
-    else:
-        sensor_id = amber.create_sensor('stream-test-sensor')
-        amber.configure_sensor(sensor_id, feature_count=1, streaming_window_size=25)
-
+    sensor_id = '846f218ab552fa82'
     if args.reset:
-        amber.configure_sensor(sensor_id, feature_count=1, streaming_window_size=25)
+        try:
+            amber.configure_sensor(sensor_id, feature_count=1, streaming_window_size=25)
+        except AmberCloudError as e:
+            print(e)
+            sys.exit(1)
 
-    config = amber.get_config(sensor_id)
+    try:
+        config = amber.get_config(sensor_id)
+    except AmberCloudError as e:
+        print(e)
+        sys.exit(1)
     print("using sensor: {}".format(sensor_id))
     print("configuration: {}".format(config))
     print()
@@ -75,7 +77,12 @@ def main():
         if len(batch) < args.batch_size:
             continue
 
-        results = amber.stream_sensor(sensor_id, batch)
+        try:
+            results = amber.stream_sensor(sensor_id, batch)
+        except AmberCloudError as e:
+            print(e)
+            sys.exit(1)
+
         batch = []
 
         if results['state'] in ["Buffering", "Autotuning"]:

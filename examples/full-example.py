@@ -1,60 +1,124 @@
-from boonamber import AmberClient
+import sys
+from boonamber import AmberClient, AmberCloudError, AmberUserError
 
 """Demonstrates usage of all Amber SDK endpoints."""
 
 amber = AmberClient()
 
-# list all sensors belonging to current user
+# List all sensors belonging to current user
 print("listing sensors")
-sensors = amber.list_sensors()
+try:
+    sensors = amber.list_sensors()
+except AmberCloudError as e:
+    print(e)
+    sys.exit(1)
+except AmberUserError as e:
+    print(e)
+    sys.exit(1)
 print("sensors: {}".format(sensors))
 print()
 
-# create a new sensor
+# Create a new sensor
 print("creating sensor")
-sensor_id = amber.create_sensor('new-test-sensor')
+try:
+    sensor_id = amber.create_sensor('new-test-sensor')
+except AmberCloudError as e:
+    print(e)
+    sys.exit(1)
+except AmberUserError as e:
+    print(e)
+    sys.exit(1)
 print("sensor-id: {}".format(sensor_id))
 print()
 
-# get sensor info
+# Get sensor info
 print("getting sensor")
-sensor = amber.get_sensor(sensor_id)
+try:
+    sensor = amber.get_sensor(sensor_id)
+except AmberCloudError as e:
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
 print("sensor: {}".format(sensor))
 print()
 
-# update the label of a sensor
+# Update the label of a sensor
 print("updating label")
-label = amber.update_label(sensor_id, 'test-sensor')
+try:
+    label = amber.update_label(sensor_id, 'test-sensor')
+except AmberCloudError as e:
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
 print("label: {}".format(label))
 print()
 
-# configure a sensor
+# Configure a sensor
 print("configuring sensor")
-config = amber.configure_sensor(sensor_id, feature_count=1, streaming_window_size=25)
+try:
+    config = amber.configure_sensor(sensor_id, feature_count=1, streaming_window_size=25)
+except AmberCloudError as e:
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
 print("config: {}".format(config))
 print()
 
-# get sensor configuration
+# Get sensor configuration
 print("getting configuration")
-config = amber.get_config(sensor_id)
+try:
+    config = amber.get_config(sensor_id)
+except AmberCloudError as e:
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
 print("config: {}".format(config))
 print()
 
-# stream data to a sensor
+# Stream data to a sensor
 print("streaming data")
 data = [0, 1, 2, 3, 4]
-results = amber.stream_sensor(sensor_id, data)
+try:
+    results = amber.stream_sensor(sensor_id, data)
+except AmberCloudError as e:
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
 print("results: {},".format(results))
 print()
 
-# get clustering status from a sensor
+# Get clustering status from a sensor
 print("getting status")
-status = amber.get_status(sensor_id)
+try:
+    status = amber.get_status(sensor_id)
+except AmberCloudError as e:
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
 print("status: {}".format(status))
 print()
 
-# delete a sensor instance
+# Delete a sensor instance
 print("deleting sensor")
-amber.delete_sensor(sensor_id)
+try:
+    amber.delete_sensor(sensor_id)
+except AmberCloudError as e:
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
 print("succeeded")
 print()
