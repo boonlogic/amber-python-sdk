@@ -3,6 +3,8 @@ from boonamber import AmberClient, AmberCloudError, AmberUserError
 
 """Demonstrates usage of all Amber SDK endpoints."""
 
+# connect with default license
+# use 'license_id=<name>' to specify something other than 'default'
 amber = AmberClient()
 
 # List all sensors belonging to current user
