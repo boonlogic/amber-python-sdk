@@ -228,6 +228,7 @@ class AmberClient():
 
         url = self.server + '/sensor'
         headers = {
+            'Content-Type': 'application/json',
             'sensorId': sensor_id
         }
         response = self._api_call('DELETE', url, headers)
@@ -244,7 +245,9 @@ class AmberClient():
         """
 
         url = self.server + '/sensors'
-        headers = {}
+        headers = {
+            'Content-Type': 'application/json'
+        }
         response = self._api_call('GET', url, headers)
         sensors = {s['sensorId']: s.get('label', None) for s in response}
 
