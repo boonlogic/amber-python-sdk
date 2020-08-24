@@ -55,6 +55,7 @@ class AmberClient():
         """
 
         self.token = None
+        self.reauth_time = time.time()
 
         env_license_file = os.environ.get('AMBER_LICENSE_FILE', None)
         env_license_id = os.environ.get('AMBER_LICENSE_ID', None)
@@ -104,8 +105,6 @@ class AmberClient():
             self.server = env_server if env_server else license_data['server']
         except KeyError:
             raise AmberUserError("\"server\" is missing from the specified license in license file")
-
-        self.reauth_time = time.time()
 
     def _authenticate(self):
         """Authenticate client for the next hour using the credentials given at
