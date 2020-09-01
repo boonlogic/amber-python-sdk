@@ -405,6 +405,7 @@ class AmberClient():
                     'clusterCount': int,
                     'retryCount': int,
                     'streamingWindowSize': int,
+                    'totalInferences': int,
                     'ID': [int],
                     'SI': [float],
                     'AD': [int],
@@ -423,7 +424,9 @@ class AmberClient():
                 'progress' progress as a percentage value (applicable for "Buffering" and "Autotuning" states)
                 'clusterCount' number of clusters created so far
                 'retryCount' number of times autotuning was re-attempted to tune streamingWindowSize
-                'streamingWindowSize': streaming window size of sensor (may differ from value given at configuration if window size was adjusted during autotune)
+                'streamingWindowSize': streaming window size of sensor (may differ from value
+                    given at configuration if window size was adjusted during autotune)
+                'totalInferences': number of inferences since configuration
                 'ID': list of cluster IDs. The values in this list correspond one-to-one
                     with input samples, indicating the cluster to which each input pattern
                     was assigned.
