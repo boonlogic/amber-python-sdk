@@ -254,7 +254,7 @@ class AmberClient():
         return sensors
 
     def configure_sensor(self, sensor_id, feature_count=1, streaming_window_size=25,
-                         samples_to_buffer=1000,
+                         samples_to_buffer=10000,
                          learning_rate_numerator=10,
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
