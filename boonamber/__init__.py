@@ -254,7 +254,7 @@ class AmberClient():
         return sensors
 
     def configure_sensor(self, sensor_id, feature_count=1, streaming_window_size=25,
-                         samples_to_buffer=1000,
+                         samples_to_buffer=10000,
                          learning_rate_numerator=10,
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
@@ -405,6 +405,7 @@ class AmberClient():
                     'clusterCount': int,
                     'retryCount': int,
                     'streamingWindowSize': int,
+                    'totalInferences': int,
                     'ID': [int],
                     'SI': [float],
                     'AD': [int],
@@ -423,7 +424,9 @@ class AmberClient():
                 'progress' progress as a percentage value (applicable for "Buffering" and "Autotuning" states)
                 'clusterCount' number of clusters created so far
                 'retryCount' number of times autotuning was re-attempted to tune streamingWindowSize
-                'streamingWindowSize': streaming window size of sensor (may differ from value given at configuration if window size was adjusted during autotune)
+                'streamingWindowSize': streaming window size of sensor (may differ from value
+                    given at configuration if window size was adjusted during autotune)
+                'totalInferences': number of inferences since configuration
                 'ID': list of cluster IDs. The values in this list correspond one-to-one
                     with input samples, indicating the cluster to which each input pattern
                     was assigned.
