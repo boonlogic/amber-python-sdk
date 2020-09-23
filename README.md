@@ -24,7 +24,7 @@ The username and password should be placed in a file named _~/.Amber.license_ wh
 {
     "default": {
         "username": "AMBER-ACCOUNT-USERNAME",
-        "password": "AMBER-ACCOUNT-PASSWORD"
+        "password": "AMBER-ACCOUNT-PASSWORD",
         "server": "https://amber.boonlogic.com/v1"
     }
 }
