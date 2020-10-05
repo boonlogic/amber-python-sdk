@@ -20,7 +20,7 @@ Note: An account in the Boon Amber cloud must be obtained from Boon Logic to use
 
 The username and password should be placed in a file named _~/.Amber.license_ whose contents are the following:
 
-```
+```json
 {
     "default": {
         "username": "AMBER-ACCOUNT-USERNAME",
@@ -38,7 +38,7 @@ The following Python script provides a basic proof-of-connectivity:
 
 [connect-example.py](examples/connect-example.py)
 
-```
+```python
 from boonamber import AmberClient
 
 # At initialization the client discovers Amber account credentials
@@ -62,7 +62,7 @@ The following Python script will demonstrate each API call in the Amber Python S
 
 [full-example.py](examples/full-example.py)
 
-```
+```python
 import sys
 from boonamber import AmberClient, AmberCloudError, AmberUserError
 
