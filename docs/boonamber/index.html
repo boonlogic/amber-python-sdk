@@ -435,7 +435,7 @@ class AmberClient():
                     &#39;streamingWindowSize&#39;: int,
                     &#39;totalInferences&#39;: int,
                     &#39;ID&#39;: [int],
-                    &#39;SI&#39;: [float],
+                    &#39;SI&#39;: [int],
                     &#39;AD&#39;: [int],
                     &#39;AH&#39;: [int],
                     &#39;AM&#39;: [float],
@@ -459,9 +459,9 @@ class AmberClient():
                     with input samples, indicating the cluster to which each input pattern
                     was assigned.
                 &#39;SI&#39;: smoothed anomaly index. The values in this list correspond
-                    one-for-one with input samples and range between 0.0 and 1.0. Values
+                    one-for-one with input samples and range between 0 and 1000. Values
                     closer to 0 represent input patterns which are ordinary given the data
-                    seen so far on this sensor. Values closer to 1 represent novel patterns
+                    seen so far on this sensor. Values closer to 1000 represent novel patterns
                     which are anomalous with respect to data seen before.
                 &#39;AD&#39;: list of binary anomaly detection values. These correspond one-to-one
                     with input samples and are produced by thresholding the smoothed anomaly
@@ -506,9 +506,6 @@ class AmberClient():
         }
 
         results = self._api_call(&#39;POST&#39;, url, headers, body=body)
-
-        # normalize index values from the range [0, 1000] to [0.0, 1.0]
-        results[&#39;SI&#39;] = [r / 1000.0 for r in results[&#39;SI&#39;]]
 
         return results
 
@@ -1097,7 +1094,7 @@ home directory, or optionally overridden using environment variables.</p>
                     &#39;streamingWindowSize&#39;: int,
                     &#39;totalInferences&#39;: int,
                     &#39;ID&#39;: [int],
-                    &#39;SI&#39;: [float],
+                    &#39;SI&#39;: [int],
                     &#39;AD&#39;: [int],
                     &#39;AH&#39;: [int],
                     &#39;AM&#39;: [float],
@@ -1121,9 +1118,9 @@ home directory, or optionally overridden using environment variables.</p>
                     with input samples, indicating the cluster to which each input pattern
                     was assigned.
                 &#39;SI&#39;: smoothed anomaly index. The values in this list correspond
-                    one-for-one with input samples and range between 0.0 and 1.0. Values
+                    one-for-one with input samples and range between 0 and 1000. Values
                     closer to 0 represent input patterns which are ordinary given the data
-                    seen so far on this sensor. Values closer to 1 represent novel patterns
+                    seen so far on this sensor. Values closer to 1000 represent novel patterns
                     which are anomalous with respect to data seen before.
                 &#39;AD&#39;: list of binary anomaly detection values. These correspond one-to-one
                     with input samples and are produced by thresholding the smoothed anomaly
@@ -1168,9 +1165,6 @@ home directory, or optionally overridden using environment variables.</p>
         }
 
         results = self._api_call(&#39;POST&#39;, url, headers, body=body)
-
-        # normalize index values from the range [0, 1000] to [0.0, 1.0]
-        results[&#39;SI&#39;] = [r / 1000.0 for r in results[&#39;SI&#39;]]
 
         return results
 
@@ -1944,7 +1938,7 @@ equal length.</dd>
     'streamingWindowSize': int,
     'totalInferences': int,
     'ID': [int],
-    'SI': [float],
+    'SI': [int],
     'AD': [int],
     'AH': [int],
     'AM': [float],
@@ -1968,9 +1962,9 @@ equal length.</dd>
     with input samples, indicating the cluster to which each input pattern
     was assigned.
 'SI': smoothed anomaly index. The values in this list correspond
-    one-for-one with input samples and range between 0.0 and 1.0. Values
+    one-for-one with input samples and range between 0 and 1000. Values
     closer to 0 represent input patterns which are ordinary given the data
-    seen so far on this sensor. Values closer to 1 represent novel patterns
+    seen so far on this sensor. Values closer to 1000 represent novel patterns
     which are anomalous with respect to data seen before.
 'AD': list of binary anomaly detection values. These correspond one-to-one
     with input samples and are produced by thresholding the smoothed anomaly
@@ -2027,7 +2021,7 @@ equal length.</dd>
                 &#39;streamingWindowSize&#39;: int,
                 &#39;totalInferences&#39;: int,
                 &#39;ID&#39;: [int],
-                &#39;SI&#39;: [float],
+                &#39;SI&#39;: [int],
                 &#39;AD&#39;: [int],
                 &#39;AH&#39;: [int],
                 &#39;AM&#39;: [float],
@@ -2051,9 +2045,9 @@ equal length.</dd>
                 with input samples, indicating the cluster to which each input pattern
                 was assigned.
             &#39;SI&#39;: smoothed anomaly index. The values in this list correspond
-                one-for-one with input samples and range between 0.0 and 1.0. Values
+                one-for-one with input samples and range between 0 and 1000. Values
                 closer to 0 represent input patterns which are ordinary given the data
-                seen so far on this sensor. Values closer to 1 represent novel patterns
+                seen so far on this sensor. Values closer to 1000 represent novel patterns
                 which are anomalous with respect to data seen before.
             &#39;AD&#39;: list of binary anomaly detection values. These correspond one-to-one
                 with input samples and are produced by thresholding the smoothed anomaly
@@ -2098,9 +2092,6 @@ equal length.</dd>
     }
 
     results = self._api_call(&#39;POST&#39;, url, headers, body=body)
-
-    # normalize index values from the range [0, 1000] to [0.0, 1.0]
-    results[&#39;SI&#39;] = [r / 1000.0 for r in results[&#39;SI&#39;]]
 
     return results</code></pre>
 </details>
