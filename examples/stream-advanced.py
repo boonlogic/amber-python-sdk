@@ -1,8 +1,6 @@
 import csv
 import sys
-from datetime import timedelta
 from datetime import datetime
-import time
 from boonamber import AmberClient, AmberCloudError
 
 """Demonstrates a streaming use case in which we read continuously

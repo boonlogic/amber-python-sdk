@@ -191,66 +191,113 @@ print("succeeded")
 print()
 ```
 
-## Sample CSV file processor
 
-The following will process a file named data.csv residing in the current working directory of this Python script.  Each row will be fed to an Amber instance with SI analytics being displayed.
+## Advanced CSV file processor
+
+The following will process a CSV file using batch-style streaming requests.  Full Amber analytic results will be displayed after each streaming request.  
 
 [stream-example.py](examples/stream-example.py)<br>
-[data.csv](examples/data.csv)
+[output_current.csv](examples/output_current.csv)
 
-```
+```python
 import csv
 import sys
+from datetime import datetime
 from boonamber import AmberClient, AmberCloudError
 
 """Demonstrates a streaming use case in which we read continuously
    from a CSV file, inference the data line by line, and print results.
 """
 
-amber = AmberClient()
 
-sensor_id = 'put-created-sensor-id-here'
+class AmberStream:
 
-# The commented out block below creates a new sensor and prints the
-# corresponding sensor ID. These lines should be uncommented the first
-# time this script is run to create the sensor which is used for this
-# example. For any following runs, these lines should be commented out
-# again and the created sensor ID should be filled into the line above
-# so that the same sensor is accessed on subsequent runs.
-
-# try:
-#     sensor_id = amber.create_sensor(label='stream-example-sensor')
-# except AmberCloudError as e:
-#     print(e)
-#     sys.exit(1)
-# print("created sensor {}".format(sensor_id))
-
-print("using sensor {}".format(sensor_id))
-
-# Configure the sensor: feature_count is 3 since our CSV data has three columns
-try:
-    config = amber.configure_sensor(sensor_id, feature_count=3, streaming_window_size=25)
-except AmberCloudError as e:
-    print(e)
-    sys.exit(1)
-print("config: {}".format(config))
-
-# Open data file and begin streaming!
-with open('data.csv', 'r') as f:
-    reader = csv.reader(f, delimiter=',')
-
-    for row in reader:
-        data = [float(d) for d in row]
+    def __init__(self, sensor_id=None):
+        """
+        Initializes the AmberStream example class.
+        :param sensor_id: The sensor_id to be used by AmberStream.  If sensor_id is None, then a sensor is created
+        """
+        self.data = []
+        self.sample_cnt = 0
 
         try:
-            result = amber.stream_sensor(sensor_id, data)
+            self.amber = AmberClient()
+            if sensor_id is None:
+                self.sensor_id = self.amber.create_sensor(label='stream-example-sensor')
+                print("created sensor {}".format(sensor_id))
+            else:
+                self.sensor_id = sensor_id
+                print("using sensor {}".format(sensor_id))
+
+            config = self.amber.configure_sensor(sensor_id, feature_count=1, streaming_window_size=25,
+                                                 samples_to_buffer=1000, learning_max_clusters=1000,
+                                                 learning_max_samples=20000, learning_rate_numerator=0,
+                                                 learning_rate_denominator=20000)
+            print("{} config: {}".format(self.sensor_id, config))
         except AmberCloudError as e:
             print(e)
             sys.exit(1)
 
-        state = result['state']
-        anomaly_index = result['SI'][0]
+    def do_analytics(self):
+        """
+        Run analytics based on self.data and provide example of formatted results
+        :return: None
+        """
+        self.sample_cnt += len(self.data)
+        d1 = datetime.now()
+        results = self.amber.stream_sensor(self.sensor_id, self.data)
+        d2 = datetime.now()
+        delta = (d2 - d1).microseconds / 1000
+        print("State: {}({}%), inferences: {}, clusters: {}, samples: {}, duration: {}".format(
+            results['state'], results['progress'], results['totalInferences'], results['clusterCount'], self.sample_cnt,
+            delta))
+        for analytic in ['ID', 'SI', 'AD', 'AH', 'AM', 'AW']:
+            if analytic == 'AM':
+                analytic_pretty = ','.join("{:.6f}".format(a) for a in results[analytic])
+            else:
+                analytic_pretty = ','.join("{}".format(a) for a in results[analytic])
+            print("{}: {} ".format(analytic, analytic_pretty))
+        self.data = []
 
-        data_pretty = ' '.join("{:5.2f}".format(d) for d in data)
-        print("{} [{}] -> {}".format(state, data_pretty, anomaly_index))
+    def stream_csv(self, csv_file, batch_size=20):
+        """
+        Given a path to a csv file, stream data to Amber in sizes specified by batch_size
+        :param csv_file: Path to csv file
+        :param batch_size: Batch size to be used on each request
+        :return: None
+        """
+        # Open csv data file and begin streaming
+        with open(csv_file, 'r') as f:
+            csv_reader = csv.reader(f, delimiter=',')
+            self.data = []
+            self.sample_cnt = 0
+            for row in csv_reader:
+                for d in row:
+                    self.data.append(float(d))
+                    if len(self.data) == batch_size:
+                        try:
+                            self.do_analytics()
+                        except Exception as e:
+                            print(e)
+                            sys.exit(1)
+
+            # send the remaining partial batch (if any)
+            if len(self.data) > 0:
+                self.do_analytics()
+
+
+streamer = AmberStream(sensor_id='b76b3cc542f434a7')
+streamer.stream_csv('output_current.csv', batch_size=25)
+```
+
+### Sample output:
+
+```
+State: Monitoring(0%), inferences: 20201, clusters: 247, samples: 20275, duration: 228.852
+ID: 29,30,31,32,33,34,35,36,37,38,39,245,41,42,219,44,45,220,47,48,49,50,51,52,1 
+SI: 306,307,307,307,307,307,307,308,308,308,308,308,309,311,315,322,336,364,421,532,350,393,478,345,382 
+AD: 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 
+AH: 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 
+AM: 0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013,0.000013 
+AW: 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 
 ```
