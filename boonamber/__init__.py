@@ -407,7 +407,7 @@ class AmberClient():
                     'streamingWindowSize': int,
                     'totalInferences': int,
                     'ID': [int],
-                    'SI': [float],
+                    'SI': [int],
                     'AD': [int],
                     'AH': [int],
                     'AM': [float],
@@ -431,9 +431,9 @@ class AmberClient():
                     with input samples, indicating the cluster to which each input pattern
                     was assigned.
                 'SI': smoothed anomaly index. The values in this list correspond
-                    one-for-one with input samples and range between 0.0 and 1.0. Values
+                    one-for-one with input samples and range between 0 and 1000. Values
                     closer to 0 represent input patterns which are ordinary given the data
-                    seen so far on this sensor. Values closer to 1 represent novel patterns
+                    seen so far on this sensor. Values closer to 1000 represent novel patterns
                     which are anomalous with respect to data seen before.
                 'AD': list of binary anomaly detection values. These correspond one-to-one
                     with input samples and are produced by thresholding the smoothed anomaly
@@ -478,9 +478,6 @@ class AmberClient():
         }
 
         results = self._api_call('POST', url, headers, body=body)
-
-        # normalize index values from the range [0, 1000] to [0.0, 1.0]
-        results['SI'] = [r / 1000.0 for r in results['SI']]
 
         return results
 
