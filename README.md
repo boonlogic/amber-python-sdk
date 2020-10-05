@@ -196,7 +196,7 @@ print()
 
 The following will process a CSV file using batch-style streaming requests.  Full Amber analytic results will be displayed after each streaming request.  
 
-[advanced-streaming.py](examples/advanced-streaming.py)<br>
+[stream-advanced.py](examples/stream-advanced.py)<br>
 [output_current.csv](examples/output_current.csv)
 
 ```python
