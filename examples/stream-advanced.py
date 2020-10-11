@@ -27,7 +27,7 @@ class AmberStream:
                 self.sensor_id = sensor_id
                 print("using sensor {}".format(sensor_id))
 
-            config = self.amber.configure_sensor(sensor_id, feature_count=1, streaming_window_size=25,
+            config = self.amber.configure_sensor(self.sensor_id, feature_count=1, streaming_window_size=25,
                                                  samples_to_buffer=1000, learning_max_clusters=1000,
                                                  learning_max_samples=20000, learning_rate_numerator=0,
                                                  learning_rate_denominator=20000)
@@ -84,5 +84,7 @@ class AmberStream:
                 self.do_analytics()
 
 
-streamer = AmberStream(sensor_id='b76b3cc542f434a7')
+# Specifying sensor_id will use existing over creating a new one
+# streamer = AmberStream(sensor_id='c76b4cc542f434a7')
+streamer = AmberStream()
 streamer.stream_csv('output_current.csv', batch_size=25)
