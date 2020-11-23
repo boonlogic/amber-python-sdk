@@ -7,7 +7,7 @@ from nose.tools import assert_raises
 from nose.tools import assert_is_instance
 from boonamber import AmberClient, AmberUserError, AmberCloudError
 
-TEST_SENSOR_ID = '52fa82fbf86758bf'
+TEST_SENSOR_ID = '0e3acc64e8e069e1'
 
 
 class TestInit:

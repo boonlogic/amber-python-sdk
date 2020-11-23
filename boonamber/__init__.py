@@ -29,6 +29,8 @@ class AmberCloudError(Exception):
 
 
 class AmberClient():
+    user_agent = 'Boon Logic / amber-python-sdk / requests'
+
     def __init__(self, license_id='default', license_file="~/.Amber.license"):
         """Main client which interfaces with the Amber cloud. Amber account
         credentials are discovered within a .Amber.license file located in the
@@ -117,7 +119,8 @@ class AmberClient():
 
         url = self.server + '/oauth2'
         headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'User-Agent': self.user_agent
         }
         body = {
             'username': self.username,
@@ -146,6 +149,7 @@ class AmberClient():
             self._authenticate()
 
         headers['Authorization'] = 'Bearer {}'.format(self.token)
+        headers['User-Agent'] = self.user_agent
         response = requests.request(method=method, url=url, headers=headers, json=body)
 
         if response.status_code != 200:
