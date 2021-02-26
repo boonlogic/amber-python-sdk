@@ -39,7 +39,7 @@ class AmberClient():
         Args:
             license_id (str): license identifier label found within .Amber.license file
             license_file (str): path to .Amber.license file
-        
+
         Environment:
 
             `AMBER_LICENSE_FILE`: sets license_file path
@@ -622,6 +622,7 @@ class AmberClient():
                     'distanceIndexes' [int],
                     'totalInferences' [int],
                     'numClusters' [int],
+                    'anomalyThreshold' [int]
                 }
 
                 'pca': list of length-3 vectors representing cluster centroids
@@ -636,6 +637,7 @@ class AmberClient():
                 'distanceIndexes': distance index associated with each cluster
                 'totalInferences': total number of inferences performed so far
                 'numClusters': number of clusters created so far (includes zero cluster)
+                'anomalyThreshold': threshold value used for detections
 
         Raises:
             AmberUserError: if client is not authenticated

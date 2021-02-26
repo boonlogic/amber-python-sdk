@@ -215,6 +215,7 @@ class TestEndpoints:
         status = self.amber.get_status(TEST_SENSOR_ID)
         assert_true('pca' in status)
         assert_true('numClusters' in status)
+        assert_true('anomalyThreshold' in status)
 
     def test_get_status_negative(self):
         with assert_raises(AmberCloudError) as context:
