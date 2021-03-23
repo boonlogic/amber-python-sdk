@@ -31,7 +31,7 @@ class AmberCloudError(Exception):
 class AmberClient():
     user_agent = 'Boon Logic / amber-python-sdk / requests'
 
-    def __init__(self, license_id='default', license_file="~/.Amber.license"):
+    def __init__(self, license_id='default', license_file="~/.Amber.license", verify=True, cert=None):
         """Main client which interfaces with the Amber cloud. Amber account
         credentials are discovered within a .Amber.license file located in the
         home directory, or optionally overridden using environment variables.
@@ -39,6 +39,8 @@ class AmberClient():
         Args:
             license_id (str): license identifier label found within .Amber.license file
             license_file (str): path to .Amber.license file
+            verify:  Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
+            cert (bool): if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.
         
         Environment:
 
@@ -52,6 +54,10 @@ class AmberClient():
 
             `AMBER_SERVER`: overrides the server as found in .Amber.license file
 
+            `AMBER_SSL_CERT`: path to ssl client cert file (.pem)
+
+            `AMBER_SSL_VERIFY`: Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
+
         Raises:
             AmberUserError: if error supplying authentication credentials
         """
@@ -64,6 +70,20 @@ class AmberClient():
         env_username = os.environ.get('AMBER_USERNAME', None)
         env_password = os.environ.get('AMBER_PASSWORD', None)
         env_server = os.environ.get('AMBER_SERVER', None)
+        env_cert = os.environ.get('AMBER_SSL_CERT', None)
+        env_verify = os.environ.get('AMBER_SSL_VERIFY', None)
+
+        # certificates
+        self.cert = env_cert if env_cert else cert
+        if env_verify:
+            if env_verify.lower() == 'false':
+                self.verify = False
+            elif env_verify.lower() == 'true':
+                self.verify = True
+            else:
+                self.verify = env_verify
+        else:
+            self.verify = verify
 
         # if username, password and server are all specified via environment, we're done here
         if env_username and env_password and env_server:
@@ -127,7 +147,7 @@ class AmberClient():
             'password': self.password
         }
 
-        response = requests.request(method='POST', url=url, headers=headers, json=body)
+        response = requests.request(method='POST', url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
 
         if response.status_code != 200:
             message = "authentication failed: {}".format(response.json()['message'])
@@ -150,7 +170,7 @@ class AmberClient():
 
         headers['Authorization'] = 'Bearer {}'.format(self.token)
         headers['User-Agent'] = self.user_agent
-        response = requests.request(method=method, url=url, headers=headers, json=body)
+        response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
 
         if response.status_code != 200:
             raise AmberCloudError(response.status_code, response.json()['message'])

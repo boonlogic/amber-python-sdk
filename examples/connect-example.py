@@ -1,8 +1,16 @@
 import sys
 from boonamber import AmberClient, AmberCloudError, AmberUserError
 
+# if you wish to turn off tls certificate warnings
+# import urllib3
+# urllib3.disable_warnings()
+#
+# Alternatively invoke python with -Wignore
+#
+
 # At initialization the client discovers Amber account credentials
 # under the "default" entry in the ~/.Amber.license file.
+#amber = AmberClient(verify=False)
 amber = AmberClient()
 
 try:
