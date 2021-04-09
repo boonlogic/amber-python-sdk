@@ -16,7 +16,7 @@ format-check:
 test: local-env-check
 	@. local-env/bin/activate && \
 	cd test && \
-	coverage run --source=boonamber -m nose -verbosity=2 test_client.py && \
+	coverage run --source=boonamber -m nose -x -verbosity=2 test_client.py && \
 	coverage html
 
 pypi:

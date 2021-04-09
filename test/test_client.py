@@ -10,15 +10,27 @@ from boonamber import AmberClient, AmberUserError, AmberCloudError
 TEST_SENSOR_ID = '0e3acc64e8e069e1'
 
 
-class TestInit:
+def env_check():
+    global saved_amber_password
+    saved_amber_password = os.environ.get('AMBER_PASSWORD')
+    assert saved_amber_password != None, "must set AMBER_PASSWORD in environment"
+
+
+class Test1Init:
+
+    def __init__(self):
+        # first test class will do an environment test
+        env_check()
+
     def unset_environment_variables(self):
+        os.environ['AMBER_PASSWORD'] = ''
         os.environ['AMBER_LICENSE_FILE'] = ''
         os.environ['AMBER_LICENSE_ID'] = ''
         os.environ['AMBER_USERNAME'] = ''
         os.environ['AMBER_PASSWORD'] = ''
         os.environ['AMBER_SERVER'] = ''
 
-    def test_init(self):
+    def test_01_init(self):
         self.unset_environment_variables()
 
         # set credentials using license file
@@ -32,12 +44,12 @@ class TestInit:
         # set credentials directly using environment variables
         os.environ['AMBER_USERNAME'] = "amber-test-user"
         os.environ['AMBER_PASSWORD'] = "filler-password"
-        os.environ['AMBER_SERVER'] = "https://amber-local.boonlogic.com/dev"
+        os.environ['AMBER_SERVER'] = "https:#amber-local.boonlogic.com/dev"
         amber = AmberClient(license_id=None, license_file=None)
 
         self.unset_environment_variables()
 
-    def test_init_negative(self):
+    def test__02_init_negative(self):
         self.unset_environment_variables()
         assert_raises(AmberUserError, AmberClient, "default", "nonexistent-license-file")
         assert_raises(AmberUserError, AmberClient, "nonexistent-license-id", "test.Amber.license")
@@ -46,29 +58,28 @@ class TestInit:
         assert_raises(AmberUserError, AmberClient, "missing-server", "test.Amber.license")
 
 
-class TestAuth:
-    def setUp(self):
-        self.amber = AmberClient(license_file="test.Amber.license")
-        self.amber.password = os.environ['AMBER_TEST_PASSWORD']
+class Test2Auth:
 
-    def setup_garbage_credentials(self):
+    def __init__(self):
+        os.environ['AMBER_PASSWORD'] = saved_amber_password
+
+    def test__01_authenticate(self):
+        os.environ['AMBER_PASSWORD'] = saved_amber_password
+        amber = AmberClient(license_file="test.Amber.license")
+        result = amber._authenticate()
+
+    def test__02_authenticate_negative(self):
         self.amber = AmberClient(license_id="garbage", license_file="test.Amber.license")
-
-    def test_authenticate(self):
-        result = self.amber._authenticate()
-
-    def test_authenticate_negative(self):
-        self.setup_garbage_credentials()
         with assert_raises(AmberCloudError) as context:
             self.amber._authenticate()
         assert_equal(context.exception.code, 401)
 
 
-class TestEndpoints:
-    def setUp(self):
+class Test5Endpoints:
+
+    def __init__(self):
+        os.environ['AMBER_PASSWORD'] = saved_amber_password
         self.amber = AmberClient(license_file="test.Amber.license")
-        self.amber.password = os.environ['AMBER_TEST_PASSWORD']
-        self.amber._authenticate()
 
     def setup_created_sensor(self):
         try:
@@ -83,20 +94,20 @@ class TestEndpoints:
         except Exception as e:
             raise RuntimeError("teardown failed, sensor was not deleted: {}".format(e))
 
-    def test_create_sensor(self):
+    def test_01_create_sensor(self):
         sensor_id = self.amber.create_sensor('test-sensor')
         self.teardown_created_sensor(sensor_id)
 
-    def test_delete_sensor(self):
+    def test_02_delete_sensor(self):
         self.setup_created_sensor()
         self.amber.delete_sensor(self.sensor_id)
 
-    def test_delete_sensor_negative(self):
+    def test_03_delete_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             self.amber.delete_sensor('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_update_label(self):
+    def test_04_update_label(self):
         label = self.amber.update_label(TEST_SENSOR_ID, 'new-label')
         assert_equal(label, 'new-label')
 
@@ -105,12 +116,12 @@ class TestEndpoints:
         except Exception as e:
             raise RuntimeError("teardown failed, label was not changed back to 'test-sensor': {}".format(e))
 
-    def test_update_label_negative(self):
+    def test_05_update_label_negative(self):
         with assert_raises(AmberCloudError) as context:
             label = self.amber.update_label('nonexistent-sensor-id', 'test-sensor')
         assert_equal(context.exception.code, 404)
 
-    def test_get_sensor(self):
+    def test_06_get_sensor(self):
         expected = {
             'label': 'test-sensor',
             'sensorId': TEST_SENSOR_ID,
@@ -122,16 +133,16 @@ class TestEndpoints:
         assert_equal(sensor['tenantId'], 'amber-test-user')
         assert_true('usageInfo' in sensor)
 
-    def test_get_sensor_negative(self):
+    def test_07_get_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             sensor = self.amber.get_sensor('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_list_sensors(self):
+    def test_08_list_sensors(self):
         sensors = self.amber.list_sensors()
         assert_true(TEST_SENSOR_ID in sensors.keys())
 
-    def test_configure_sensor(self):
+    def test_09_configure_sensor(self):
         expected = {
             'featureCount': 1,
             'streamingWindowSize': 25,
@@ -149,7 +160,7 @@ class TestEndpoints:
                                              learning_max_samples=1000000)
         assert_equal(config, expected)
 
-    def test_configure_sensor_negative(self):
+    def test_10_configure_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             config = self.amber.configure_sensor('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
@@ -160,7 +171,7 @@ class TestEndpoints:
         assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, streaming_window_size=-1)
         assert_raises(AmberUserError, self.amber.configure_sensor, TEST_SENSOR_ID, streaming_window_size=1.5)
 
-    def test_get_config(self):
+    def test_11_get_config(self):
         expected = {
             'featureCount': 1,
             'streamingWindowSize': 25,
@@ -175,12 +186,12 @@ class TestEndpoints:
         config = self.amber.get_config(TEST_SENSOR_ID)
         assert_equal(config, expected)
 
-    def test_get_config_negative(self):
+    def test_12_get_config_negative(self):
         with assert_raises(AmberCloudError) as context:
             config = self.amber.get_config('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_stream_sensor(self):
+    def test_13_stream_sensor(self):
         results = self.amber.stream_sensor(TEST_SENSOR_ID, 1)
         assert_true('state' in results)
         assert_true('message' in results)
@@ -193,6 +204,7 @@ class TestEndpoints:
         assert_true('AH' in results)
         assert_true('AM' in results)
         assert_true('AW' in results)
+        print(results['state'])
 
         # scalar data should return SI of length 1
         assert_true(len(results['SI']) == 1)
@@ -201,7 +213,7 @@ class TestEndpoints:
         results = self.amber.stream_sensor(TEST_SENSOR_ID, [1, 2, 3, 4, 5])
         assert_true(len(results['SI']) == 5)
 
-    def test_stream_sensor_negative(self):
+    def test_14_stream_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             results = self.amber.stream_sensor('nonexistent-sensor-id', [1, 2, 3, 4, 5])
         assert_equal(context.exception.code, 404)
@@ -211,21 +223,46 @@ class TestEndpoints:
         assert_raises(AmberUserError, self.amber.stream_sensor, TEST_SENSOR_ID, [1, '2', 3])
         assert_raises(AmberUserError, self.amber.stream_sensor, TEST_SENSOR_ID, [1, [2, 3], 4])
 
-    def test_get_status(self):
+    def test_15_get_root_cause(self):
+        config = self.amber.get_config(TEST_SENSOR_ID)
+        expected = [[0] * len(config['features']) * config['streamingWindowSize']] * 2
+        config = self.amber.get_root_cause(TEST_SENSOR_ID, pattern_list=[[1] * len(config['features']) * config['streamingWindowSize'], [0] * len(config['features']) * config['streamingWindowSize']])
+        assert_equal(config, expected)
+
+    def test_16_get_root_cause_negative(self):
+        with assert_raises(AmberCloudError) as context:
+            config = self.amber.get_root_cause('nonexistent-sensor-id', id_list=[1])
+        assert_equal(context.exception.code, 404)
+
+        # give both fail
+        with assert_raises(AmberUserError) as context:
+            config = self.amber.get_root_cause(TEST_SENSOR_ID, id_list=[1], pattern_list=[[1,2,3],[4,5,6]])
+
+        # give neither fail
+        with assert_raises(AmberUserError) as context:
+            config = self.amber.get_root_cause(TEST_SENSOR_ID)
+
+        assert_raises(AmberCloudError, self.amber.get_root_cause, TEST_SENSOR_ID, [1])
+
+    def test_17_get_status(self):
         status = self.amber.get_status(TEST_SENSOR_ID)
         assert_true('pca' in status)
         assert_true('numClusters' in status)
 
-    def test_get_status_negative(self):
+    def test_18_get_status_negative(self):
         with assert_raises(AmberCloudError) as context:
             status = self.amber.get_status('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
 
-class TestAPICall:
+class Test3APICall:
+
+    def __init__(self):
+        env_check()
+
     def setUp(self):
         self.amber = AmberClient(license_file="test.Amber.license")
-        self.amber.password = os.environ['AMBER_TEST_PASSWORD']
+        self.amber.password = os.environ['AMBER_PASSWORD']
 
         self.server = self.amber.server
         self.headers = {
@@ -244,7 +281,11 @@ class TestAPICall:
         assert_raises(AmberCloudError, self.amber._api_call, 'GET', self.server + '/sensors', self.headers)
 
 
-class TestDataHandling:
+class Test4DataHandling:
+
+    def __init__(self):
+        env_check()
+
     def setUp(self):
         self.amber = AmberClient(license_file="test.Amber.license")
 
@@ -291,8 +332,8 @@ class TestDataHandling:
 
 if __name__ == '__main__':
     argv = ['nosetests', '--verbosity=2']
-    nose.run(defaultTest=__name__ + ':TestInit', argv=argv)
-    nose.run(defaultTest=__name__ + ':TestAuth', argv=argv)
-    nose.run(defaultTest=__name__ + ':TestAPICall', argv=argv)
-    nose.run(defaultTest=__name__ + ':TestDataHandling', argv=argv)
-    nose.run(defaultTest=__name__ + ':TestEndpoints', argv=argv)
+    nose.run(defaultTest=__name__ + ':Test1Init', argv=argv)
+    nose.run(defaultTest=__name__ + ':Test2Auth', argv=argv)
+    # nose.run(defaultTest=__name__ + ':Test3APICall', argv=argv)
+    # nose.run(defaultTest=__name__ + ':Test4DataHandling', argv=argv)
+    # nose.run(defaultTest=__name__ + ':Test5Endpoints', argv=argv)

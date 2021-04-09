@@ -1,4 +1,5 @@
 import itertools
+import numpy as np
 import json
 import os
 import requests
@@ -152,8 +153,10 @@ class AmberClient():
             'password': self.password
         }
 
-        response = requests.request(method='POST', url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
-
+        try:
+            response = requests.request(method='POST', url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
+        except Exception as e:
+            raise AmberCloudError(401, 'invalid server connection')
         if response.status_code != 200:
             message = "authentication failed: {}".format(response.json()['message'])
             raise AmberCloudError(response.status_code, message)
@@ -178,6 +181,7 @@ class AmberClient():
         response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
 
         if response.status_code != 200:
+            print(response.json())
             raise AmberCloudError(response.status_code, response.json()['message'])
 
         # todo: why 200 status codes with error codes/message in body instead?
@@ -668,6 +672,51 @@ class AmberClient():
         """
 
         url = self.server + '/status'
+        headers = {
+            'Content-Type': 'application/json',
+            'sensorId': sensor_id
+        }
+        status = self._api_call('GET', url, headers)
+
+        return status
+
+    def get_root_cause(self, sensor_id, id_list=[], pattern_list=[]):
+        """Get root cause
+
+        Args:
+            sensor_id (str): sensor identifier
+            id_list (list): list of IDs to return the root cause for
+            pattern_list (list): list of pattern vectors to calculate the root cause against the model
+
+        Returns:
+            A list containing the root cause for each pattern/id provided for a sensor:
+
+                [float]
+
+        Raises:
+            AmberUserError: if client is not authenticated
+            AmberCloudError: if Amber cloud gives non-200 response
+        """
+
+        if len(id_list) != 0 and len(pattern_list) != 0:
+            raise AmberUserError('Cannot specify both patterns and cluster IDs for analysis')
+        url_call = 'rootCause?'
+        if len(id_list) != 0:
+            # IDs
+            id_list = [str(element) for element in id_list]
+            url_call = url_call + 'clusterID=[' + ",".join(id_list) + ']'
+        elif len(pattern_list) != 0:
+            # patterns
+            if len(np.array(pattern_list).shape) == 1:  # only 1 pattern provided
+                pattern_list = [pattern_list]
+            else:
+                for i, pattern in enumerate(pattern_list):
+                    pattern_list[i] = ','.join([str(element) for element in pattern])
+            url_call = url_call + 'pattern=[[' + "],[".join(pattern_list) + ']]'
+        else:
+            raise AmberUserError('Must specify either cluster IDs or patterns to analyze')
+
+        url = self.server + '/' + url_call
         headers = {
             'Content-Type': 'application/json',
             'sensorId': sensor_id
