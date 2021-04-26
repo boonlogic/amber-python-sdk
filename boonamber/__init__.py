@@ -3,8 +3,10 @@ import json
 import os
 import requests
 import time
+import requests
 from collections.abc import Iterable
 from numbers import Number, Integral
+from urllib3.exceptions import InsecureRequestWarning
 
 
 ############################
@@ -84,6 +86,9 @@ class AmberClient():
                 self.verify = env_verify
         else:
             self.verify = verify
+
+        if self.verify == False:
+            requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # if username, password and server are all specified via environment, we're done here
         if env_username and env_password and env_server:
