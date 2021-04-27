@@ -43,7 +43,7 @@ class AmberClient():
             license_file (str): path to .Amber.license file
             verify:  Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
             cert (bool): if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.
-        
+
         Environment:
 
             `AMBER_LICENSE_FILE`: sets license_file path
@@ -87,7 +87,7 @@ class AmberClient():
         else:
             self.verify = verify
 
-        if self.verify == False:
+        if self.verify is False:
             requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # if username, password and server are all specified via environment, we're done here

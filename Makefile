@@ -8,6 +8,10 @@ init:
 	echo ""; \
 	echo "virtual environment configured, use 'source local-env/bin/activate' to enable it"
 
+format-check:
+	@. local-env/bin/activate && \
+	pycodestyle --first boonamber/__init__.py
+
 test: local-env-check
 	@. local-env/bin/activate && \
 	cd test; \
@@ -29,5 +33,5 @@ docs:
 	@. local-env/bin/activate; \
 	pdoc3 --force -o docs --html boonamber
 
-.PHONY: docs init test pypi local-env-check
+.PHONY: docs format-check init test pypi local-env-check
 
