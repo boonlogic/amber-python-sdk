@@ -5,7 +5,7 @@ from boonamber import AmberClient, AmberCloudError, AmberUserError
 
 # connect with default license
 # use 'license_id=<name>' to specify something other than 'default'
-amber = AmberClient()
+amber = AmberClient(verify=False)
 
 # List all sensors belonging to current user
 print("listing sensors")
@@ -113,14 +113,14 @@ print("status: {}".format(status))
 print()
 
 # Delete a sensor instance
-print("deleting sensor")
-try:
-    amber.delete_sensor(sensor_id)
-except AmberCloudError as e:
-    print("Amber Cloud error: {}".format(e))
-    sys.exit(1)
-except AmberUserError as e:
-    print("Amber user error: {}".format(e))
-    sys.exit(1)
+#print("deleting sensor")
+#try:
+#    amber.delete_sensor(sensor_id)
+#except AmberCloudError as e:
+#    print("Amber Cloud error: {}".format(e))
+#    sys.exit(1)
+#except AmberUserError as e:
+#    print("Amber user error: {}".format(e))
+#    sys.exit(1)
 print("succeeded")
 print()

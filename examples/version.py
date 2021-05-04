@@ -14,8 +14,7 @@ amber = AmberClient(verify=False)
 #amber = AmberClient()
 
 try:
-    # Get a list of all sensors belonging to the current user.
-    sensors = amber.list_sensors()
+    version = amber.get_version()
 except AmberCloudError as e:
     # AmberCloudError is raised upon any error response from the Amber server.
     print("Amber Cloud error: {}".format(e))
@@ -25,5 +24,4 @@ except AmberUserError as e:
     print("Amber user error: {}".format(e))
     sys.exit(1)
 
-print("sensors: {}".format(sensors))
-
+print("Amber server version:\n{}".format(version))
