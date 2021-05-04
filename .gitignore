@@ -1,3 +1,4 @@
+test/.coverage
 boonamber.egg-info/
 dist/
 local-env/
