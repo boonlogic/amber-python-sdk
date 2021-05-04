@@ -675,23 +675,3 @@ class AmberClient():
         status = self._api_call('GET', url, headers)
 
         return status
-
-    def get_version(self):
-        """Retrieve Amber server version information
-
-        Returns:
-            A json string of version information
-
-        Raises:
-            AmberUserError: if client is not authenticated
-            AmberCloudError: if Amber cloud gives non-200 response
-        """
-
-        url = self.server + '/version'
-        headers = {
-            'Content-Type': 'application/json'
-        }
-        response = self._api_call('GET', url, headers)
-        # sensors = {s['sensorId']: s.get('label', None) for s in response}
-
-        return response

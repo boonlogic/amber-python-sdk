@@ -10,8 +10,8 @@ from boonamber import AmberClient, AmberCloudError, AmberUserError
 
 # At initialization the client discovers Amber account credentials
 # under the "default" entry in the ~/.Amber.license file.
-amber = AmberClient(verify=False)
-#amber = AmberClient()
+#amber = AmberClient(verify=False)
+amber = AmberClient()
 
 try:
     # Get a list of all sensors belonging to the current user.
@@ -26,4 +26,3 @@ except AmberUserError as e:
     sys.exit(1)
 
 print("sensors: {}".format(sensors))
-

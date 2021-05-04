@@ -71,7 +71,7 @@ class AmberClient():
             license_file (str): path to .Amber.license file
             verify:  Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
             cert (bool): if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.
-
+        
         Environment:
 
             `AMBER_LICENSE_FILE`: sets license_file path
@@ -115,7 +115,7 @@ class AmberClient():
         else:
             self.verify = verify
 
-        if self.verify is False:
+        if self.verify == False:
             requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # if username, password and server are all specified via environment, we&#39;re done here
@@ -702,27 +702,7 @@ class AmberClient():
         }
         status = self._api_call(&#39;GET&#39;, url, headers)
 
-        return status
-
-    def get_version(self):
-        &#34;&#34;&#34;Retrieve Amber server version information
-
-        Returns:
-            A json string of version information
-
-        Raises:
-            AmberUserError: if client is not authenticated
-            AmberCloudError: if Amber cloud gives non-200 response
-        &#34;&#34;&#34;
-
-        url = self.server + &#39;/version&#39;
-        headers = {
-            &#39;Content-Type&#39;: &#39;application/json&#39;
-        }
-        response = self._api_call(&#39;GET&#39;, url, headers)
-        # sensors = {s[&#39;sensorId&#39;]: s.get(&#39;label&#39;, None) for s in response}
-
-        return response</code></pre>
+        return status</code></pre>
 </details>
 </section>
 <section>
@@ -783,7 +763,7 @@ home directory, or optionally overridden using environment variables.</p>
             license_file (str): path to .Amber.license file
             verify:  Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
             cert (bool): if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.
-
+        
         Environment:
 
             `AMBER_LICENSE_FILE`: sets license_file path
@@ -827,7 +807,7 @@ home directory, or optionally overridden using environment variables.</p>
         else:
             self.verify = verify
 
-        if self.verify is False:
+        if self.verify == False:
             requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # if username, password and server are all specified via environment, we&#39;re done here
@@ -1414,27 +1394,7 @@ home directory, or optionally overridden using environment variables.</p>
         }
         status = self._api_call(&#39;GET&#39;, url, headers)
 
-        return status
-
-    def get_version(self):
-        &#34;&#34;&#34;Retrieve Amber server version information
-
-        Returns:
-            A json string of version information
-
-        Raises:
-            AmberUserError: if client is not authenticated
-            AmberCloudError: if Amber cloud gives non-200 response
-        &#34;&#34;&#34;
-
-        url = self.server + &#39;/version&#39;
-        headers = {
-            &#39;Content-Type&#39;: &#39;application/json&#39;
-        }
-        response = self._api_call(&#39;GET&#39;, url, headers)
-        # sensors = {s[&#39;sensorId&#39;]: s.get(&#39;label&#39;, None) for s in response}
-
-        return response</code></pre>
+        return status</code></pre>
 </details>
 <h3>Class variables</h3>
 <dl>
@@ -1982,45 +1942,6 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     return status</code></pre>
 </details>
 </dd>
-<dt id="boonamber.AmberClient.get_version"><code class="name flex">
-<span>def <span class="ident">get_version</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Retrieve Amber server version information</p>
-<h2 id="returns">Returns</h2>
-<p>A json string of version information</p>
-<h2 id="raises">Raises</h2>
-<dl>
-<dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
-<dd>if client is not authenticated</dd>
-<dt><code><a title="boonamber.AmberCloudError" href="#boonamber.AmberCloudError">AmberCloudError</a></code></dt>
-<dd>if Amber cloud gives non-200 response</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_version(self):
-    &#34;&#34;&#34;Retrieve Amber server version information
-
-    Returns:
-        A json string of version information
-
-    Raises:
-        AmberUserError: if client is not authenticated
-        AmberCloudError: if Amber cloud gives non-200 response
-    &#34;&#34;&#34;
-
-    url = self.server + &#39;/version&#39;
-    headers = {
-        &#39;Content-Type&#39;: &#39;application/json&#39;
-    }
-    response = self._api_call(&#39;GET&#39;, url, headers)
-    # sensors = {s[&#39;sensorId&#39;]: s.get(&#39;label&#39;, None) for s in response}
-
-    return response</code></pre>
-</details>
-</dd>
 <dt id="boonamber.AmberClient.list_sensors"><code class="name flex">
 <span>def <span class="ident">list_sensors</span></span>(<span>self)</span>
 </code></dt>
@@ -2366,7 +2287,6 @@ equal length.</dd>
 <li><code><a title="boonamber.AmberClient.get_config" href="#boonamber.AmberClient.get_config">get_config</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_sensor" href="#boonamber.AmberClient.get_sensor">get_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_status" href="#boonamber.AmberClient.get_status">get_status</a></code></li>
-<li><code><a title="boonamber.AmberClient.get_version" href="#boonamber.AmberClient.get_version">get_version</a></code></li>
 <li><code><a title="boonamber.AmberClient.list_sensors" href="#boonamber.AmberClient.list_sensors">list_sensors</a></code></li>
 <li><code><a title="boonamber.AmberClient.stream_sensor" href="#boonamber.AmberClient.stream_sensor">stream_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.update_label" href="#boonamber.AmberClient.update_label">update_label</a></code></li>

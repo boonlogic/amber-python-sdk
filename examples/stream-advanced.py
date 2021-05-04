@@ -19,7 +19,7 @@ class AmberStream:
         self.sample_cnt = 0
 
         try:
-            self.amber = AmberClient(verify=False)
+            self.amber = AmberClient()
             if sensor_id is None:
                 self.sensor_id = self.amber.create_sensor(label='stream-example-sensor')
                 print("created sensor {}".format(sensor_id))
@@ -27,11 +27,11 @@ class AmberStream:
                 self.sensor_id = sensor_id
                 print("using sensor {}".format(sensor_id))
 
-            #config = self.amber.configure_sensor(self.sensor_id, feature_count=1, streaming_window_size=25,
-            #                                     samples_to_buffer=1000, learning_max_clusters=1000,
-            #                                     learning_max_samples=20000, learning_rate_numerator=0,
-            #                                     learning_rate_denominator=20000)
-            #print("{} config: {}".format(self.sensor_id, config))
+            config = self.amber.configure_sensor(self.sensor_id, feature_count=1, streaming_window_size=25,
+                                                 samples_to_buffer=1000, learning_max_clusters=1000,
+                                                 learning_max_samples=20000, learning_rate_numerator=0,
+                                                 learning_rate_denominator=20000)
+            print("{} config: {}".format(self.sensor_id, config))
         except AmberCloudError as e:
             print(e)
             sys.exit(1)
@@ -85,6 +85,6 @@ class AmberStream:
 
 
 # Specifying sensor_id will use existing over creating a new one
-streamer = AmberStream(sensor_id='fa3e84492dcf96c6')
-# streamer = AmberStream()
+# streamer = AmberStream(sensor_id='c76b4cc542f434a7')
+streamer = AmberStream()
 streamer.stream_csv('output_current.csv', batch_size=25)
