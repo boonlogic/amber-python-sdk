@@ -27,6 +27,7 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">import itertools
+import numpy as np
 import json
 import os
 import requests
@@ -71,7 +72,7 @@ class AmberClient():
             license_file (str): path to .Amber.license file
             verify:  Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
             cert (bool): if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.
-        
+
         Environment:
 
             `AMBER_LICENSE_FILE`: sets license_file path
@@ -115,7 +116,7 @@ class AmberClient():
         else:
             self.verify = verify
 
-        if self.verify == False:
+        if self.verify is False:
             requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # if username, password and server are all specified via environment, we&#39;re done here
@@ -180,8 +181,10 @@ class AmberClient():
             &#39;password&#39;: self.password
         }
 
-        response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
-
+        try:
+            response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
+        except Exception as e:
+            raise AmberCloudError(401, &#39;invalid server connection&#39;)
         if response.status_code != 200:
             message = &#34;authentication failed: {}&#34;.format(response.json()[&#39;message&#39;])
             raise AmberCloudError(response.status_code, message)
@@ -206,6 +209,7 @@ class AmberClient():
         response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
 
         if response.status_code != 200:
+            print(response.json())
             raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
 
         # todo: why 200 status codes with error codes/message in body instead?
@@ -702,6 +706,51 @@ class AmberClient():
         }
         status = self._api_call(&#39;GET&#39;, url, headers)
 
+        return status
+
+    def get_root_cause(self, sensor_id, id_list=[], pattern_list=[]):
+        &#34;&#34;&#34;Get root cause
+
+        Args:
+            sensor_id (str): sensor identifier
+            id_list (list): list of IDs to return the root cause for
+            pattern_list (list): list of pattern vectors to calculate the root cause against the model
+
+        Returns:
+            A list containing the root cause for each pattern/id provided for a sensor:
+
+                [float]
+
+        Raises:
+            AmberUserError: if client is not authenticated
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        if len(id_list) != 0 and len(pattern_list) != 0:
+            raise AmberUserError(&#39;Cannot specify both patterns and cluster IDs for analysis&#39;)
+        url_call = &#39;rootCause?&#39;
+        if len(id_list) != 0:
+            # IDs
+            id_list = [str(element) for element in id_list]
+            url_call = url_call + &#39;clusterID=[&#39; + &#34;,&#34;.join(id_list) + &#39;]&#39;
+        elif len(pattern_list) != 0:
+            # patterns
+            if len(np.array(pattern_list).shape) == 1:  # only 1 pattern provided
+                pattern_list = [pattern_list]
+            else:
+                for i, pattern in enumerate(pattern_list):
+                    pattern_list[i] = &#39;,&#39;.join([str(element) for element in pattern])
+            url_call = url_call + &#39;pattern=[[&#39; + &#34;],[&#34;.join(pattern_list) + &#39;]]&#39;
+        else:
+            raise AmberUserError(&#39;Must specify either cluster IDs or patterns to analyze&#39;)
+
+        url = self.server + &#39;/&#39; + url_call
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        status = self._api_call(&#39;GET&#39;, url, headers)
+
         return status</code></pre>
 </details>
 </section>
@@ -763,7 +812,7 @@ home directory, or optionally overridden using environment variables.</p>
             license_file (str): path to .Amber.license file
             verify:  Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
             cert (bool): if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.
-        
+
         Environment:
 
             `AMBER_LICENSE_FILE`: sets license_file path
@@ -807,7 +856,7 @@ home directory, or optionally overridden using environment variables.</p>
         else:
             self.verify = verify
 
-        if self.verify == False:
+        if self.verify is False:
             requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # if username, password and server are all specified via environment, we&#39;re done here
@@ -872,8 +921,10 @@ home directory, or optionally overridden using environment variables.</p>
             &#39;password&#39;: self.password
         }
 
-        response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
-
+        try:
+            response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
+        except Exception as e:
+            raise AmberCloudError(401, &#39;invalid server connection&#39;)
         if response.status_code != 200:
             message = &#34;authentication failed: {}&#34;.format(response.json()[&#39;message&#39;])
             raise AmberCloudError(response.status_code, message)
@@ -898,6 +949,7 @@ home directory, or optionally overridden using environment variables.</p>
         response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
 
         if response.status_code != 200:
+            print(response.json())
             raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
 
         # todo: why 200 status codes with error codes/message in body instead?
@@ -1388,6 +1440,51 @@ home directory, or optionally overridden using environment variables.</p>
         &#34;&#34;&#34;
 
         url = self.server + &#39;/status&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        status = self._api_call(&#39;GET&#39;, url, headers)
+
+        return status
+
+    def get_root_cause(self, sensor_id, id_list=[], pattern_list=[]):
+        &#34;&#34;&#34;Get root cause
+
+        Args:
+            sensor_id (str): sensor identifier
+            id_list (list): list of IDs to return the root cause for
+            pattern_list (list): list of pattern vectors to calculate the root cause against the model
+
+        Returns:
+            A list containing the root cause for each pattern/id provided for a sensor:
+
+                [float]
+
+        Raises:
+            AmberUserError: if client is not authenticated
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        if len(id_list) != 0 and len(pattern_list) != 0:
+            raise AmberUserError(&#39;Cannot specify both patterns and cluster IDs for analysis&#39;)
+        url_call = &#39;rootCause?&#39;
+        if len(id_list) != 0:
+            # IDs
+            id_list = [str(element) for element in id_list]
+            url_call = url_call + &#39;clusterID=[&#39; + &#34;,&#34;.join(id_list) + &#39;]&#39;
+        elif len(pattern_list) != 0:
+            # patterns
+            if len(np.array(pattern_list).shape) == 1:  # only 1 pattern provided
+                pattern_list = [pattern_list]
+            else:
+                for i, pattern in enumerate(pattern_list):
+                    pattern_list[i] = &#39;,&#39;.join([str(element) for element in pattern])
+            url_call = url_call + &#39;pattern=[[&#39; + &#34;],[&#34;.join(pattern_list) + &#39;]]&#39;
+        else:
+            raise AmberUserError(&#39;Must specify either cluster IDs or patterns to analyze&#39;)
+
+        url = self.server + &#39;/&#39; + url_call
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1710,6 +1807,81 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     config = self._api_call(&#39;GET&#39;, url, headers)
 
     return config</code></pre>
+</details>
+</dd>
+<dt id="boonamber.AmberClient.get_root_cause"><code class="name flex">
+<span>def <span class="ident">get_root_cause</span></span>(<span>self, sensor_id, id_list=[], pattern_list=[])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get root cause</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>id_list</code></strong> :&ensp;<code>list</code></dt>
+<dd>list of IDs to return the root cause for</dd>
+<dt><strong><code>pattern_list</code></strong> :&ensp;<code>list</code></dt>
+<dd>list of pattern vectors to calculate the root cause against the model</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A list containing the root cause for each pattern/id provided for a sensor:</p>
+<pre><code>[float]
+</code></pre>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
+<dd>if client is not authenticated</dd>
+<dt><code><a title="boonamber.AmberCloudError" href="#boonamber.AmberCloudError">AmberCloudError</a></code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_root_cause(self, sensor_id, id_list=[], pattern_list=[]):
+    &#34;&#34;&#34;Get root cause
+
+    Args:
+        sensor_id (str): sensor identifier
+        id_list (list): list of IDs to return the root cause for
+        pattern_list (list): list of pattern vectors to calculate the root cause against the model
+
+    Returns:
+        A list containing the root cause for each pattern/id provided for a sensor:
+
+            [float]
+
+    Raises:
+        AmberUserError: if client is not authenticated
+        AmberCloudError: if Amber cloud gives non-200 response
+    &#34;&#34;&#34;
+
+    if len(id_list) != 0 and len(pattern_list) != 0:
+        raise AmberUserError(&#39;Cannot specify both patterns and cluster IDs for analysis&#39;)
+    url_call = &#39;rootCause?&#39;
+    if len(id_list) != 0:
+        # IDs
+        id_list = [str(element) for element in id_list]
+        url_call = url_call + &#39;clusterID=[&#39; + &#34;,&#34;.join(id_list) + &#39;]&#39;
+    elif len(pattern_list) != 0:
+        # patterns
+        if len(np.array(pattern_list).shape) == 1:  # only 1 pattern provided
+            pattern_list = [pattern_list]
+        else:
+            for i, pattern in enumerate(pattern_list):
+                pattern_list[i] = &#39;,&#39;.join([str(element) for element in pattern])
+        url_call = url_call + &#39;pattern=[[&#39; + &#34;],[&#34;.join(pattern_list) + &#39;]]&#39;
+    else:
+        raise AmberUserError(&#39;Must specify either cluster IDs or patterns to analyze&#39;)
+
+    url = self.server + &#39;/&#39; + url_call
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/json&#39;,
+        &#39;sensorId&#39;: sensor_id
+    }
+    status = self._api_call(&#39;GET&#39;, url, headers)
+
+    return status</code></pre>
 </details>
 </dd>
 <dt id="boonamber.AmberClient.get_sensor"><code class="name flex">
@@ -2285,6 +2457,7 @@ equal length.</dd>
 <li><code><a title="boonamber.AmberClient.create_sensor" href="#boonamber.AmberClient.create_sensor">create_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.delete_sensor" href="#boonamber.AmberClient.delete_sensor">delete_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_config" href="#boonamber.AmberClient.get_config">get_config</a></code></li>
+<li><code><a title="boonamber.AmberClient.get_root_cause" href="#boonamber.AmberClient.get_root_cause">get_root_cause</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_sensor" href="#boonamber.AmberClient.get_sensor">get_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_status" href="#boonamber.AmberClient.get_status">get_status</a></code></li>
 <li><code><a title="boonamber.AmberClient.list_sensors" href="#boonamber.AmberClient.list_sensors">list_sensors</a></code></li>
