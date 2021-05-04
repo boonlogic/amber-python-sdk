@@ -32,7 +32,6 @@ class AmberCloudError(Exception):
 
 
 class AmberClient():
-    user_agent = 'Boon Logic / amber-python-sdk / requests'
 
     def __init__(self, license_id='default', license_file="~/.Amber.license", verify=True, cert=None):
         """Main client which interfaces with the Amber cloud. Amber account
@@ -67,6 +66,7 @@ class AmberClient():
 
         self.token = None
         self.reauth_time = time.time()
+        self.user_agent = 'Boon Logic / amber-python-sdk / requests'
 
         env_license_file = os.environ.get('AMBER_LICENSE_FILE', None)
         env_license_id = os.environ.get('AMBER_LICENSE_ID', None)

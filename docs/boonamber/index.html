@@ -60,7 +60,6 @@ class AmberCloudError(Exception):
 
 
 class AmberClient():
-    user_agent = &#39;Boon Logic / amber-python-sdk / requests&#39;
 
     def __init__(self, license_id=&#39;default&#39;, license_file=&#34;~/.Amber.license&#34;, verify=True, cert=None):
         &#34;&#34;&#34;Main client which interfaces with the Amber cloud. Amber account
@@ -95,6 +94,7 @@ class AmberClient():
 
         self.token = None
         self.reauth_time = time.time()
+        self.user_agent = &#39;Boon Logic / amber-python-sdk / requests&#39;
 
         env_license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, None)
         env_license_id = os.environ.get(&#39;AMBER_LICENSE_ID&#39;, None)
@@ -800,7 +800,6 @@ home directory, or optionally overridden using environment variables.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class AmberClient():
-    user_agent = &#39;Boon Logic / amber-python-sdk / requests&#39;
 
     def __init__(self, license_id=&#39;default&#39;, license_file=&#34;~/.Amber.license&#34;, verify=True, cert=None):
         &#34;&#34;&#34;Main client which interfaces with the Amber cloud. Amber account
@@ -835,6 +834,7 @@ home directory, or optionally overridden using environment variables.</p>
 
         self.token = None
         self.reauth_time = time.time()
+        self.user_agent = &#39;Boon Logic / amber-python-sdk / requests&#39;
 
         env_license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, None)
         env_license_id = os.environ.get(&#39;AMBER_LICENSE_ID&#39;, None)
@@ -1493,13 +1493,6 @@ home directory, or optionally overridden using environment variables.</p>
 
         return status</code></pre>
 </details>
-<h3>Class variables</h3>
-<dl>
-<dt id="boonamber.AmberClient.user_agent"><code class="name">var <span class="ident">user_agent</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
 <h3>Methods</h3>
 <dl>
 <dt id="boonamber.AmberClient.configure_sensor"><code class="name flex">
@@ -2463,7 +2456,6 @@ equal length.</dd>
 <li><code><a title="boonamber.AmberClient.list_sensors" href="#boonamber.AmberClient.list_sensors">list_sensors</a></code></li>
 <li><code><a title="boonamber.AmberClient.stream_sensor" href="#boonamber.AmberClient.stream_sensor">stream_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.update_label" href="#boonamber.AmberClient.update_label">update_label</a></code></li>
-<li><code><a title="boonamber.AmberClient.user_agent" href="#boonamber.AmberClient.user_agent">user_agent</a></code></li>
 </ul>
 </li>
 <li>
