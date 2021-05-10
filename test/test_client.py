@@ -130,7 +130,6 @@ class Test5Endpoints:
         sensor = self.amber.get_sensor(TEST_SENSOR_ID)
         assert_equal(sensor['label'], 'test-sensor')
         assert_equal(sensor['sensorId'], TEST_SENSOR_ID)
-        assert_equal(sensor['tenantId'], 'amber-test-user')
         assert_true('usageInfo' in sensor)
 
     def test_07_get_sensor_negative(self):
