@@ -526,7 +526,6 @@ class AmberClient():
                 {
                     'label': str,
                     'sensorId': str,
-                    'tenantId': str,
                     'usageInfo': {
                         putSensor {
                             'callsTotal': int
@@ -560,7 +559,6 @@ class AmberClient():
 
                 'label' (str): sensor label
                 'sensorId' (str): sensor identifier
-                'tenantId' (str): username of associated Amber account
                 'callsTotal': total number of calls to this endpoint
                 'callsThisPeriod': calls this billing period to this endpoint
                 'lastCalled': ISO formatted time of last call to this endpoint

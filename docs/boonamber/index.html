@@ -554,7 +554,6 @@ class AmberClient():
                 {
                     &#39;label&#39;: str,
                     &#39;sensorId&#39;: str,
-                    &#39;tenantId&#39;: str,
                     &#39;usageInfo&#39;: {
                         putSensor {
                             &#39;callsTotal&#39;: int
@@ -588,7 +587,6 @@ class AmberClient():
 
                 &#39;label&#39; (str): sensor label
                 &#39;sensorId&#39; (str): sensor identifier
-                &#39;tenantId&#39; (str): username of associated Amber account
                 &#39;callsTotal&#39;: total number of calls to this endpoint
                 &#39;callsThisPeriod&#39;: calls this billing period to this endpoint
                 &#39;lastCalled&#39;: ISO formatted time of last call to this endpoint
@@ -1294,7 +1292,6 @@ home directory, or optionally overridden using environment variables.</p>
                 {
                     &#39;label&#39;: str,
                     &#39;sensorId&#39;: str,
-                    &#39;tenantId&#39;: str,
                     &#39;usageInfo&#39;: {
                         putSensor {
                             &#39;callsTotal&#39;: int
@@ -1328,7 +1325,6 @@ home directory, or optionally overridden using environment variables.</p>
 
                 &#39;label&#39; (str): sensor label
                 &#39;sensorId&#39; (str): sensor identifier
-                &#39;tenantId&#39; (str): username of associated Amber account
                 &#39;callsTotal&#39;: total number of calls to this endpoint
                 &#39;callsThisPeriod&#39;: calls this billing period to this endpoint
                 &#39;lastCalled&#39;: ISO formatted time of last call to this endpoint
@@ -1892,7 +1888,6 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <pre><code>{
     'label': str,
     'sensorId': str,
-    'tenantId': str,
     'usageInfo': {
         putSensor {
             'callsTotal': int
@@ -1926,7 +1921,6 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 
 'label' (str): sensor label
 'sensorId' (str): sensor identifier
-'tenantId' (str): username of associated Amber account
 'callsTotal': total number of calls to this endpoint
 'callsThisPeriod': calls this billing period to this endpoint
 'lastCalled': ISO formatted time of last call to this endpoint
@@ -1956,7 +1950,6 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
             {
                 &#39;label&#39;: str,
                 &#39;sensorId&#39;: str,
-                &#39;tenantId&#39;: str,
                 &#39;usageInfo&#39;: {
                     putSensor {
                         &#39;callsTotal&#39;: int
@@ -1990,7 +1983,6 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 
             &#39;label&#39; (str): sensor label
             &#39;sensorId&#39; (str): sensor identifier
-            &#39;tenantId&#39; (str): username of associated Amber account
             &#39;callsTotal&#39;: total number of calls to this endpoint
             &#39;callsThisPeriod&#39;: calls this billing period to this endpoint
             &#39;lastCalled&#39;: ISO formatted time of last call to this endpoint
