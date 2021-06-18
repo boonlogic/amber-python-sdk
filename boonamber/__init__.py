@@ -468,6 +468,7 @@ class AmberClient():
                     closer to 0 represent input patterns which are ordinary given the data
                     seen so far on this sensor. Values closer to 1000 represent novel patterns
                     which are anomalous with respect to data seen before.
+                'RI': raw anomaly index. These values are the SI values without any smoothing.
                 'AD': list of binary anomaly detection values. These correspond one-to-one
                     with input samples and are produced by thresholding the smoothed anomaly
                     index (SI). The threshold is determined automatically from the SI values.
