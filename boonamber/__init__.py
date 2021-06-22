@@ -288,6 +288,7 @@ class AmberClient():
 
     def configure_sensor(self, sensor_id, feature_count=1, streaming_window_size=25,
                          samples_to_buffer=10000,
+                         anomaly_history_window=10000,
                          learning_rate_numerator=10,
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
@@ -299,6 +300,7 @@ class AmberClient():
             feature_count (int): number of features (dimensionality of each data sample)
             streaming_window_size (int): streaming window size (number of samples)
             samples_to_buffer (int): number of samples to load before autotuning
+            anomaly_history_window (int): number of samples to use for AH calculation
             learning_rate_numerator (int): sensor "graduates" (i.e. transitions from
                 learning to monitoring mode) if fewer than learning_rate_numerator
                 new clusters are opened in the last learning_rate_denominator samples
@@ -313,9 +315,10 @@ class AmberClient():
                     'feature_count': int,
                     'streaming_window_size': int,
                     'samples_to_buffer': int
-                    'learning_rate_numerator': int
-                    'learning_rate_denominator': int
-                    'learning_max_clusters': int
+                    'anomaly_history_window': int,
+                    'learning_rate_numerator': int,
+                    'learning_rate_denominator': int,
+                    'learning_max_clusters': int,
                     'learning_max_samples': int
                 }
 
@@ -338,6 +341,7 @@ class AmberClient():
             'featureCount': feature_count,
             'streamingWindowSize': streaming_window_size,
             'samplesToBuffer': samples_to_buffer,
+            'anomalyHistoryWindow': anomaly_history_window,
             'learningRateNumerator': learning_rate_numerator,
             'learningRateDenominator': learning_rate_denominator,
             'learningMaxClusters': learning_max_clusters,

@@ -147,6 +147,7 @@ class Test5Endpoints:
             'featureCount': 1,
             'streamingWindowSize': 25,
             'samplesToBuffer': 1000,
+            'anomalyHistoryWindow': 1000,
             'learningRateNumerator': 10,
             'learningRateDenominator': 10000,
             'learningMaxClusters': 1000,
@@ -154,6 +155,7 @@ class Test5Endpoints:
         }
         config = self.amber.configure_sensor(TEST_SENSOR_ID, feature_count=1, streaming_window_size=25,
                                              samples_to_buffer=1000,
+                                             anomaly_history_window=1000,
                                              learning_rate_numerator=10,
                                              learning_rate_denominator=10000,
                                              learning_max_clusters=1000,
@@ -177,6 +179,7 @@ class Test5Endpoints:
             'featureCount': 1,
             'streamingWindowSize': 25,
             'samplesToBuffer': 1000,
+            'anomalyHistoryWindow': 1000,
             'learningRateNumerator': 10,
             'learningRateDenominator': 10000,
             'learningMaxClusters': 1000,
