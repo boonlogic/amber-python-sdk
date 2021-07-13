@@ -112,6 +112,19 @@ except AmberUserError as e:
 print("status: {}".format(status))
 print()
 
+# Get clustering status from a sensor
+print("getting root cause")
+try:
+    root_cause = amber.get_root_cause(sensor_id, cluster_id=[1,2])
+except AmberCloudError as e:
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
+print("root cause: {}".format(root_cause))
+print()
+
 # Delete a sensor instance
 print("deleting sensor")
 try:
