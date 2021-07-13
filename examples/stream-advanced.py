@@ -55,6 +55,15 @@ class AmberStream:
             else:
                 analytic_pretty = ','.join("{}".format(a) for a in results[analytic])
             print("{}: {} ".format(analytic, analytic_pretty))
+
+        neg_ids = [num for num in results['ID'] if num < 0]
+        if len(neg_ids) > 0:
+            print("Root Cause:")
+            rc = self.amber.get_root_cause(self.sensor_id, id_list=neg_ids)
+            root_cause_pretty = ['\t' + str(id) + ': ' + ','.join("{:.6f}".format(a) for a in root) for (root, id) in zip(rc, neg_ids)]
+            for root in root_cause_pretty:
+                print(root)
+        self.data = []
         self.data = []
 
     def stream_csv(self, csv_file, batch_size=20):
