@@ -143,6 +143,7 @@ class Test5Endpoints:
 
     def test_09_configure_sensor(self):
         expected = {
+            'anomalyHistoryWindow': 0,
             'featureCount': 1,
             'streamingWindowSize': 25,
             'samplesToBuffer': 1000,
@@ -172,6 +173,7 @@ class Test5Endpoints:
 
     def test_11_get_config(self):
         expected = {
+            'anomalyHistoryWindow': 0,
             'featureCount': 1,
             'streamingWindowSize': 25,
             'samplesToBuffer': 1000,
