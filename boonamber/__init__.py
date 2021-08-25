@@ -154,7 +154,8 @@ class AmberClient():
         }
 
         try:
-            response = requests.request(method='POST', url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
+            response = requests.request(method='POST', url=url, headers=headers, json=body, verify=self.verify,
+                                        cert=self.cert)
         except Exception as e:
             raise AmberCloudError(401, 'invalid server connection')
         if response.status_code != 200:
@@ -178,17 +179,19 @@ class AmberClient():
 
         headers['Authorization'] = 'Bearer {}'.format(self.token)
         headers['User-Agent'] = self.user_agent
-        response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
+        response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify,
+                                    cert=self.cert)
 
-        if response.status_code != 200:
+        if response.status_code != 200 and response.status_code != 202:
             print(response.json())
             raise AmberCloudError(response.status_code, response.json()['message'])
 
-        # todo: why 200 status codes with error codes/message in body instead?
-        if 'code' in response.json() and response.json()['code'] != 200:
+        if 'code' in response.json() and response.json()['code'] != response.status_code:
+            # todo: if this happens, there is a bug in the amber service.
+            # is returned in the message, it should agree with the header
             raise AmberCloudError(response.json()['code'], response.json()['message'])
 
-        # lambda runtime errors return 200 with errorMessage in response body
+        # todo: we should not see errorMessage in the response.  It indicates a misconfigured API gateway
         if 'errorMessage' in response.json():
             raise AmberCloudError(500, response.json()['errorMessage'])
 
@@ -422,6 +425,97 @@ class AmberClient():
 
         return ','.join([str(float(d)) for d in data_flat])
 
+    def pretrain_sensor(self, sensor_id, data, autotune_config=True, block=True):
+        """Pretrain a sensor with historical data
+
+        Args:
+            sensor_id (str): sensor identifier
+            data (array-like): data to be inferenced. Must be non-empty,
+                entirely numeric and one of the following: scalar value,
+                list-like or list-of-lists-like where all sublists have
+                equal length.
+            autotune_config (bool): if True, the sensor will be reconfigured based
+                on the training data provided so that the sensor will be in monitoring
+                once the data is through. If False, the sensor uses the already
+                configured values to train the sensor.
+            block (bool): if True, will block until pretraining is complete.
+                Otherwise, will return immediately; in this case pretraining
+                status can be checked using get_pretrain_state endpoint.
+
+        Returns:
+
+            {
+                'state': str
+            }
+
+            'state': current state of the sensor.
+                "Pretraining": pretraining is in progress
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response
+        """
+
+        # Server expects data as a plaintext string of comma-separated values.
+        try:
+            data_csv = self._convert_to_csv(data)
+        except ValueError as e:
+            raise AmberUserError("invalid data: {}".format(e))
+
+        url = self.server + '/pretrain'
+        headers = {
+            'Content-Type': 'application/json',
+            'sensorId': sensor_id
+        }
+        body = {
+            'data': data_csv,
+            'autotuneConfig': autotuneConfig
+        }
+
+        results = self._api_call('POST', url, headers, body=body)
+
+        if not block:
+            return results
+
+        while True:
+            results = self.get_pretrain_state(sensor_id)
+            if results['state'] == "Pretraining":
+                time.sleep(5)
+                continue
+            else:
+                return results
+
+    def get_pretrain_state(self, sensor_id):
+        """Gets the state of sensor that is being pretrained
+
+        Args:
+            sensor_id (str): sensor identifier
+
+        Returns:
+
+            {
+                    'state': str
+            }
+
+            'state': current state of the sensor. One of:
+                "Pretraining": pretraining is in progress
+                "Pretrained": pretraining has completed
+                "Error": error has occurred
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response
+        """
+
+        url = self.server + '/pretrain'
+        headers = {
+            'Content-Type': 'application/json',
+            'sensorId': sensor_id
+        }
+
+        results = self._api_call('GET', url, headers)
+
+        return results
+
     def stream_sensor(self, sensor_id, data):
         """Stream data to an amber sensor and return the inference result
 
@@ -597,6 +691,7 @@ class AmberClient():
                     'featureCount': int,
                     'streamingWindowSize': int,
                     'samplesToBuffer': int,
+                    'anomalyHistoryWindow': int,
                     'learningRateNumerator': int,
                     'learningRateDenominator': int,
                     'learningMaxClusters': int,
@@ -614,6 +709,7 @@ class AmberClient():
                 'featureCount': number of features (dimensionality of each data sample)
                 'streamingWindowSize': streaming window size (number of samples)
                 'samplesToBuffer': number of samples to load before autotuning
+                'anomalyHistoryWindow': number of samples to calculate normal anomaly variation
                 'learningRateNumerator': sensor "graduates" (i.e. transitions from
                     learning to monitoring mode) if fewer than learning_rate_numerator
                     new clusters are opened in the last learning_rate_denominator samples

@@ -182,7 +182,8 @@ class AmberClient():
         }
 
         try:
-            response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
+            response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body, verify=self.verify,
+                                        cert=self.cert)
         except Exception as e:
             raise AmberCloudError(401, &#39;invalid server connection&#39;)
         if response.status_code != 200:
@@ -206,17 +207,19 @@ class AmberClient():
 
         headers[&#39;Authorization&#39;] = &#39;Bearer {}&#39;.format(self.token)
         headers[&#39;User-Agent&#39;] = self.user_agent
-        response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
+        response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify,
+                                    cert=self.cert)
 
-        if response.status_code != 200:
+        if response.status_code != 200 and response.status_code != 202:
             print(response.json())
             raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
 
-        # todo: why 200 status codes with error codes/message in body instead?
-        if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != 200:
+        if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != response.status_code:
+            # todo: if this happens, there is a bug in the amber service.
+            # is returned in the message, it should agree with the header
             raise AmberCloudError(response.json()[&#39;code&#39;], response.json()[&#39;message&#39;])
 
-        # lambda runtime errors return 200 with errorMessage in response body
+        # todo: we should not see errorMessage in the response.  It indicates a misconfigured API gateway
         if &#39;errorMessage&#39; in response.json():
             raise AmberCloudError(500, response.json()[&#39;errorMessage&#39;])
 
@@ -316,6 +319,7 @@ class AmberClient():
 
     def configure_sensor(self, sensor_id, feature_count=1, streaming_window_size=25,
                          samples_to_buffer=10000,
+                         anomaly_history_window=10000,
                          learning_rate_numerator=10,
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
@@ -327,6 +331,7 @@ class AmberClient():
             feature_count (int): number of features (dimensionality of each data sample)
             streaming_window_size (int): streaming window size (number of samples)
             samples_to_buffer (int): number of samples to load before autotuning
+            anomaly_history_window (int): number of samples to use for AH calculation
             learning_rate_numerator (int): sensor &#34;graduates&#34; (i.e. transitions from
                 learning to monitoring mode) if fewer than learning_rate_numerator
                 new clusters are opened in the last learning_rate_denominator samples
@@ -341,9 +346,10 @@ class AmberClient():
                     &#39;feature_count&#39;: int,
                     &#39;streaming_window_size&#39;: int,
                     &#39;samples_to_buffer&#39;: int
-                    &#39;learning_rate_numerator&#39;: int
-                    &#39;learning_rate_denominator&#39;: int
-                    &#39;learning_max_clusters&#39;: int
+                    &#39;anomaly_history_window&#39;: int,
+                    &#39;learning_rate_numerator&#39;: int,
+                    &#39;learning_rate_denominator&#39;: int,
+                    &#39;learning_max_clusters&#39;: int,
                     &#39;learning_max_samples&#39;: int
                 }
 
@@ -366,6 +372,7 @@ class AmberClient():
             &#39;featureCount&#39;: feature_count,
             &#39;streamingWindowSize&#39;: streaming_window_size,
             &#39;samplesToBuffer&#39;: samples_to_buffer,
+            &#39;anomalyHistoryWindow&#39;: anomaly_history_window,
             &#39;learningRateNumerator&#39;: learning_rate_numerator,
             &#39;learningRateDenominator&#39;: learning_rate_denominator,
             &#39;learningMaxClusters&#39;: learning_max_clusters,
@@ -445,6 +452,97 @@ class AmberClient():
                 raise ValueError(&#34;contained {} which is not numeric&#34;.format(d.__repr__()))
 
         return &#39;,&#39;.join([str(float(d)) for d in data_flat])
+
+    def pretrain_sensor(self, sensor_id, data, autotune_config=True, block=True):
+        &#34;&#34;&#34;Pretrain a sensor with historical data
+
+        Args:
+            sensor_id (str): sensor identifier
+            data (array-like): data to be inferenced. Must be non-empty,
+                entirely numeric and one of the following: scalar value,
+                list-like or list-of-lists-like where all sublists have
+                equal length.
+            autotune_config (bool): if True, the sensor will be reconfigured based
+                on the training data provided so that the sensor will be in monitoring
+                once the data is through. If False, the sensor uses the already
+                configured values to train the sensor.
+            block (bool): if True, will block until pretraining is complete.
+                Otherwise, will return immediately; in this case pretraining
+                status can be checked using get_pretrain_state endpoint.
+
+        Returns:
+
+            {
+                &#39;state&#39;: str
+            }
+
+            &#39;state&#39;: current state of the sensor.
+                &#34;Pretraining&#34;: pretraining is in progress
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        # Server expects data as a plaintext string of comma-separated values.
+        try:
+            data_csv = self._convert_to_csv(data)
+        except ValueError as e:
+            raise AmberUserError(&#34;invalid data: {}&#34;.format(e))
+
+        url = self.server + &#39;/pretrain&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        body = {
+            &#39;data&#39;: data_csv,
+            &#39;autotuneConfig&#39;: autotuneConfig
+        }
+
+        results = self._api_call(&#39;POST&#39;, url, headers, body=body)
+
+        if not block:
+            return results
+
+        while True:
+            results = self.get_pretrain_state(sensor_id)
+            if results[&#39;state&#39;] == &#34;Pretraining&#34;:
+                time.sleep(5)
+                continue
+            else:
+                return results
+
+    def get_pretrain_state(self, sensor_id):
+        &#34;&#34;&#34;Gets the state of sensor that is being pretrained
+
+        Args:
+            sensor_id (str): sensor identifier
+
+        Returns:
+
+            {
+                    &#39;state&#39;: str
+            }
+
+            &#39;state&#39;: current state of the sensor. One of:
+                &#34;Pretraining&#34;: pretraining is in progress
+                &#34;Pretrained&#34;: pretraining has completed
+                &#34;Error&#34;: error has occurred
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        url = self.server + &#39;/pretrain&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+
+        results = self._api_call(&#39;GET&#39;, url, headers)
+
+        return results
 
     def stream_sensor(self, sensor_id, data):
         &#34;&#34;&#34;Stream data to an amber sensor and return the inference result
@@ -621,6 +719,7 @@ class AmberClient():
                     &#39;featureCount&#39;: int,
                     &#39;streamingWindowSize&#39;: int,
                     &#39;samplesToBuffer&#39;: int,
+                    &#39;anomalyHistoryWindow&#39;: int,
                     &#39;learningRateNumerator&#39;: int,
                     &#39;learningRateDenominator&#39;: int,
                     &#39;learningMaxClusters&#39;: int,
@@ -638,6 +737,7 @@ class AmberClient():
                 &#39;featureCount&#39;: number of features (dimensionality of each data sample)
                 &#39;streamingWindowSize&#39;: streaming window size (number of samples)
                 &#39;samplesToBuffer&#39;: number of samples to load before autotuning
+                &#39;anomalyHistoryWindow&#39;: number of samples to calculate normal anomaly variation
                 &#39;learningRateNumerator&#39;: sensor &#34;graduates&#34; (i.e. transitions from
                     learning to monitoring mode) if fewer than learning_rate_numerator
                     new clusters are opened in the last learning_rate_denominator samples
@@ -921,7 +1021,8 @@ home directory, or optionally overridden using environment variables.</p>
         }
 
         try:
-            response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
+            response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body, verify=self.verify,
+                                        cert=self.cert)
         except Exception as e:
             raise AmberCloudError(401, &#39;invalid server connection&#39;)
         if response.status_code != 200:
@@ -945,17 +1046,19 @@ home directory, or optionally overridden using environment variables.</p>
 
         headers[&#39;Authorization&#39;] = &#39;Bearer {}&#39;.format(self.token)
         headers[&#39;User-Agent&#39;] = self.user_agent
-        response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify, cert=self.cert)
+        response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify,
+                                    cert=self.cert)
 
-        if response.status_code != 200:
+        if response.status_code != 200 and response.status_code != 202:
             print(response.json())
             raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
 
-        # todo: why 200 status codes with error codes/message in body instead?
-        if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != 200:
+        if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != response.status_code:
+            # todo: if this happens, there is a bug in the amber service.
+            # is returned in the message, it should agree with the header
             raise AmberCloudError(response.json()[&#39;code&#39;], response.json()[&#39;message&#39;])
 
-        # lambda runtime errors return 200 with errorMessage in response body
+        # todo: we should not see errorMessage in the response.  It indicates a misconfigured API gateway
         if &#39;errorMessage&#39; in response.json():
             raise AmberCloudError(500, response.json()[&#39;errorMessage&#39;])
 
@@ -1055,6 +1158,7 @@ home directory, or optionally overridden using environment variables.</p>
 
     def configure_sensor(self, sensor_id, feature_count=1, streaming_window_size=25,
                          samples_to_buffer=10000,
+                         anomaly_history_window=10000,
                          learning_rate_numerator=10,
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
@@ -1066,6 +1170,7 @@ home directory, or optionally overridden using environment variables.</p>
             feature_count (int): number of features (dimensionality of each data sample)
             streaming_window_size (int): streaming window size (number of samples)
             samples_to_buffer (int): number of samples to load before autotuning
+            anomaly_history_window (int): number of samples to use for AH calculation
             learning_rate_numerator (int): sensor &#34;graduates&#34; (i.e. transitions from
                 learning to monitoring mode) if fewer than learning_rate_numerator
                 new clusters are opened in the last learning_rate_denominator samples
@@ -1080,9 +1185,10 @@ home directory, or optionally overridden using environment variables.</p>
                     &#39;feature_count&#39;: int,
                     &#39;streaming_window_size&#39;: int,
                     &#39;samples_to_buffer&#39;: int
-                    &#39;learning_rate_numerator&#39;: int
-                    &#39;learning_rate_denominator&#39;: int
-                    &#39;learning_max_clusters&#39;: int
+                    &#39;anomaly_history_window&#39;: int,
+                    &#39;learning_rate_numerator&#39;: int,
+                    &#39;learning_rate_denominator&#39;: int,
+                    &#39;learning_max_clusters&#39;: int,
                     &#39;learning_max_samples&#39;: int
                 }
 
@@ -1105,6 +1211,7 @@ home directory, or optionally overridden using environment variables.</p>
             &#39;featureCount&#39;: feature_count,
             &#39;streamingWindowSize&#39;: streaming_window_size,
             &#39;samplesToBuffer&#39;: samples_to_buffer,
+            &#39;anomalyHistoryWindow&#39;: anomaly_history_window,
             &#39;learningRateNumerator&#39;: learning_rate_numerator,
             &#39;learningRateDenominator&#39;: learning_rate_denominator,
             &#39;learningMaxClusters&#39;: learning_max_clusters,
@@ -1184,6 +1291,97 @@ home directory, or optionally overridden using environment variables.</p>
                 raise ValueError(&#34;contained {} which is not numeric&#34;.format(d.__repr__()))
 
         return &#39;,&#39;.join([str(float(d)) for d in data_flat])
+
+    def pretrain_sensor(self, sensor_id, data, autotune_config=True, block=True):
+        &#34;&#34;&#34;Pretrain a sensor with historical data
+
+        Args:
+            sensor_id (str): sensor identifier
+            data (array-like): data to be inferenced. Must be non-empty,
+                entirely numeric and one of the following: scalar value,
+                list-like or list-of-lists-like where all sublists have
+                equal length.
+            autotune_config (bool): if True, the sensor will be reconfigured based
+                on the training data provided so that the sensor will be in monitoring
+                once the data is through. If False, the sensor uses the already
+                configured values to train the sensor.
+            block (bool): if True, will block until pretraining is complete.
+                Otherwise, will return immediately; in this case pretraining
+                status can be checked using get_pretrain_state endpoint.
+
+        Returns:
+
+            {
+                &#39;state&#39;: str
+            }
+
+            &#39;state&#39;: current state of the sensor.
+                &#34;Pretraining&#34;: pretraining is in progress
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        # Server expects data as a plaintext string of comma-separated values.
+        try:
+            data_csv = self._convert_to_csv(data)
+        except ValueError as e:
+            raise AmberUserError(&#34;invalid data: {}&#34;.format(e))
+
+        url = self.server + &#39;/pretrain&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        body = {
+            &#39;data&#39;: data_csv,
+            &#39;autotuneConfig&#39;: autotuneConfig
+        }
+
+        results = self._api_call(&#39;POST&#39;, url, headers, body=body)
+
+        if not block:
+            return results
+
+        while True:
+            results = self.get_pretrain_state(sensor_id)
+            if results[&#39;state&#39;] == &#34;Pretraining&#34;:
+                time.sleep(5)
+                continue
+            else:
+                return results
+
+    def get_pretrain_state(self, sensor_id):
+        &#34;&#34;&#34;Gets the state of sensor that is being pretrained
+
+        Args:
+            sensor_id (str): sensor identifier
+
+        Returns:
+
+            {
+                    &#39;state&#39;: str
+            }
+
+            &#39;state&#39;: current state of the sensor. One of:
+                &#34;Pretraining&#34;: pretraining is in progress
+                &#34;Pretrained&#34;: pretraining has completed
+                &#34;Error&#34;: error has occurred
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        url = self.server + &#39;/pretrain&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+
+        results = self._api_call(&#39;GET&#39;, url, headers)
+
+        return results
 
     def stream_sensor(self, sensor_id, data):
         &#34;&#34;&#34;Stream data to an amber sensor and return the inference result
@@ -1360,6 +1558,7 @@ home directory, or optionally overridden using environment variables.</p>
                     &#39;featureCount&#39;: int,
                     &#39;streamingWindowSize&#39;: int,
                     &#39;samplesToBuffer&#39;: int,
+                    &#39;anomalyHistoryWindow&#39;: int,
                     &#39;learningRateNumerator&#39;: int,
                     &#39;learningRateDenominator&#39;: int,
                     &#39;learningMaxClusters&#39;: int,
@@ -1377,6 +1576,7 @@ home directory, or optionally overridden using environment variables.</p>
                 &#39;featureCount&#39;: number of features (dimensionality of each data sample)
                 &#39;streamingWindowSize&#39;: streaming window size (number of samples)
                 &#39;samplesToBuffer&#39;: number of samples to load before autotuning
+                &#39;anomalyHistoryWindow&#39;: number of samples to calculate normal anomaly variation
                 &#39;learningRateNumerator&#39;: sensor &#34;graduates&#34; (i.e. transitions from
                     learning to monitoring mode) if fewer than learning_rate_numerator
                     new clusters are opened in the last learning_rate_denominator samples
@@ -1494,7 +1694,7 @@ home directory, or optionally overridden using environment variables.</p>
 <h3>Methods</h3>
 <dl>
 <dt id="boonamber.AmberClient.configure_sensor"><code class="name flex">
-<span>def <span class="ident">configure_sensor</span></span>(<span>self, sensor_id, feature_count=1, streaming_window_size=25, samples_to_buffer=10000, learning_rate_numerator=10, learning_rate_denominator=10000, learning_max_clusters=1000, learning_max_samples=1000000)</span>
+<span>def <span class="ident">configure_sensor</span></span>(<span>self, sensor_id, feature_count=1, streaming_window_size=25, samples_to_buffer=10000, anomaly_history_window=10000, learning_rate_numerator=10, learning_rate_denominator=10000, learning_max_clusters=1000, learning_max_samples=1000000)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Configure an amber sensor instance</p>
@@ -1508,6 +1708,8 @@ home directory, or optionally overridden using environment variables.</p>
 <dd>streaming window size (number of samples)</dd>
 <dt><strong><code>samples_to_buffer</code></strong> :&ensp;<code>int</code></dt>
 <dd>number of samples to load before autotuning</dd>
+<dt><strong><code>anomaly_history_window</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of samples to use for AH calculation</dd>
 <dt><strong><code>learning_rate_numerator</code></strong> :&ensp;<code>int</code></dt>
 <dd>sensor "graduates" (i.e. transitions from
 learning to monitoring mode) if fewer than learning_rate_numerator
@@ -1525,9 +1727,10 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     'feature_count': int,
     'streaming_window_size': int,
     'samples_to_buffer': int
-    'learning_rate_numerator': int
-    'learning_rate_denominator': int
-    'learning_max_clusters': int
+    'anomaly_history_window': int,
+    'learning_rate_numerator': int,
+    'learning_rate_denominator': int,
+    'learning_max_clusters': int,
     'learning_max_samples': int
 }
 </code></pre>
@@ -1544,6 +1747,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 </summary>
 <pre><code class="python">def configure_sensor(self, sensor_id, feature_count=1, streaming_window_size=25,
                      samples_to_buffer=10000,
+                     anomaly_history_window=10000,
                      learning_rate_numerator=10,
                      learning_rate_denominator=10000,
                      learning_max_clusters=1000,
@@ -1555,6 +1759,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         feature_count (int): number of features (dimensionality of each data sample)
         streaming_window_size (int): streaming window size (number of samples)
         samples_to_buffer (int): number of samples to load before autotuning
+        anomaly_history_window (int): number of samples to use for AH calculation
         learning_rate_numerator (int): sensor &#34;graduates&#34; (i.e. transitions from
             learning to monitoring mode) if fewer than learning_rate_numerator
             new clusters are opened in the last learning_rate_denominator samples
@@ -1569,9 +1774,10 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
                 &#39;feature_count&#39;: int,
                 &#39;streaming_window_size&#39;: int,
                 &#39;samples_to_buffer&#39;: int
-                &#39;learning_rate_numerator&#39;: int
-                &#39;learning_rate_denominator&#39;: int
-                &#39;learning_max_clusters&#39;: int
+                &#39;anomaly_history_window&#39;: int,
+                &#39;learning_rate_numerator&#39;: int,
+                &#39;learning_rate_denominator&#39;: int,
+                &#39;learning_max_clusters&#39;: int,
                 &#39;learning_max_samples&#39;: int
             }
 
@@ -1594,6 +1800,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         &#39;featureCount&#39;: feature_count,
         &#39;streamingWindowSize&#39;: streaming_window_size,
         &#39;samplesToBuffer&#39;: samples_to_buffer,
+        &#39;anomalyHistoryWindow&#39;: anomaly_history_window,
         &#39;learningRateNumerator&#39;: learning_rate_numerator,
         &#39;learningRateDenominator&#39;: learning_rate_denominator,
         &#39;learningMaxClusters&#39;: learning_max_clusters,
@@ -1710,6 +1917,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     'featureCount': int,
     'streamingWindowSize': int,
     'samplesToBuffer': int,
+    'anomalyHistoryWindow': int,
     'learningRateNumerator': int,
     'learningRateDenominator': int,
     'learningMaxClusters': int,
@@ -1727,6 +1935,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 'featureCount': number of features (dimensionality of each data sample)
 'streamingWindowSize': streaming window size (number of samples)
 'samplesToBuffer': number of samples to load before autotuning
+'anomalyHistoryWindow': number of samples to calculate normal anomaly variation
 'learningRateNumerator': sensor "graduates" (i.e. transitions from
     learning to monitoring mode) if fewer than learning_rate_numerator
     new clusters are opened in the last learning_rate_denominator samples
@@ -1760,6 +1969,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
                 &#39;featureCount&#39;: int,
                 &#39;streamingWindowSize&#39;: int,
                 &#39;samplesToBuffer&#39;: int,
+                &#39;anomalyHistoryWindow&#39;: int,
                 &#39;learningRateNumerator&#39;: int,
                 &#39;learningRateDenominator&#39;: int,
                 &#39;learningMaxClusters&#39;: int,
@@ -1777,6 +1987,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
             &#39;featureCount&#39;: number of features (dimensionality of each data sample)
             &#39;streamingWindowSize&#39;: streaming window size (number of samples)
             &#39;samplesToBuffer&#39;: number of samples to load before autotuning
+            &#39;anomalyHistoryWindow&#39;: number of samples to calculate normal anomaly variation
             &#39;learningRateNumerator&#39;: sensor &#34;graduates&#34; (i.e. transitions from
                 learning to monitoring mode) if fewer than learning_rate_numerator
                 new clusters are opened in the last learning_rate_denominator samples
@@ -1798,6 +2009,67 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     config = self._api_call(&#39;GET&#39;, url, headers)
 
     return config</code></pre>
+</details>
+</dd>
+<dt id="boonamber.AmberClient.get_pretrain_state"><code class="name flex">
+<span>def <span class="ident">get_pretrain_state</span></span>(<span>self, sensor_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets the state of sensor that is being pretrained</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>{
+'state': str
+}</p>
+<p>'state': current state of the sensor. One of:
+"Pretraining": pretraining is in progress
+"Pretrained": pretraining has completed
+"Error": error has occurred</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code><a title="boonamber.AmberCloudError" href="#boonamber.AmberCloudError">AmberCloudError</a></code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_pretrain_state(self, sensor_id):
+    &#34;&#34;&#34;Gets the state of sensor that is being pretrained
+
+    Args:
+        sensor_id (str): sensor identifier
+
+    Returns:
+
+        {
+                &#39;state&#39;: str
+        }
+
+        &#39;state&#39;: current state of the sensor. One of:
+            &#34;Pretraining&#34;: pretraining is in progress
+            &#34;Pretrained&#34;: pretraining has completed
+            &#34;Error&#34;: error has occurred
+    Raises:
+        AmberUserError: if client is not authenticated or supplies invalid data
+        AmberCloudError: if Amber cloud gives non-200 response
+    &#34;&#34;&#34;
+
+    url = self.server + &#39;/pretrain&#39;
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/json&#39;,
+        &#39;sensorId&#39;: sensor_id
+    }
+
+    results = self._api_call(&#39;GET&#39;, url, headers)
+
+    return results</code></pre>
 </details>
 </dd>
 <dt id="boonamber.AmberClient.get_root_cause"><code class="name flex">
@@ -2140,6 +2412,108 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     return sensors</code></pre>
 </details>
 </dd>
+<dt id="boonamber.AmberClient.pretrain_sensor"><code class="name flex">
+<span>def <span class="ident">pretrain_sensor</span></span>(<span>self, sensor_id, data, autotune_config=True, block=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Pretrain a sensor with historical data</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>data</code></strong> :&ensp;<code>array-like</code></dt>
+<dd>data to be inferenced. Must be non-empty,
+entirely numeric and one of the following: scalar value,
+list-like or list-of-lists-like where all sublists have
+equal length.</dd>
+<dt><strong><code>autotune_config</code></strong> :&ensp;<code>bool</code></dt>
+<dd>if True, the sensor will be reconfigured based
+on the training data provided so that the sensor will be in monitoring
+once the data is through. If False, the sensor uses the already
+configured values to train the sensor.</dd>
+<dt><strong><code>block</code></strong> :&ensp;<code>bool</code></dt>
+<dd>if True, will block until pretraining is complete.
+Otherwise, will return immediately; in this case pretraining
+status can be checked using get_pretrain_state endpoint.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>{
+'state': str
+}</p>
+<p>'state': current state of the sensor.
+"Pretraining": pretraining is in progress</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code><a title="boonamber.AmberCloudError" href="#boonamber.AmberCloudError">AmberCloudError</a></code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pretrain_sensor(self, sensor_id, data, autotune_config=True, block=True):
+    &#34;&#34;&#34;Pretrain a sensor with historical data
+
+    Args:
+        sensor_id (str): sensor identifier
+        data (array-like): data to be inferenced. Must be non-empty,
+            entirely numeric and one of the following: scalar value,
+            list-like or list-of-lists-like where all sublists have
+            equal length.
+        autotune_config (bool): if True, the sensor will be reconfigured based
+            on the training data provided so that the sensor will be in monitoring
+            once the data is through. If False, the sensor uses the already
+            configured values to train the sensor.
+        block (bool): if True, will block until pretraining is complete.
+            Otherwise, will return immediately; in this case pretraining
+            status can be checked using get_pretrain_state endpoint.
+
+    Returns:
+
+        {
+            &#39;state&#39;: str
+        }
+
+        &#39;state&#39;: current state of the sensor.
+            &#34;Pretraining&#34;: pretraining is in progress
+
+    Raises:
+        AmberUserError: if client is not authenticated or supplies invalid data
+        AmberCloudError: if Amber cloud gives non-200 response
+    &#34;&#34;&#34;
+
+    # Server expects data as a plaintext string of comma-separated values.
+    try:
+        data_csv = self._convert_to_csv(data)
+    except ValueError as e:
+        raise AmberUserError(&#34;invalid data: {}&#34;.format(e))
+
+    url = self.server + &#39;/pretrain&#39;
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/json&#39;,
+        &#39;sensorId&#39;: sensor_id
+    }
+    body = {
+        &#39;data&#39;: data_csv,
+        &#39;autotuneConfig&#39;: autotuneConfig
+    }
+
+    results = self._api_call(&#39;POST&#39;, url, headers, body=body)
+
+    if not block:
+        return results
+
+    while True:
+        results = self.get_pretrain_state(sensor_id)
+        if results[&#39;state&#39;] == &#34;Pretraining&#34;:
+            time.sleep(5)
+            continue
+        else:
+            return results</code></pre>
+</details>
+</dd>
 <dt id="boonamber.AmberClient.stream_sensor"><code class="name flex">
 <span>def <span class="ident">stream_sensor</span></span>(<span>self, sensor_id, data)</span>
 </code></dt>
@@ -2446,10 +2820,12 @@ equal length.</dd>
 <li><code><a title="boonamber.AmberClient.create_sensor" href="#boonamber.AmberClient.create_sensor">create_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.delete_sensor" href="#boonamber.AmberClient.delete_sensor">delete_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_config" href="#boonamber.AmberClient.get_config">get_config</a></code></li>
+<li><code><a title="boonamber.AmberClient.get_pretrain_state" href="#boonamber.AmberClient.get_pretrain_state">get_pretrain_state</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_root_cause" href="#boonamber.AmberClient.get_root_cause">get_root_cause</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_sensor" href="#boonamber.AmberClient.get_sensor">get_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_status" href="#boonamber.AmberClient.get_status">get_status</a></code></li>
 <li><code><a title="boonamber.AmberClient.list_sensors" href="#boonamber.AmberClient.list_sensors">list_sensors</a></code></li>
+<li><code><a title="boonamber.AmberClient.pretrain_sensor" href="#boonamber.AmberClient.pretrain_sensor">pretrain_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.stream_sensor" href="#boonamber.AmberClient.stream_sensor">stream_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.update_label" href="#boonamber.AmberClient.update_label">update_label</a></code></li>
 </ul>
