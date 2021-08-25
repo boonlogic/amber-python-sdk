@@ -1,3 +1,4 @@
+import csv
 import os
 import nose
 import time
@@ -258,6 +259,48 @@ class Test5Endpoints:
             status = self.amber.get_status('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
+    def test_19_get_pretrain_state(self):
+        response = self.amber.get_pretrain_state(TEST_SENSOR_ID)
+        assert_true('state' in response)
+
+    def test_19_get_pretrain_state_negative(self):
+        with assert_raises(AmberCloudError) as context:
+            response = self.amber.get_pretrain_state('nonexistent-sensor-id')
+        assert_equal(context.exception.code, 404)
+
+    def test_20_pretrain_sensor(self):
+        with open('output_current.csv', 'r') as f:
+            csv_reader = csv.reader(f, delimiter=',')
+            data = []
+            for row in csv_reader:
+                for d in row:
+                    data.append(float(d))
+
+        results = self.amber.pretrain_sensor(TEST_SENSOR_ID, data, block=True)
+        assert_equal(results['state'], 'Pretrained')
+
+        results = self.amber.pretrain_sensor(TEST_SENSOR_ID, data, block=False)
+        assert_equal(results['state'], 'Pretraining')
+        while True:
+            time.sleep(5)
+            results = self.amber.get_pretrain_state(TEST_SENSOR_ID)
+            if results['state'] == 'Pretraining':
+                continue
+            else:
+                break
+        assert_equal(results['state'], 'Pretrained')
+
+    def test_20_pretrain_sensor_negative(self):
+        with assert_raises(AmberCloudError) as context:
+            response = self.amber.pretrain_sensor('nonexistent-sensor-id', [1, 2, 3, 4, 5], block=True)
+        assert_equal(context.exception.code, 404)
+
+        # not enough data to fill sample buffer
+        with assert_raises(AmberCloudError) as context:
+            response = self.amber.pretrain_sensor(TEST_SENSOR_ID, [1, 2, 3, 4, 5], block=True)
+        assert_equal(context.exception.code, 400)
+
+
 
 class Test3APICall:
 
@@ -338,6 +381,6 @@ if __name__ == '__main__':
     argv = ['nosetests', '--verbosity=2']
     nose.run(defaultTest=__name__ + ':Test1Init', argv=argv)
     nose.run(defaultTest=__name__ + ':Test2Auth', argv=argv)
-    # nose.run(defaultTest=__name__ + ':Test3APICall', argv=argv)
-    # nose.run(defaultTest=__name__ + ':Test4DataHandling', argv=argv)
-    # nose.run(defaultTest=__name__ + ':Test5Endpoints', argv=argv)
+    nose.run(defaultTest=__name__ + ':Test3APICall', argv=argv)
+    nose.run(defaultTest=__name__ + ':Test4DataHandling', argv=argv)
+    nose.run(defaultTest=__name__ + ':Test5Endpoints', argv=argv)
