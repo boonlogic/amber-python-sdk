@@ -143,7 +143,9 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         """
 
-        url = self.server + '/oauth2'
+        oauth_server = os.environ.get('AMBER_OAUTH_SERVER', self.server)
+
+        url = oauth_server + '/oauth2'
         headers = {
             'Content-Type': 'application/json',
             'User-Agent': self.user_agent
