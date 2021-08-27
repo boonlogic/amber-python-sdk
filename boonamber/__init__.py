@@ -469,7 +469,7 @@ class AmberClient():
         }
         body = {
             'data': data_csv,
-            'autotuneConfig': autotuneConfig
+            'autotuneConfig': autotune_config
         }
 
         results = self._api_call('POST', url, headers, body=body)

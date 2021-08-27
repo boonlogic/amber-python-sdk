@@ -5,11 +5,11 @@ with open("README.md", "r") as fh:
 
 setup(
     name='boonamber',
-    version='1.0.14',
+    version='1.0.15',
     author="BoonLogic",
     author_email="amber-support@boonlogic.com",
     packages=['boonamber'],
-    install_requires=['requests'],
+    install_requires=['requests', 'numpy'],
     description="An SDK for Boon Amber sensor analytics",
     long_description=long_description,
     license='MIT',

@@ -497,7 +497,7 @@ class AmberClient():
         }
         body = {
             &#39;data&#39;: data_csv,
-            &#39;autotuneConfig&#39;: autotuneConfig
+            &#39;autotuneConfig&#39;: autotune_config
         }
 
         results = self._api_call(&#39;POST&#39;, url, headers, body=body)
@@ -1336,7 +1336,7 @@ home directory, or optionally overridden using environment variables.</p>
         }
         body = {
             &#39;data&#39;: data_csv,
-            &#39;autotuneConfig&#39;: autotuneConfig
+            &#39;autotuneConfig&#39;: autotune_config
         }
 
         results = self._api_call(&#39;POST&#39;, url, headers, body=body)
@@ -2497,7 +2497,7 @@ status can be checked using get_pretrain_state endpoint.</dd>
     }
     body = {
         &#39;data&#39;: data_csv,
-        &#39;autotuneConfig&#39;: autotuneConfig
+        &#39;autotuneConfig&#39;: autotune_config
     }
 
     results = self._api_call(&#39;POST&#39;, url, headers, body=body)
