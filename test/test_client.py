@@ -5,7 +5,6 @@ import time
 from nose.tools import assert_equal
 from nose.tools import assert_true
 from nose.tools import assert_raises
-from nose.tools import assert_is_instance
 from boonamber import AmberClient, AmberUserError, AmberCloudError
 
 TEST_SENSOR_ID = '0e3acc64e8e069e1'
@@ -281,7 +280,7 @@ class Test5Endpoints:
         assert_equal(results['state'], 'Pretrained')
 
         results = self.amber.pretrain_sensor(TEST_SENSOR_ID, data, block=False)
-        assert_equal(results['state'], 'Pretraining')
+        assert_true('Pretraining' in results['state'] or 'Pretrained' in results['state'])
         while True:
             time.sleep(5)
             results = self.amber.get_pretrain_state(TEST_SENSOR_ID)
