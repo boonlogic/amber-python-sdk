@@ -262,13 +262,14 @@ class Test5Endpoints:
     def test_19_get_pretrain_state(self):
         response = self.amber.get_pretrain_state(TEST_SENSOR_ID)
         assert_true('state' in response)
+        assert_equal(response['state'], 'None')
 
-    def test_19_get_pretrain_state_negative(self):
+    def test_20_get_pretrain_state_negative(self):
         with assert_raises(AmberCloudError) as context:
             response = self.amber.get_pretrain_state('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_20_pretrain_sensor(self):
+    def test_21_pretrain_sensor(self):
         with open('output_current.csv', 'r') as f:
             csv_reader = csv.reader(f, delimiter=',')
             data = []
@@ -290,7 +291,7 @@ class Test5Endpoints:
                 break
         assert_equal(results['state'], 'Pretrained')
 
-    def test_20_pretrain_sensor_negative(self):
+    def test_22_pretrain_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             response = self.amber.pretrain_sensor('nonexistent-sensor-id', [1, 2, 3, 4, 5], block=True)
         assert_equal(context.exception.code, 404)
