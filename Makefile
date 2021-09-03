@@ -14,11 +14,16 @@ format-check:
 	@. local-env/bin/activate && \
 	pycodestyle --first boonamber/__init__.py
 
-test: local-env-check
+# test-v1, test-v1next, test-dev, test-qa, test-aoc, test-oap
+# add additional .license files in test directory to expand / customize tests
+test-%:
 	@. local-env/bin/activate && \
 	cd test && \
-	coverage run --source=boonamber -m nose -x -verbosity=2 test_client.py && \
+	AMBER_LICENSE_ID=$* coverage run --source=boonamber -m nose -x -verbosity=2 test_client.py && \
 	coverage html
+
+# default test target will be against qa
+test: test-qa
 
 pypi:
 	@. local-env/bin/activate && \

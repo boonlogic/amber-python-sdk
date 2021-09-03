@@ -1,16 +1,16 @@
 {
     "default": {
-        "username": "amber-test-user",
+        "username": "im_not_real",
         "password": "filler-password",
-        "server": "https://amber-local.boonlogic.com/pretrain"
+        "server": "https://amber-local.boonlogic.com/dev"
     },
     "missing-username": {
         "password": "filler-password",
-        "server": "https://amber-local.boonlogic.com/pretrain"
+        "server": "https://amber-local.boonlogic.com/dev"
     },
     "missing-password": {
         "username": "amber-test-user",
-        "server": "https://amber-local.boonlogic.com/pretrain"
+        "server": "https://amber-local.boonlogic.com/dev"
     },
     "missing-server": {
         "username": "amber-test-user",
@@ -19,6 +19,6 @@
     "garbage": {
         "username": "garbage-username",
         "password": "garbage-password",
-        "server": "https://amber-local.boonlogic.com/pretrain"
+        "server": "https://amber-local.boonlogic.com/dev"
     }
 }
