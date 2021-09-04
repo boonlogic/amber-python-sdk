@@ -59,7 +59,7 @@ class AmberCloudError(Exception):
         super().__init__(&#34;{}: {}&#34;.format(code, message))
 
 
-class AmberClient():
+class AmberClient:
 
     def __init__(self, license_id=&#39;default&#39;, license_file=&#34;~/.Amber.license&#34;, verify=True, cert=None):
         &#34;&#34;&#34;Main client which interfaces with the Amber cloud. Amber account
@@ -84,6 +84,8 @@ class AmberClient():
 
             `AMBER_SERVER`: overrides the server as found in .Amber.license file
 
+            `AMBER_OAUTH_SERVER`: overrides the oauth server as found in .Amber.license file
+
             `AMBER_SSL_CERT`: path to ssl client cert file (.pem)
 
             `AMBER_SSL_VERIFY`: Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
@@ -96,71 +98,55 @@ class AmberClient():
         self.reauth_time = time.time()
         self.user_agent = &#39;Boon Logic / amber-python-sdk / requests&#39;
 
-        env_license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, None)
-        env_license_id = os.environ.get(&#39;AMBER_LICENSE_ID&#39;, None)
-        env_username = os.environ.get(&#39;AMBER_USERNAME&#39;, None)
-        env_password = os.environ.get(&#39;AMBER_PASSWORD&#39;, None)
-        env_server = os.environ.get(&#39;AMBER_SERVER&#39;, None)
-        env_cert = os.environ.get(&#39;AMBER_SSL_CERT&#39;, None)
-        env_verify = os.environ.get(&#39;AMBER_SSL_VERIFY&#39;, None)
+        # first load from license file, override from environment if specified
+        self.license_file = license_file
+        self.license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, self.license_file)
 
-        # certificates
-        self.cert = env_cert if env_cert else cert
-        if env_verify:
-            if env_verify.lower() == &#39;false&#39;:
-                self.verify = False
-            elif env_verify.lower() == &#39;true&#39;:
-                self.verify = True
-            else:
-                self.verify = env_verify
+        # determine which license_id to use, override from environment if specified
+        self.license_id = license_id
+        self.license_id = os.environ.get(&#39;AMBER_LICENSE_ID&#39;, self.license_id)
+
+        # create license profile
+        if self.license_file is not None:
+            license_path = os.path.expanduser(self.license_file)
+            if not os.path.exists(license_path):
+                raise AmberUserError(&#34;license file {} does not exist&#34;.format(license_path))
+            try:
+                with open(license_path, &#39;r&#39;) as f:
+                    file_data = json.load(f)
+            except json.JSONDecodeError as e:
+                raise AmberUserError(
+                    &#34;JSON formatting error in license file: {}, line: {}, col: {}&#34;.format(e.msg, e.lineno, e.colno))
+            try:
+                self.license_profile = file_data[self.license_id]
+            except KeyError:
+                raise AmberUserError(&#34;license_id \&#34;{}\&#34; not found in license file&#34;.format(self.license_id))
         else:
-            self.verify = verify
+            # no license file found, create a stub profile to be filled in from environment
+            self.license_profile = json.loads(&#39;{&#34;username&#34;: &#34;&#34;, &#34;password&#34;: &#34;&#34;, &#34;server&#34;: &#34;&#34;, &#34;oauth-server&#34;: &#34;&#34;}&#39;)
 
-        if self.verify is False:
+        # override from environment if specified
+        try:
+            self.license_profile[&#39;username&#39;] = os.environ.get(&#39;AMBER_USERNAME&#39;, self.license_profile[&#39;username&#39;])
+            self.license_profile[&#39;password&#39;] = os.environ.get(&#39;AMBER_PASSWORD&#39;, self.license_profile[&#39;password&#39;])
+            self.license_profile[&#39;server&#39;] = os.environ.get(&#39;AMBER_SERVER&#39;, self.license_profile[&#39;server&#39;])
+            self.license_profile[&#39;oauth-server&#39;] = os.environ.get(&#39;AMBER_OAUTH_SERVER&#39;, self.license_profile[&#39;server&#39;])
+            self.license_profile[&#39;cert&#39;] = os.environ.get(&#39;AMBER_SSL_CERT&#39;, cert)
+            verify_str = os.environ.get(&#39;AMBER_SSL_VERIFY&#39;, &#34;true&#34;).lower()
+            self.license_profile[&#39;verify&#39;] = True if verify_str == &#34;true&#34; else False
+        except KeyError as e:
+            raise AmberUserError(&#34;missing field&#34;)
+
+        if self.license_profile[&#39;verify&#39;] is False:
             requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-        # if username, password and server are all specified via environment, we&#39;re done here
-        if env_username and env_password and env_server:
-            self.username = env_username
-            self.password = env_password
-            self.server = env_server
-            return
-
-        # otherwise we acquire either or both of them from license file
-        license_file = env_license_file if env_license_file else license_file
-        license_id = env_license_id if env_license_id else license_id
-
-        license_path = os.path.expanduser(license_file)
-        if not os.path.exists(license_path):
-            raise AmberUserError(&#34;license file {} does not exist&#34;.format(license_path))
-
-        try:
-            with open(license_path, &#39;r&#39;) as f:
-                file_data = json.load(f)
-        except json.JSONDecodeError as e:
-            raise AmberUserError(
-                &#34;JSON formatting error in license file: {}, line: {}, col: {}&#34;.format(e.msg, e.lineno, e.colno))
-
-        try:
-            license_data = file_data[license_id]
-        except KeyError:
-            raise AmberUserError(&#34;license_id \&#34;{}\&#34; not found in license file&#34;.format(license_id))
-
-        # load the username, password and server, still giving precedence to environment
-        try:
-            self.username = env_username if env_username else license_data[&#39;username&#39;]
-        except KeyError:
-            raise AmberUserError(&#34;\&#34;username\&#34; is missing from the specified license in license file&#34;)
-
-        try:
-            self.password = env_password if env_password else license_data[&#39;password&#39;]
-        except KeyError:
-            raise AmberUserError(&#34;\&#34;password\&#34; is missing from the specified license in license file&#34;)
-
-        try:
-            self.server = env_server if env_server else license_data[&#39;server&#39;]
-        except KeyError:
-            raise AmberUserError(&#34;\&#34;server\&#34; is missing from the specified license in license file&#34;)
+        # verify required profile elements have been created
+        if self.license_profile[&#39;username&#39;] == &#34;&#34;:
+            raise AmberUserError(&#34;username \&#34;{}\&#34; not specified&#34;.format(self.license_profile[&#39;username&#39;]))
+        if self.license_profile[&#39;password&#39;] == &#34;&#34;:
+            raise AmberUserError(&#34;password \&#34;{}\&#34; not specified&#34;.format(self.license_profile[&#39;password&#39;]))
+        if self.license_profile[&#39;server&#39;] == &#34;&#34;:
+            raise AmberUserError(&#34;server \&#34;{}\&#34; not specified&#34;.format(self.license_profile[&#39;server&#39;]))
 
     def _authenticate(self):
         &#34;&#34;&#34;Authenticate client for the next hour using the credentials given at
@@ -171,19 +157,20 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/oauth2&#39;
+        url = self.license_profile[&#39;oauth-server&#39;] + &#39;/oauth2&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;User-Agent&#39;: self.user_agent
         }
         body = {
-            &#39;username&#39;: self.username,
-            &#39;password&#39;: self.password
+            &#39;username&#39;: self.license_profile[&#39;username&#39;],
+            &#39;password&#39;: self.license_profile[&#39;password&#39;]
         }
 
         try:
-            response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body, verify=self.verify,
-                                        cert=self.cert)
+            response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body,
+                                        verify=self.license_profile[&#39;verify&#39;],
+                                        cert=self.license_profile[&#39;cert&#39;])
         except Exception as e:
             raise AmberCloudError(401, &#39;invalid server connection&#39;)
         if response.status_code != 200:
@@ -207,11 +194,11 @@ class AmberClient():
 
         headers[&#39;Authorization&#39;] = &#39;Bearer {}&#39;.format(self.token)
         headers[&#39;User-Agent&#39;] = self.user_agent
-        response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify,
-                                    cert=self.cert)
+        response = requests.request(method=method, url=url, headers=headers, json=body,
+                                    verify=self.license_profile[&#39;verify&#39;],
+                                    cert=self.license_profile[&#39;cert&#39;])
 
         if response.status_code != 200 and response.status_code != 202:
-            print(response.json())
             raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
 
         if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != response.status_code:
@@ -239,7 +226,7 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/sensor&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;
         }
@@ -266,7 +253,7 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/sensor&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -290,7 +277,7 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/sensor&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -308,7 +295,7 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/sensors&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/sensors&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;
         }
@@ -363,7 +350,7 @@ class AmberClient():
         if not streaming_window_size &gt; 0 or not isinstance(streaming_window_size, Integral):
             raise AmberUserError(&#34;invalid &#39;streaming_window_size&#39;: must be positive integer&#34;)
 
-        url = self.server + &#39;/config&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -490,7 +477,7 @@ class AmberClient():
         except ValueError as e:
             raise AmberUserError(&#34;invalid data: {}&#34;.format(e))
 
-        url = self.server + &#39;/pretrain&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/pretrain&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -534,7 +521,7 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/pretrain&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/pretrain&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -628,7 +615,7 @@ class AmberClient():
         except ValueError as e:
             raise AmberUserError(&#34;invalid data: {}&#34;.format(e))
 
-        url = self.server + &#39;/stream&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/stream&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -697,7 +684,7 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/sensor&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -751,7 +738,7 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/config&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -798,7 +785,7 @@ class AmberClient():
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/status&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/status&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -843,7 +830,7 @@ class AmberClient():
         else:
             raise AmberUserError(&#39;Must specify either cluster IDs or patterns to analyze&#39;)
 
-        url = self.server + &#39;/&#39; + url_call
+        url = self.license_profile[&#39;server&#39;] + &#39;/&#39; + url_call
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -887,6 +874,7 @@ home directory, or optionally overridden using environment variables.</p>
 <p><code>AMBER_USERNAME</code>: overrides the username as found in .Amber.license file</p>
 <p><code>AMBER_PASSWORD</code>: overrides the password as found in .Amber.license file</p>
 <p><code>AMBER_SERVER</code>: overrides the server as found in .Amber.license file</p>
+<p><code>AMBER_OAUTH_SERVER</code>: overrides the oauth server as found in .Amber.license file</p>
 <p><code>AMBER_SSL_CERT</code>: path to ssl client cert file (.pem)</p>
 <p><code>AMBER_SSL_VERIFY</code>: Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use</p>
 <h2 id="raises">Raises</h2>
@@ -898,7 +886,7 @@ home directory, or optionally overridden using environment variables.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class AmberClient():
+<pre><code class="python">class AmberClient:
 
     def __init__(self, license_id=&#39;default&#39;, license_file=&#34;~/.Amber.license&#34;, verify=True, cert=None):
         &#34;&#34;&#34;Main client which interfaces with the Amber cloud. Amber account
@@ -923,6 +911,8 @@ home directory, or optionally overridden using environment variables.</p>
 
             `AMBER_SERVER`: overrides the server as found in .Amber.license file
 
+            `AMBER_OAUTH_SERVER`: overrides the oauth server as found in .Amber.license file
+
             `AMBER_SSL_CERT`: path to ssl client cert file (.pem)
 
             `AMBER_SSL_VERIFY`: Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
@@ -935,71 +925,55 @@ home directory, or optionally overridden using environment variables.</p>
         self.reauth_time = time.time()
         self.user_agent = &#39;Boon Logic / amber-python-sdk / requests&#39;
 
-        env_license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, None)
-        env_license_id = os.environ.get(&#39;AMBER_LICENSE_ID&#39;, None)
-        env_username = os.environ.get(&#39;AMBER_USERNAME&#39;, None)
-        env_password = os.environ.get(&#39;AMBER_PASSWORD&#39;, None)
-        env_server = os.environ.get(&#39;AMBER_SERVER&#39;, None)
-        env_cert = os.environ.get(&#39;AMBER_SSL_CERT&#39;, None)
-        env_verify = os.environ.get(&#39;AMBER_SSL_VERIFY&#39;, None)
+        # first load from license file, override from environment if specified
+        self.license_file = license_file
+        self.license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, self.license_file)
 
-        # certificates
-        self.cert = env_cert if env_cert else cert
-        if env_verify:
-            if env_verify.lower() == &#39;false&#39;:
-                self.verify = False
-            elif env_verify.lower() == &#39;true&#39;:
-                self.verify = True
-            else:
-                self.verify = env_verify
+        # determine which license_id to use, override from environment if specified
+        self.license_id = license_id
+        self.license_id = os.environ.get(&#39;AMBER_LICENSE_ID&#39;, self.license_id)
+
+        # create license profile
+        if self.license_file is not None:
+            license_path = os.path.expanduser(self.license_file)
+            if not os.path.exists(license_path):
+                raise AmberUserError(&#34;license file {} does not exist&#34;.format(license_path))
+            try:
+                with open(license_path, &#39;r&#39;) as f:
+                    file_data = json.load(f)
+            except json.JSONDecodeError as e:
+                raise AmberUserError(
+                    &#34;JSON formatting error in license file: {}, line: {}, col: {}&#34;.format(e.msg, e.lineno, e.colno))
+            try:
+                self.license_profile = file_data[self.license_id]
+            except KeyError:
+                raise AmberUserError(&#34;license_id \&#34;{}\&#34; not found in license file&#34;.format(self.license_id))
         else:
-            self.verify = verify
+            # no license file found, create a stub profile to be filled in from environment
+            self.license_profile = json.loads(&#39;{&#34;username&#34;: &#34;&#34;, &#34;password&#34;: &#34;&#34;, &#34;server&#34;: &#34;&#34;, &#34;oauth-server&#34;: &#34;&#34;}&#39;)
 
-        if self.verify is False:
+        # override from environment if specified
+        try:
+            self.license_profile[&#39;username&#39;] = os.environ.get(&#39;AMBER_USERNAME&#39;, self.license_profile[&#39;username&#39;])
+            self.license_profile[&#39;password&#39;] = os.environ.get(&#39;AMBER_PASSWORD&#39;, self.license_profile[&#39;password&#39;])
+            self.license_profile[&#39;server&#39;] = os.environ.get(&#39;AMBER_SERVER&#39;, self.license_profile[&#39;server&#39;])
+            self.license_profile[&#39;oauth-server&#39;] = os.environ.get(&#39;AMBER_OAUTH_SERVER&#39;, self.license_profile[&#39;server&#39;])
+            self.license_profile[&#39;cert&#39;] = os.environ.get(&#39;AMBER_SSL_CERT&#39;, cert)
+            verify_str = os.environ.get(&#39;AMBER_SSL_VERIFY&#39;, &#34;true&#34;).lower()
+            self.license_profile[&#39;verify&#39;] = True if verify_str == &#34;true&#34; else False
+        except KeyError as e:
+            raise AmberUserError(&#34;missing field&#34;)
+
+        if self.license_profile[&#39;verify&#39;] is False:
             requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-        # if username, password and server are all specified via environment, we&#39;re done here
-        if env_username and env_password and env_server:
-            self.username = env_username
-            self.password = env_password
-            self.server = env_server
-            return
-
-        # otherwise we acquire either or both of them from license file
-        license_file = env_license_file if env_license_file else license_file
-        license_id = env_license_id if env_license_id else license_id
-
-        license_path = os.path.expanduser(license_file)
-        if not os.path.exists(license_path):
-            raise AmberUserError(&#34;license file {} does not exist&#34;.format(license_path))
-
-        try:
-            with open(license_path, &#39;r&#39;) as f:
-                file_data = json.load(f)
-        except json.JSONDecodeError as e:
-            raise AmberUserError(
-                &#34;JSON formatting error in license file: {}, line: {}, col: {}&#34;.format(e.msg, e.lineno, e.colno))
-
-        try:
-            license_data = file_data[license_id]
-        except KeyError:
-            raise AmberUserError(&#34;license_id \&#34;{}\&#34; not found in license file&#34;.format(license_id))
-
-        # load the username, password and server, still giving precedence to environment
-        try:
-            self.username = env_username if env_username else license_data[&#39;username&#39;]
-        except KeyError:
-            raise AmberUserError(&#34;\&#34;username\&#34; is missing from the specified license in license file&#34;)
-
-        try:
-            self.password = env_password if env_password else license_data[&#39;password&#39;]
-        except KeyError:
-            raise AmberUserError(&#34;\&#34;password\&#34; is missing from the specified license in license file&#34;)
-
-        try:
-            self.server = env_server if env_server else license_data[&#39;server&#39;]
-        except KeyError:
-            raise AmberUserError(&#34;\&#34;server\&#34; is missing from the specified license in license file&#34;)
+        # verify required profile elements have been created
+        if self.license_profile[&#39;username&#39;] == &#34;&#34;:
+            raise AmberUserError(&#34;username \&#34;{}\&#34; not specified&#34;.format(self.license_profile[&#39;username&#39;]))
+        if self.license_profile[&#39;password&#39;] == &#34;&#34;:
+            raise AmberUserError(&#34;password \&#34;{}\&#34; not specified&#34;.format(self.license_profile[&#39;password&#39;]))
+        if self.license_profile[&#39;server&#39;] == &#34;&#34;:
+            raise AmberUserError(&#34;server \&#34;{}\&#34; not specified&#34;.format(self.license_profile[&#39;server&#39;]))
 
     def _authenticate(self):
         &#34;&#34;&#34;Authenticate client for the next hour using the credentials given at
@@ -1010,19 +984,20 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/oauth2&#39;
+        url = self.license_profile[&#39;oauth-server&#39;] + &#39;/oauth2&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;User-Agent&#39;: self.user_agent
         }
         body = {
-            &#39;username&#39;: self.username,
-            &#39;password&#39;: self.password
+            &#39;username&#39;: self.license_profile[&#39;username&#39;],
+            &#39;password&#39;: self.license_profile[&#39;password&#39;]
         }
 
         try:
-            response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body, verify=self.verify,
-                                        cert=self.cert)
+            response = requests.request(method=&#39;POST&#39;, url=url, headers=headers, json=body,
+                                        verify=self.license_profile[&#39;verify&#39;],
+                                        cert=self.license_profile[&#39;cert&#39;])
         except Exception as e:
             raise AmberCloudError(401, &#39;invalid server connection&#39;)
         if response.status_code != 200:
@@ -1046,11 +1021,11 @@ home directory, or optionally overridden using environment variables.</p>
 
         headers[&#39;Authorization&#39;] = &#39;Bearer {}&#39;.format(self.token)
         headers[&#39;User-Agent&#39;] = self.user_agent
-        response = requests.request(method=method, url=url, headers=headers, json=body, verify=self.verify,
-                                    cert=self.cert)
+        response = requests.request(method=method, url=url, headers=headers, json=body,
+                                    verify=self.license_profile[&#39;verify&#39;],
+                                    cert=self.license_profile[&#39;cert&#39;])
 
         if response.status_code != 200 and response.status_code != 202:
-            print(response.json())
             raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
 
         if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != response.status_code:
@@ -1078,7 +1053,7 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/sensor&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;
         }
@@ -1105,7 +1080,7 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/sensor&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1129,7 +1104,7 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/sensor&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1147,7 +1122,7 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/sensors&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/sensors&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;
         }
@@ -1202,7 +1177,7 @@ home directory, or optionally overridden using environment variables.</p>
         if not streaming_window_size &gt; 0 or not isinstance(streaming_window_size, Integral):
             raise AmberUserError(&#34;invalid &#39;streaming_window_size&#39;: must be positive integer&#34;)
 
-        url = self.server + &#39;/config&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1329,7 +1304,7 @@ home directory, or optionally overridden using environment variables.</p>
         except ValueError as e:
             raise AmberUserError(&#34;invalid data: {}&#34;.format(e))
 
-        url = self.server + &#39;/pretrain&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/pretrain&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1373,7 +1348,7 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/pretrain&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/pretrain&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1467,7 +1442,7 @@ home directory, or optionally overridden using environment variables.</p>
         except ValueError as e:
             raise AmberUserError(&#34;invalid data: {}&#34;.format(e))
 
-        url = self.server + &#39;/stream&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/stream&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1536,7 +1511,7 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/sensor&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1590,7 +1565,7 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/config&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1637,7 +1612,7 @@ home directory, or optionally overridden using environment variables.</p>
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
 
-        url = self.server + &#39;/status&#39;
+        url = self.license_profile[&#39;server&#39;] + &#39;/status&#39;
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1682,7 +1657,7 @@ home directory, or optionally overridden using environment variables.</p>
         else:
             raise AmberUserError(&#39;Must specify either cluster IDs or patterns to analyze&#39;)
 
-        url = self.server + &#39;/&#39; + url_call
+        url = self.license_profile[&#39;server&#39;] + &#39;/&#39; + url_call
         headers = {
             &#39;Content-Type&#39;: &#39;application/json&#39;,
             &#39;sensorId&#39;: sensor_id
@@ -1791,7 +1766,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     if not streaming_window_size &gt; 0 or not isinstance(streaming_window_size, Integral):
         raise AmberUserError(&#34;invalid &#39;streaming_window_size&#39;: must be positive integer&#34;)
 
-    url = self.server + &#39;/config&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
         &#39;sensorId&#39;: sensor_id
@@ -1848,7 +1823,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    url = self.server + &#39;/sensor&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;
     }
@@ -1893,7 +1868,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    url = self.server + &#39;/sensor&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
         &#39;sensorId&#39;: sensor_id
@@ -2001,7 +1976,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    url = self.server + &#39;/config&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
         &#39;sensorId&#39;: sensor_id
@@ -2061,7 +2036,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    url = self.server + &#39;/pretrain&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/pretrain&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
         &#39;sensorId&#39;: sensor_id
@@ -2137,7 +2112,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     else:
         raise AmberUserError(&#39;Must specify either cluster IDs or patterns to analyze&#39;)
 
-    url = self.server + &#39;/&#39; + url_call
+    url = self.license_profile[&#39;server&#39;] + &#39;/&#39; + url_call
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
         &#39;sensorId&#39;: sensor_id
@@ -2268,7 +2243,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    url = self.server + &#39;/sensor&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
         &#39;sensorId&#39;: sensor_id
@@ -2363,7 +2338,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    url = self.server + &#39;/status&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/status&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
         &#39;sensorId&#39;: sensor_id
@@ -2402,7 +2377,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    url = self.server + &#39;/sensors&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/sensors&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;
     }
@@ -2490,7 +2465,7 @@ status can be checked using get_pretrain_state endpoint.</dd>
     except ValueError as e:
         raise AmberUserError(&#34;invalid data: {}&#34;.format(e))
 
-    url = self.server + &#39;/pretrain&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/pretrain&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
         &#39;sensorId&#39;: sensor_id
@@ -2686,7 +2661,7 @@ equal length.</dd>
     except ValueError as e:
         raise AmberUserError(&#34;invalid data: {}&#34;.format(e))
 
-    url = self.server + &#39;/stream&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/stream&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
         &#39;sensorId&#39;: sensor_id
@@ -2740,7 +2715,7 @@ equal length.</dd>
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
 
-    url = self.server + &#39;/sensor&#39;
+    url = self.license_profile[&#39;server&#39;] + &#39;/sensor&#39;
     headers = {
         &#39;Content-Type&#39;: &#39;application/json&#39;,
         &#39;sensorId&#39;: sensor_id

@@ -184,6 +184,24 @@ class AmberClient:
 
         return response.json()
 
+    def get_version(self):
+        """Get version information for Amber
+
+        Returns:
+            json version information
+
+        Raises:
+            AmberCloudError: if Amber cloud gives non-200 response
+        """
+
+        url = self.license_profile['server'] + '/version'
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        response = self._api_call('GET', url, headers)
+
+        return response
+
     def create_sensor(self, label=''):
         """Create a new sensor instance
 

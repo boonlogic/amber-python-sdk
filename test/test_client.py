@@ -3,6 +3,7 @@ import os
 import time
 from nose.tools import assert_equal
 from nose.tools import assert_true
+from nose.tools import assert_false
 from nose.tools import assert_raises
 from nose.tools import assert_not_equal
 from nose.tools import assert_is_not_none
@@ -429,3 +430,19 @@ class Test_04_CSVConvert:
         assert_raises(ValueError, amber._convert_to_csv, [[1, 2], [3, 4, 5]])  # ragged array
         assert_raises(ValueError, amber._convert_to_csv, [[[1, 2, 3, 4]]])  # nested too deep
         assert_raises(ValueError, amber._convert_to_csv, [[[1], [2], [3], [4]]])
+
+
+class Test_05_Version:
+
+    def test_01_version(self):
+        amber = AmberClient(license_id=None, license_file=None)
+        version = amber.get_version()
+        assert_equal(7, len(version.keys()))
+        assert_true('api-version' in version.keys())
+        assert_true('builder' in version.keys())
+        assert_true('expert-api' in version.keys())
+        assert_true('expert-common' in version.keys())
+        assert_true('nano-secure' in version.keys())
+        assert_true('release' in version.keys())
+        assert_true('swagger-ui' in version.keys())
+        assert_false('rXelXeXaseX' in version.keys())
