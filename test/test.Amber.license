@@ -1,8 +1,9 @@
 {
     "default": {
-        "username": "im_not_real",
-        "password": "filler-password",
-        "server": "https://amber-local.boonlogic.com/dev"
+        "username": "admin",
+        "password": "admin",
+        "server": "https://localhost:5007/v1",
+        "oauth-server": "https://localhost:5007/v1"
     },
     "missing-username": {
         "password": "filler-password",
