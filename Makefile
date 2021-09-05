@@ -22,6 +22,15 @@ test-%:
 	AMBER_LICENSE_ID=$* coverage run --source=boonamber -m nose -x -verbosity=2 test_client.py && \
 	coverage html
 
+# run test profile from 'default' profile in test.Amber.license
+test-local:
+	@. local-env/bin/activate && \
+	cd test && \
+	AMBER_LICENSE_ID=default \
+	AMBER_LICENSE_FILE=test.Amber.license \
+	coverage run --source=boonamber -m nose -x -verbosity=2 test_client.py && \
+	coverage html
+
 # default test target will be against qa
 test: test-qa
 

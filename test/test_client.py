@@ -20,17 +20,29 @@ license_profile = {}
 # secrets downloaded from points beyond
 def amber_set_test_profile():
     global license_id, license_profile
-    if license_id is None:
-        license_id = os.environ.get('AMBER_LICENSE_ID', None)
-        assert_is_not_none(license_id, 'AMBER_LICENSE_ID must be specified in environment')
-        secret_dict = get_secrets()
-        license_profile = secret_dict.get(license_id, None)
-        assert_is_not_none(license_profile, 'license_id {} not found')
 
-    os.environ['AMBER_USERNAME'] = license_profile['username']
-    os.environ['AMBER_PASSWORD'] = license_profile['password']
-    os.environ['AMBER_SERVER'] = license_profile['server']
-    os.environ['AMBER_OAUTH_SERVER'] = license_profile.get('oauth-server', license_profile['server'])
+    local_license_file = os.environ.get('AMBER_LICENSE_FILE')
+    if os.environ.get('AMBER_LICENSE_FILE', None) is not None:
+        # load credential set for test using the AMBER_LICENSE_FILE specified
+        # in the environment
+        amber_client = AmberClient()
+        os.environ['AMBER_USERNAME'] = amber_client.license_profile['username']
+        os.environ['AMBER_PASSWORD'] = amber_client.license_profile['password']
+        os.environ['AMBER_SERVER'] = amber_client.license_profile['server']
+        os.environ['AMBER_OAUTH_SERVER'] = amber_client.license_profile['oauth-server']
+    else:
+        # load credential set from secrets manager, AMBER_LICENSE_ID must be specified in environment
+        # to select which credential set to use
+        if license_id is None:
+            license_id = os.environ.get('AMBER_LICENSE_ID', None)
+            assert_is_not_none(license_id, 'AMBER_LICENSE_ID must be specified in environment')
+            secret_dict = get_secrets()
+            license_profile = secret_dict.get(license_id, None)
+            assert_is_not_none(license_profile, 'license_id {} not found')
+        os.environ['AMBER_USERNAME'] = license_profile['username']
+        os.environ['AMBER_PASSWORD'] = license_profile['password']
+        os.environ['AMBER_SERVER'] = license_profile['server']
+        os.environ['AMBER_OAUTH_SERVER'] = license_profile.get('oauth-server', license_profile['server'])
 
 
 class Test_01_AmberInstance:
@@ -129,7 +141,7 @@ class Test_02_Authenticate:
 class Test_03_SensorOps:
     # class variables
     amber = None
-    sensor_id = ""
+    sensor_id = None
 
     def test_01_create_sensor(self):
 
@@ -137,7 +149,16 @@ class Test_03_SensorOps:
 
         Test_03_SensorOps.amber = AmberClient(license_file=None, license_id=None)
         try:
-            Test_03_SensorOps.sensor_id = Test_03_SensorOps.amber.create_sensor('test-sensor')
+
+            sensor_list = Test_03_SensorOps.amber.list_sensors()
+            for sensor, label in sensor_list.items():
+                # look for existing test sensors
+                if label == 'test-sensor':
+                    Test_03_SensorOps.sensor_id = sensor
+                    break
+            if Test_03_SensorOps.sensor_id is None:
+                # create a sensor if no test sensors found
+                Test_03_SensorOps.sensor_id = Test_03_SensorOps.amber.create_sensor('test-sensor')
             assert_not_equal(Test_03_SensorOps.sensor_id, None)
             assert_not_equal(Test_03_SensorOps.sensor_id, "")
         except Exception as e:
