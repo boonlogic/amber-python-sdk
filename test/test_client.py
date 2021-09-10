@@ -153,12 +153,12 @@ class Test_03_SensorOps:
             sensor_list = Test_03_SensorOps.amber.list_sensors()
             for sensor, label in sensor_list.items():
                 # look for existing test sensors
-                if label == 'test-sensor':
+                if label == 'test-sensor-python':
                     Test_03_SensorOps.sensor_id = sensor
                     break
             if Test_03_SensorOps.sensor_id is None:
                 # create a sensor if no test sensors found
-                Test_03_SensorOps.sensor_id = Test_03_SensorOps.amber.create_sensor('test-sensor')
+                Test_03_SensorOps.sensor_id = Test_03_SensorOps.amber.create_sensor('test-sensor-python')
             assert_not_equal(Test_03_SensorOps.sensor_id, None)
             assert_not_equal(Test_03_SensorOps.sensor_id, "")
         except Exception as e:
@@ -169,23 +169,18 @@ class Test_03_SensorOps:
         assert_equal(label, 'new-label')
 
         try:
-            Test_03_SensorOps.amber.update_label(Test_03_SensorOps.sensor_id, 'test-sensor')
+            Test_03_SensorOps.amber.update_label(Test_03_SensorOps.sensor_id, 'test-sensor-python')
         except Exception as e:
-            raise RuntimeError("teardown failed, label was not changed back to 'test-sensor': {}".format(e))
+            raise RuntimeError("teardown failed, label was not changed back to 'test-sensor-python': {}".format(e))
 
     def test_03_update_label_negative(self):
         with assert_raises(AmberCloudError) as context:
-            label = Test_03_SensorOps.amber.update_label('nonexistent-sensor-id', 'test-sensor')
+            label = Test_03_SensorOps.amber.update_label('nonexistent-sensor-id', 'test-sensor-python')
         assert_equal(context.exception.code, 404)
 
     def test_04_get_sensor(self):
-        expected = {
-            'label': 'test-sensor',
-            'sensorId': Test_03_SensorOps.sensor_id,
-            'tenantId': 'amber-test-user'
-        }
         sensor = Test_03_SensorOps.amber.get_sensor(Test_03_SensorOps.sensor_id)
-        assert_equal(sensor['label'], 'test-sensor')
+        assert_equal(sensor['label'], 'test-sensor-python')
         assert_equal(sensor['sensorId'], Test_03_SensorOps.sensor_id)
         assert_true('usageInfo' in sensor)
 

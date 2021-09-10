@@ -1,4 +1,5 @@
 import sys
+import json
 from boonamber import AmberClient, AmberCloudError, AmberUserError
 
 # if you wish to turn off tls certificate warnings
@@ -15,7 +16,7 @@ amber = AmberClient()
 
 try:
     # Get a list of all sensors belonging to the current user.
-    sensors = amber.list_sensors()
+    version_info = amber.get_version()
 except AmberCloudError as e:
     # AmberCloudError is raised upon any error response from the Amber server.
     print("Amber Cloud error: {}".format(e))
@@ -25,4 +26,4 @@ except AmberUserError as e:
     print("Amber user error: {}".format(e))
     sys.exit(1)
 
-print("sensors: {}".format(sensors))
+print(json.dumps(version_info, indent=4))
