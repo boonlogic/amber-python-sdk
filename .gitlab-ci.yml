@@ -51,10 +51,8 @@ system-test-aol:
     include:
       - project: 'development/builder'
         file: 'pipelines/base/pipeline.yml'
-        branch: ${CI_COMMIT_REF_NAME}
       - project: 'development/builder'
         file: '/pipelines/expert-api/system-test.yml'
-        branch: ${CI_COMMIT_REF_NAME}
 
 system-test-aop-sw:
   stage: system-test
@@ -62,10 +60,8 @@ system-test-aop-sw:
     include:
       - project: 'development/builder'
         file: 'pipelines/base/pipeline.yml'
-        branch: ${CI_COMMIT_REF_NAME}
       - project: 'development/builder'
         file: '/pipelines/expert-api/system-test.yml'
-        branch: ${CI_COMMIT_REF_NAME}
 
 system-test-aop-sgx:
   stage: system-test
@@ -73,7 +69,5 @@ system-test-aop-sgx:
     include:
       - project: 'development/builder'
         file: 'pipelines/base/pipeline.yml'
-        branch: ${CI_COMMIT_REF_NAME}
       - project: 'development/builder'
         file: '/pipelines/expert-api/system-test.yml'
-        branch: ${CI_COMMIT_REF_NAME}
