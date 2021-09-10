@@ -1,4 +1,5 @@
 import sys
+import json
 from boonamber import AmberClient, AmberCloudError, AmberUserError
 
 """Demonstrates usage of all Amber SDK endpoints."""
@@ -7,6 +8,19 @@ from boonamber import AmberClient, AmberCloudError, AmberUserError
 # use 'license_id=<name>' to specify something other than 'default'
 amber = AmberClient()
 
+# List all sensors belonging to current user
+print("getting version info")
+try:
+    version_info = amber.get_version()
+except AmberCloudError as e:
+    print(e)
+    sys.exit(1)
+except AmberUserError as e:
+    print(e)
+    sys.exit(1)
+print(json.dumps(version_info, indent=4))
+
+print()
 # List all sensors belonging to current user
 print("listing sensors")
 try:
@@ -115,7 +129,7 @@ print()
 # Get clustering status from a sensor
 print("getting root cause")
 try:
-    root_cause = amber.get_root_cause(sensor_id, cluster_id=[1,2])
+    root_cause = amber.get_root_cause(sensor_id, id_list=[1, 2])
 except AmberCloudError as e:
     print("Amber Cloud error: {}".format(e))
     sys.exit(1)

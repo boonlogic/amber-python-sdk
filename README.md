@@ -39,20 +39,49 @@ The following Python script provides a basic proof-of-connectivity:
 [connect-example.py](examples/connect-example.py)
 
 ```python
-from boonamber import AmberClient
+import sys
+import json
+from boonamber import AmberClient, AmberCloudError, AmberUserError
+
+# if you wish to turn off tls certificate warnings
+# import urllib3
+# urllib3.disable_warnings()
+#
+# Alternatively invoke python with -Wignore
+#
 
 # At initialization the client discovers Amber account credentials
 # under the "default" entry in the ~/.Amber.license file.
+#amber = AmberClient(verify=False)
 amber = AmberClient()
 
-sensors = amber.list_sensors()
-print("sensors: {}".format(sensors))
+try:
+    # Get a list of all sensors belonging to the current user.
+    version_info = amber.get_version()
+except AmberCloudError as e:
+    # AmberCloudError is raised upon any error response from the Amber server.
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    # AmberUserError is raised upon client-side usage errors with the SDK.
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
+
+print(json.dumps(version_info, indent=4))
 ```
 
 Running the connect-example.py script should yield output like the following:
 ```
 $ python connect-example.py
-sensors: {}
+{
+    "release": "0.0.405",
+    "api-version": "/v1",
+    "builder": "ec74f421",
+    "expert-api": "dee23681",
+    "expert-common": "300a588e",
+    "nano-secure": "61c431e2",
+    "swagger-ui": "914af396"
+}
 ```
 where the dictionary `{}` lists all sensors that currently exist under the given Boon Amber account.
 
