@@ -33,7 +33,7 @@ class AmberCloudError(Exception):
 
 class AmberClient:
 
-    def __init__(self, license_id='default', license_file="~/.Amber.license", verify=True, cert=None):
+    def __init__(self, license_id='default', license_file="~/.Amber.license", verify=True, cert=None, timeout=300):
         """Main client which interfaces with the Amber cloud. Amber account
         credentials are discovered within a .Amber.license file located in the
         home directory, or optionally overridden using environment variables.
@@ -69,6 +69,7 @@ class AmberClient:
         self.token = None
         self.reauth_time = time.time()
         self.user_agent = 'Boon Logic / amber-python-sdk / requests'
+        self.timeout = timeout
 
         # first load from license file, override from environment if specified
         self.license_file = license_file
@@ -144,7 +145,10 @@ class AmberClient:
         try:
             response = requests.request(method='POST', url=url, headers=headers, json=body,
                                         verify=self.license_profile['verify'],
-                                        cert=self.license_profile['cert'])
+                                        cert=self.license_profile['cert'],
+                                        timeout=self.timeout)
+        except requests.exceptions.Timeout:
+            raise AmberCloudError(500, "request timed out")
         except Exception as e:
             raise AmberCloudError(401, 'invalid server connection')
         if response.status_code != 200:
@@ -168,9 +172,14 @@ class AmberClient:
 
         headers['Authorization'] = 'Bearer {}'.format(self.token)
         headers['User-Agent'] = self.user_agent
-        response = requests.request(method=method, url=url, headers=headers, json=body,
-                                    verify=self.license_profile['verify'],
-                                    cert=self.license_profile['cert'])
+        try:
+            response = requests.request(method=method, url=url, headers=headers, json=body,
+                                        verify=self.license_profile['verify'],
+                                        cert=self.license_profile['cert'],
+                                        timeout=self.timeout)
+        except requests.exceptions.Timeout:
+            # request timed out
+            raise AmberCloudError(500, "request timed out")
 
         if response.status_code != 200 and response.status_code != 202:
             raise AmberCloudError(response.status_code, response.json()['message'])
