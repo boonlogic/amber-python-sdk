@@ -212,6 +212,24 @@ class AmberClient:
 
         return response.json()
 
+    def get_version(self):
+        &#34;&#34;&#34;Get version information for Amber
+
+        Returns:
+            json version information
+
+        Raises:
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/version&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;
+        }
+        response = self._api_call(&#39;GET&#39;, url, headers)
+
+        return response
+
     def create_sensor(self, label=&#39;&#39;):
         &#34;&#34;&#34;Create a new sensor instance
 
@@ -1038,6 +1056,24 @@ home directory, or optionally overridden using environment variables.</p>
             raise AmberCloudError(500, response.json()[&#39;errorMessage&#39;])
 
         return response.json()
+
+    def get_version(self):
+        &#34;&#34;&#34;Get version information for Amber
+
+        Returns:
+            json version information
+
+        Raises:
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/version&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;
+        }
+        response = self._api_call(&#39;GET&#39;, url, headers)
+
+        return response
 
     def create_sensor(self, label=&#39;&#39;):
         &#34;&#34;&#34;Create a new sensor instance
@@ -2348,6 +2384,41 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     return status</code></pre>
 </details>
 </dd>
+<dt id="boonamber.AmberClient.get_version"><code class="name flex">
+<span>def <span class="ident">get_version</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get version information for Amber</p>
+<h2 id="returns">Returns</h2>
+<p>json version information</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code><a title="boonamber.AmberCloudError" href="#boonamber.AmberCloudError">AmberCloudError</a></code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_version(self):
+    &#34;&#34;&#34;Get version information for Amber
+
+    Returns:
+        json version information
+
+    Raises:
+        AmberCloudError: if Amber cloud gives non-200 response
+    &#34;&#34;&#34;
+
+    url = self.license_profile[&#39;server&#39;] + &#39;/version&#39;
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/json&#39;
+    }
+    response = self._api_call(&#39;GET&#39;, url, headers)
+
+    return response</code></pre>
+</details>
+</dd>
 <dt id="boonamber.AmberClient.list_sensors"><code class="name flex">
 <span>def <span class="ident">list_sensors</span></span>(<span>self)</span>
 </code></dt>
@@ -2799,6 +2870,7 @@ equal length.</dd>
 <li><code><a title="boonamber.AmberClient.get_root_cause" href="#boonamber.AmberClient.get_root_cause">get_root_cause</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_sensor" href="#boonamber.AmberClient.get_sensor">get_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_status" href="#boonamber.AmberClient.get_status">get_status</a></code></li>
+<li><code><a title="boonamber.AmberClient.get_version" href="#boonamber.AmberClient.get_version">get_version</a></code></li>
 <li><code><a title="boonamber.AmberClient.list_sensors" href="#boonamber.AmberClient.list_sensors">list_sensors</a></code></li>
 <li><code><a title="boonamber.AmberClient.pretrain_sensor" href="#boonamber.AmberClient.pretrain_sensor">pretrain_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.stream_sensor" href="#boonamber.AmberClient.stream_sensor">stream_sensor</a></code></li>
