@@ -69,7 +69,7 @@ class AmberClient:
         Args:
             license_id (str): license identifier label found within .Amber.license file
             license_file (str): path to .Amber.license file
-            verify:  Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
+            verify:  Boolean, controls whether we verify the server’s TLS certificate
             cert (bool): if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.
 
         Environment:
@@ -133,7 +133,9 @@ class AmberClient:
             self.license_profile[&#39;oauth-server&#39;] = os.environ.get(&#39;AMBER_OAUTH_SERVER&#39;, self.license_profile[&#39;server&#39;])
             self.license_profile[&#39;cert&#39;] = os.environ.get(&#39;AMBER_SSL_CERT&#39;, cert)
             verify_str = os.environ.get(&#39;AMBER_SSL_VERIFY&#39;, &#34;true&#34;).lower()
-            self.license_profile[&#39;verify&#39;] = True if verify_str == &#34;true&#34; else False
+            self.license_profile[&#39;verify&#39;] = True  # Default
+            if not verify or verify_str == &#34;false&#34;:
+                self.license_profile[&#39;verify&#39;] = False
         except KeyError as e:
             raise AmberUserError(&#34;missing field&#34;)
 
@@ -882,7 +884,7 @@ home directory, or optionally overridden using environment variables.</p>
 <dt><strong><code>license_file</code></strong> :&ensp;<code>str</code></dt>
 <dd>path to .Amber.license file</dd>
 <dt><strong><code>verify</code></strong></dt>
-<dd>Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use</dd>
+<dd>Boolean, controls whether we verify the server’s TLS certificate</dd>
 <dt><strong><code>cert</code></strong> :&ensp;<code>bool</code></dt>
 <dd>if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.</dd>
 </dl>
@@ -914,7 +916,7 @@ home directory, or optionally overridden using environment variables.</p>
         Args:
             license_id (str): license identifier label found within .Amber.license file
             license_file (str): path to .Amber.license file
-            verify:  Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
+            verify:  Boolean, controls whether we verify the server’s TLS certificate
             cert (bool): if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.
 
         Environment:
@@ -978,7 +980,9 @@ home directory, or optionally overridden using environment variables.</p>
             self.license_profile[&#39;oauth-server&#39;] = os.environ.get(&#39;AMBER_OAUTH_SERVER&#39;, self.license_profile[&#39;server&#39;])
             self.license_profile[&#39;cert&#39;] = os.environ.get(&#39;AMBER_SSL_CERT&#39;, cert)
             verify_str = os.environ.get(&#39;AMBER_SSL_VERIFY&#39;, &#34;true&#34;).lower()
-            self.license_profile[&#39;verify&#39;] = True if verify_str == &#34;true&#34; else False
+            self.license_profile[&#39;verify&#39;] = True  # Default
+            if not verify or verify_str == &#34;false&#34;:
+                self.license_profile[&#39;verify&#39;] = False
         except KeyError as e:
             raise AmberUserError(&#34;missing field&#34;)
 
