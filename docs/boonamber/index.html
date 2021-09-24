@@ -181,16 +181,17 @@ class AmberClient:
         except Exception as e:
             raise AmberCloudError(401, &#39;invalid server connection&#39;)
         if response.status_code != 200:
-            message = &#34;authentication failed: {}&#34;.format(response.json()[&#39;message&#39;])
+            message = &#34;authentication failed: {}&#34;.format(response.json().get(&#39;message&#39;, &#39;no message&#39;))
             raise AmberCloudError(response.status_code, message)
 
         # invalid credentials return a 200 where token is an empty string
-        if not response.json()[&#39;idToken&#39;]:
+        self.token = response.json().get(&#39;idToken&#39;)
+        if self.token is None:
             raise AmberCloudError(401, &#34;authentication failed: invalid credentials&#34;)
 
-        self.token = response.json()[&#39;idToken&#39;]
-
-        expire_secs = int(response.json()[&#39;expiresIn&#39;])
+        expire_secs = int(response.json().get(&#39;expiresIn&#39;))
+        if expire_secs is None:
+            raise AmberCloudError(401, &#34;authentication failed: missing expiration&#34;)
         self.reauth_time = time.time() + expire_secs - 60
 
     def _api_call(self, method, url, headers, body=None):
@@ -211,12 +212,12 @@ class AmberClient:
             raise AmberCloudError(500, &#34;request timed out&#34;)
 
         if response.status_code != 200 and response.status_code != 202:
-            raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
+            raise AmberCloudError(response.status_code, response.json().get(&#39;message&#39;, &#39;no message&#39;))
 
         if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != response.status_code:
             # todo: if this happens, there is a bug in the amber service.
             # is returned in the message, it should agree with the header
-            raise AmberCloudError(response.json()[&#39;code&#39;], response.json()[&#39;message&#39;])
+            raise AmberCloudError(response.json()[&#39;code&#39;], response.json().get(&#39;message&#39;, &#39;no message&#39;))
 
         # todo: we should not see errorMessage in the response.  It indicates a misconfigured API gateway
         if &#39;errorMessage&#39; in response.json():
@@ -1038,16 +1039,17 @@ home directory, or optionally overridden using environment variables.</p>
         except Exception as e:
             raise AmberCloudError(401, &#39;invalid server connection&#39;)
         if response.status_code != 200:
-            message = &#34;authentication failed: {}&#34;.format(response.json()[&#39;message&#39;])
+            message = &#34;authentication failed: {}&#34;.format(response.json().get(&#39;message&#39;, &#39;no message&#39;))
             raise AmberCloudError(response.status_code, message)
 
         # invalid credentials return a 200 where token is an empty string
-        if not response.json()[&#39;idToken&#39;]:
+        self.token = response.json().get(&#39;idToken&#39;)
+        if self.token is None:
             raise AmberCloudError(401, &#34;authentication failed: invalid credentials&#34;)
 
-        self.token = response.json()[&#39;idToken&#39;]
-
-        expire_secs = int(response.json()[&#39;expiresIn&#39;])
+        expire_secs = int(response.json().get(&#39;expiresIn&#39;))
+        if expire_secs is None:
+            raise AmberCloudError(401, &#34;authentication failed: missing expiration&#34;)
         self.reauth_time = time.time() + expire_secs - 60
 
     def _api_call(self, method, url, headers, body=None):
@@ -1068,12 +1070,12 @@ home directory, or optionally overridden using environment variables.</p>
             raise AmberCloudError(500, &#34;request timed out&#34;)
 
         if response.status_code != 200 and response.status_code != 202:
-            raise AmberCloudError(response.status_code, response.json()[&#39;message&#39;])
+            raise AmberCloudError(response.status_code, response.json().get(&#39;message&#39;, &#39;no message&#39;))
 
         if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != response.status_code:
             # todo: if this happens, there is a bug in the amber service.
             # is returned in the message, it should agree with the header
-            raise AmberCloudError(response.json()[&#39;code&#39;], response.json()[&#39;message&#39;])
+            raise AmberCloudError(response.json()[&#39;code&#39;], response.json().get(&#39;message&#39;, &#39;no message&#39;))
 
         # todo: we should not see errorMessage in the response.  It indicates a misconfigured API gateway
         if &#39;errorMessage&#39; in response.json():
