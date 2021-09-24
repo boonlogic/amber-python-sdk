@@ -98,6 +98,19 @@ class Test_01_AmberInstance:
         assert_equal(profile3.license_profile['cert'], "bogus_ssl_cert")
         assert_equal(profile3.license_profile['verify'], False)
 
+        # set configuration through environment with non-existent license file
+        os.environ['AMBER_USERNAME'] = "EnvironmentAmberUser"
+        os.environ['AMBER_PASSWORD'] = "bogus_password"
+        os.environ['AMBER_SERVER'] = "https://temp.amber.boonlogic.com/v1"
+        os.environ['AMBER_SSL_CERT'] = "bogus_ssl_cert"
+        os.environ['AMBER_SSL_VERIFY'] = "false"
+        profile4 = AmberClient(license_file='bogus.Amber.license')
+        assert_equal(profile4.license_profile['server'], "https://temp.amber.boonlogic.com/v1")
+        assert_equal(profile4.license_profile['username'], "EnvironmentAmberUser")
+        assert_equal(profile4.license_profile['password'], "bogus_password")
+        assert_equal(profile4.license_profile['cert'], "bogus_ssl_cert")
+        assert_equal(profile4.license_profile['verify'], False)
+
         Test_01_AmberInstance.restore_environment()
 
     def test_02_init_negative(self):
