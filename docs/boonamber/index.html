@@ -111,17 +111,18 @@ class AmberClient:
         if self.license_file is not None:
             license_path = os.path.expanduser(self.license_file)
             if not os.path.exists(license_path):
-                raise AmberUserError(&#34;license file {} does not exist&#34;.format(license_path))
-            try:
-                with open(license_path, &#39;r&#39;) as f:
-                    file_data = json.load(f)
-            except json.JSONDecodeError as e:
-                raise AmberUserError(
-                    &#34;JSON formatting error in license file: {}, line: {}, col: {}&#34;.format(e.msg, e.lineno, e.colno))
-            try:
-                self.license_profile = file_data[self.license_id]
-            except KeyError:
-                raise AmberUserError(&#34;license_id \&#34;{}\&#34; not found in license file&#34;.format(self.license_id))
+                self.license_profile = json.loads(&#39;{&#34;username&#34;: &#34;&#34;, &#34;password&#34;: &#34;&#34;, &#34;server&#34;: &#34;&#34;, &#34;oauth-server&#34;: &#34;&#34;}&#39;)
+            else:
+                try:
+                    with open(license_path, &#39;r&#39;) as f:
+                        file_data = json.load(f)
+                except json.JSONDecodeError as e:
+                    raise AmberUserError(
+                        &#34;JSON formatting error in license file: {}, line: {}, col: {}&#34;.format(e.msg, e.lineno, e.colno))
+                try:
+                    self.license_profile = file_data[self.license_id]
+                except KeyError:
+                    raise AmberUserError(&#34;license_id \&#34;{}\&#34; not found in license file&#34;.format(self.license_id))
         else:
             # no license file found, create a stub profile to be filled in from environment
             self.license_profile = json.loads(&#39;{&#34;username&#34;: &#34;&#34;, &#34;password&#34;: &#34;&#34;, &#34;server&#34;: &#34;&#34;, &#34;oauth-server&#34;: &#34;&#34;}&#39;)
@@ -967,17 +968,18 @@ home directory, or optionally overridden using environment variables.</p>
         if self.license_file is not None:
             license_path = os.path.expanduser(self.license_file)
             if not os.path.exists(license_path):
-                raise AmberUserError(&#34;license file {} does not exist&#34;.format(license_path))
-            try:
-                with open(license_path, &#39;r&#39;) as f:
-                    file_data = json.load(f)
-            except json.JSONDecodeError as e:
-                raise AmberUserError(
-                    &#34;JSON formatting error in license file: {}, line: {}, col: {}&#34;.format(e.msg, e.lineno, e.colno))
-            try:
-                self.license_profile = file_data[self.license_id]
-            except KeyError:
-                raise AmberUserError(&#34;license_id \&#34;{}\&#34; not found in license file&#34;.format(self.license_id))
+                self.license_profile = json.loads(&#39;{&#34;username&#34;: &#34;&#34;, &#34;password&#34;: &#34;&#34;, &#34;server&#34;: &#34;&#34;, &#34;oauth-server&#34;: &#34;&#34;}&#39;)
+            else:
+                try:
+                    with open(license_path, &#39;r&#39;) as f:
+                        file_data = json.load(f)
+                except json.JSONDecodeError as e:
+                    raise AmberUserError(
+                        &#34;JSON formatting error in license file: {}, line: {}, col: {}&#34;.format(e.msg, e.lineno, e.colno))
+                try:
+                    self.license_profile = file_data[self.license_id]
+                except KeyError:
+                    raise AmberUserError(&#34;license_id \&#34;{}\&#34; not found in license file&#34;.format(self.license_id))
         else:
             # no license file found, create a stub profile to be filled in from environment
             self.license_profile = json.loads(&#39;{&#34;username&#34;: &#34;&#34;, &#34;password&#34;: &#34;&#34;, &#34;server&#34;: &#34;&#34;, &#34;oauth-server&#34;: &#34;&#34;}&#39;)
