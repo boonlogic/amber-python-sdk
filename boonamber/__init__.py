@@ -153,16 +153,17 @@ class AmberClient:
         except Exception as e:
             raise AmberCloudError(401, 'invalid server connection')
         if response.status_code != 200:
-            message = "authentication failed: {}".format(response.json()['message'])
+            message = "authentication failed: {}".format(response.json().get('message', 'no message'))
             raise AmberCloudError(response.status_code, message)
 
         # invalid credentials return a 200 where token is an empty string
-        if not response.json()['idToken']:
+        self.token = response.json().get('idToken')
+        if self.token is None:
             raise AmberCloudError(401, "authentication failed: invalid credentials")
 
-        self.token = response.json()['idToken']
-
-        expire_secs = int(response.json()['expiresIn'])
+        expire_secs = int(response.json().get('expiresIn'))
+        if expire_secs is None:
+            raise AmberCloudError(401, "authentication failed: missing expiration")
         self.reauth_time = time.time() + expire_secs - 60
 
     def _api_call(self, method, url, headers, body=None):
@@ -183,12 +184,12 @@ class AmberClient:
             raise AmberCloudError(500, "request timed out")
 
         if response.status_code != 200 and response.status_code != 202:
-            raise AmberCloudError(response.status_code, response.json()['message'])
+            raise AmberCloudError(response.status_code, response.json().get('message', 'no message'))
 
         if 'code' in response.json() and response.json()['code'] != response.status_code:
             # todo: if this happens, there is a bug in the amber service.
             # is returned in the message, it should agree with the header
-            raise AmberCloudError(response.json()['code'], response.json()['message'])
+            raise AmberCloudError(response.json()['code'], response.json().get('message', 'no message'))
 
         # todo: we should not see errorMessage in the response.  It indicates a misconfigured API gateway
         if 'errorMessage' in response.json():
