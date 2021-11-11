@@ -41,7 +41,7 @@ class AmberStream:
         :param csv_file: Path to csv file
         :return: None
         """
-        print("Reading CSV...\n")
+        print("Reading CSV...")
         with open(csv_file, 'r') as f:
             csv_reader = csv.reader(f, delimiter=',')
             self.data = []
@@ -49,15 +49,17 @@ class AmberStream:
             for row in csv_reader:
                 for d in row:
                     self.data.append(float(d))
-            try:
-                results = self.amber.pretrain_sensor(self.sensor_id, self.data)
-            except AmberCloudError as e:
-                print(e)
-                sys.exit(1)
-            except AmberUserError as e:
-                print(e)
-                sys.exit(1)
-            print(json.dumps(results))
+
+        print("Pretraining...")
+        try:
+            results = self.amber.pretrain_sensor(self.sensor_id, self.data)
+        except AmberCloudError as e:
+            print(e)
+            sys.exit(1)
+        except AmberUserError as e:
+            print(e)
+            sys.exit(1)
+        print(json.dumps(results))
 
     def pretrain_csv_nonblocking(self, csv_file):
         """
@@ -66,7 +68,7 @@ class AmberStream:
         :param csv_file: Path to csv file
         :return: None
         """
-        print("Reading CSV...\n")
+        print("Reading CSV...")
         with open(csv_file, 'r') as f:
             csv_reader = csv.reader(f, delimiter=',')
             self.data = []
@@ -83,13 +85,14 @@ class AmberStream:
                 print(e)
                 sys.exit(1)
 
+        print("Pretraining...")
         try:
             while True:
                 time.sleep(5)
                 results = self.amber.get_pretrain_state(self.sensor_id)
-                if results['message'] == "pretraining in progress":
+                if results['state'] == "Pretraining":
                     print(results)
-                elif results['message'] == "not pretraining":
+                elif results['state'] == "Pretrained":
                     print(results)
                     break
                 else:
