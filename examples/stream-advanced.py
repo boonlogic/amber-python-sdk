@@ -22,7 +22,7 @@ class AmberStream:
         self.sensor_id = sensor_id
         self.label = label
         self.feature_count = feature_count
-        self.streaming_windows_size = streaming_window_size
+        self.streaming_window_size = streaming_window_size
         self.samples_to_buffer = samples_to_buffer
         self.anomaly_history_window = anomaly_history_window
         self.learning_max_clusters = learning_max_clusters
@@ -39,11 +39,12 @@ class AmberStream:
                 print("using sensor {}".format(self.sensor_id))
 
             config = self.amber.configure_sensor(self.sensor_id, feature_count=self.feature_count,
-                                                 streaming_window_size=self.streaming_windows_size,
+                                                 streaming_window_size=self.streaming_window_size,
                                                  samples_to_buffer=self.samples_to_buffer,
+                                                 anomaly_history_window=self.anomaly_history_window,
                                                  learning_max_clusters=self.learning_max_clusters,
                                                  learning_max_samples=self.learning_max_samples,
-                                                 learning_rate_numerator=self.learning_max_samples,
+                                                 learning_rate_numerator=self.learning_rate_numerator,
                                                  learning_rate_denominator=self.learning_rate_denominator)
             print("{} config: {}".format(self.sensor_id, config))
         except AmberCloudError as e:
@@ -57,7 +58,7 @@ class AmberStream:
         """
         self.sample_cnt += len(self.data)
         d1 = datetime.now()
-        results = self.amber.stream_sensor(self.sensor_id, self.data)
+        results = self.amber.stream_sensor(self.sensor_id, self.data, False)
         d2 = datetime.now()
         delta = (d2 - d1).microseconds / 1000
         print("State: {}({}%), inferences: {}, clusters: {}, samples: {}, duration: {}".format(
@@ -111,6 +112,8 @@ class AmberStream:
 
 
 # Specifying sensor_id will use existing over creating a new one
-streamer = AmberStream(sensor_id=None, feature_count=5, samples_to_buffer=10000, anomaly_history_window=10000,
-                       learning_max_samples=1000000, learning_rate_numerator=10, learning_rate_denominator=10000)
+streamer = AmberStream(sensor_id=None, feature_count=1, streaming_window_size=25,
+                       samples_to_buffer=10000, anomaly_history_window=10000,
+                       learning_rate_numerator=10, learning_rate_denominator=10000,
+                       learning_max_clusters=1000, learning_max_samples=1000000)
 streamer.stream_csv('output_current.csv', samples_per_request=10)
