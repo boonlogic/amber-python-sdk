@@ -38,7 +38,7 @@ def amber_set_test_profile():
             assert_is_not_none(license_id, 'AMBER_LICENSE_ID must be specified in environment')
             secret_dict = get_secrets()
             license_profile = secret_dict.get(license_id, None)
-            assert_is_not_none(license_profile, 'license_id {} not found')
+            assert_is_not_none(license_profile, 'license_id {} not found'.format(license_id))
         os.environ['AMBER_USERNAME'] = license_profile['username']
         os.environ['AMBER_PASSWORD'] = license_profile['password']
         os.environ['AMBER_SERVER'] = license_profile['server']
