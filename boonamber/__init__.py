@@ -534,7 +534,7 @@ class AmberClient:
 
         return results
 
-    def stream_sensor(self, sensor_id, data):
+    def stream_sensor(self, sensor_id, data, save_image=True):
         """Stream data to an amber sensor and return the inference result
 
         Args:
@@ -543,6 +543,7 @@ class AmberClient:
                 entirely numeric and one of the following: scalar value,
                 list-like or list-of-lists-like where all sublists have
                 equal length.
+            save_image (bool): whether to save the image after calculation
 
         Returns:
             A dictionary containing inferencing results:
@@ -624,6 +625,7 @@ class AmberClient:
             'sensorId': sensor_id
         }
         body = {
+            'saveImage': save_image,
             'data': data_csv
         }
 
