@@ -562,7 +562,7 @@ class AmberClient:
 
         return results
 
-    def stream_sensor(self, sensor_id, data):
+    def stream_sensor(self, sensor_id, data, save_image=True):
         &#34;&#34;&#34;Stream data to an amber sensor and return the inference result
 
         Args:
@@ -571,6 +571,7 @@ class AmberClient:
                 entirely numeric and one of the following: scalar value,
                 list-like or list-of-lists-like where all sublists have
                 equal length.
+            save_image (bool): whether to save the image after calculation
 
         Returns:
             A dictionary containing inferencing results:
@@ -652,6 +653,7 @@ class AmberClient:
             &#39;sensorId&#39;: sensor_id
         }
         body = {
+            &#39;saveImage&#39;: save_image,
             &#39;data&#39;: data_csv
         }
 
@@ -1420,7 +1422,7 @@ home directory, or optionally overridden using environment variables.</p>
 
         return results
 
-    def stream_sensor(self, sensor_id, data):
+    def stream_sensor(self, sensor_id, data, save_image=True):
         &#34;&#34;&#34;Stream data to an amber sensor and return the inference result
 
         Args:
@@ -1429,6 +1431,7 @@ home directory, or optionally overridden using environment variables.</p>
                 entirely numeric and one of the following: scalar value,
                 list-like or list-of-lists-like where all sublists have
                 equal length.
+            save_image (bool): whether to save the image after calculation
 
         Returns:
             A dictionary containing inferencing results:
@@ -1510,6 +1513,7 @@ home directory, or optionally overridden using environment variables.</p>
             &#39;sensorId&#39;: sensor_id
         }
         body = {
+            &#39;saveImage&#39;: save_image,
             &#39;data&#39;: data_csv
         }
 
@@ -2587,7 +2591,7 @@ status can be checked using get_pretrain_state endpoint.</dd>
 </details>
 </dd>
 <dt id="boonamber.AmberClient.stream_sensor"><code class="name flex">
-<span>def <span class="ident">stream_sensor</span></span>(<span>self, sensor_id, data)</span>
+<span>def <span class="ident">stream_sensor</span></span>(<span>self, sensor_id, data, save_image=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Stream data to an amber sensor and return the inference result</p>
@@ -2600,6 +2604,8 @@ status can be checked using get_pretrain_state endpoint.</dd>
 entirely numeric and one of the following: scalar value,
 list-like or list-of-lists-like where all sublists have
 equal length.</dd>
+<dt><strong><code>save_image</code></strong> :&ensp;<code>bool</code></dt>
+<dd>whether to save the image after calculation</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>A dictionary containing inferencing results:</p>
@@ -2674,7 +2680,7 @@ equal length.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def stream_sensor(self, sensor_id, data):
+<pre><code class="python">def stream_sensor(self, sensor_id, data, save_image=True):
     &#34;&#34;&#34;Stream data to an amber sensor and return the inference result
 
     Args:
@@ -2683,6 +2689,7 @@ equal length.</dd>
             entirely numeric and one of the following: scalar value,
             list-like or list-of-lists-like where all sublists have
             equal length.
+        save_image (bool): whether to save the image after calculation
 
     Returns:
         A dictionary containing inferencing results:
@@ -2764,6 +2771,7 @@ equal length.</dd>
         &#39;sensorId&#39;: sensor_id
     }
     body = {
+        &#39;saveImage&#39;: save_image,
         &#39;data&#39;: data_csv
     }
 
