@@ -207,6 +207,7 @@ class Test_03_SensorOps:
         assert_true(Test_03_SensorOps.sensor_id in sensors.keys())
 
     def test_06_configure_sensor(self):
+        # configure sensor with custom features
         expected = {
             'anomalyHistoryWindow': 0,
             'featureCount': 1,
@@ -217,6 +218,44 @@ class Test_03_SensorOps:
             'learningRateDenominator': 10000,
             'learningMaxClusters': 1000,
             'learningMaxSamples': 1000000,
+            'features': [{
+                'minVal': 1,
+                'maxVal': 50,
+                'label': 'fancy-label'
+            }]
+        }
+        features = [{
+            'minVal': 1,
+            'maxVal': 50,
+            'label': 'fancy-label'
+        }]
+        config = Test_03_SensorOps.amber.configure_sensor(Test_03_SensorOps.sensor_id, feature_count=1,
+                                                          streaming_window_size=25,
+                                                          samples_to_buffer=1000,
+                                                          anomaly_history_window=1000,
+                                                          learning_rate_numerator=10,
+                                                          learning_rate_denominator=10000,
+                                                          learning_max_clusters=1000,
+                                                          learning_max_samples=1000000,
+                                                          features=features)
+
+        assert_equal(config, expected)
+
+        # configure sensor with default features
+        expected = {
+            'anomalyHistoryWindow': 0,
+            'featureCount': 1,
+            'streamingWindowSize': 25,
+            'samplesToBuffer': 1000,
+            'anomalyHistoryWindow': 1000,
+            'learningRateNumerator': 10,
+            'learningRateDenominator': 10000,
+            'learningMaxClusters': 1000,
+            'learningMaxSamples': 1000000,
+            'features': [{
+                'minVal': 0,
+                'maxVal': 1,
+            }]
         }
         config = Test_03_SensorOps.amber.configure_sensor(Test_03_SensorOps.sensor_id, feature_count=1,
                                                           streaming_window_size=25,

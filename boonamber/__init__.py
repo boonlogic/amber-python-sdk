@@ -313,7 +313,8 @@ class AmberClient:
                          learning_rate_numerator=10,
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
-                         learning_max_samples=1000000):
+                         learning_max_samples=1000000,
+                         features=None):
         """Configure an amber sensor instance
 
         Args:
@@ -328,6 +329,7 @@ class AmberClient:
             learning_rate_denominator (int): see learning_rate_numerator
             learning_max_clusters (int): sensor graduates if this many clusters are created
             learning_max_samples (int): sensor graduates if this many samples are processed
+            features (list): optional list of per feature settings (minVal, maxVal, and label)
 
         Returns:
             A dictionary containing:
@@ -340,13 +342,17 @@ class AmberClient:
                     'learning_rate_numerator': int,
                     'learning_rate_denominator': int,
                     'learning_max_clusters': int,
-                    'learning_max_samples': int
+                    'learning_max_samples': int,
+                    'features': [ {'minVal': float, 'maxVal': float, 'label': string}, {...} ]
                 }
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid options
             AmberCloudError: if Amber cloud gives non-200 response
         """
+        if features is None:
+            features = []
+
         if not feature_count > 0 or not isinstance(feature_count, Integral):
             raise AmberUserError("invalid 'feature_count': must be positive integer")
 
@@ -366,7 +372,8 @@ class AmberClient:
             'learningRateNumerator': learning_rate_numerator,
             'learningRateDenominator': learning_rate_denominator,
             'learningMaxClusters': learning_max_clusters,
-            'learningMaxSamples': learning_max_samples
+            'learningMaxSamples': learning_max_samples,
+            'features': features
         }
         config = self._api_call('POST', url, headers, body=body)
 
