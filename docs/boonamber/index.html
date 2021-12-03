@@ -341,7 +341,8 @@ class AmberClient:
                          learning_rate_numerator=10,
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
-                         learning_max_samples=1000000):
+                         learning_max_samples=1000000,
+                         features=None):
         &#34;&#34;&#34;Configure an amber sensor instance
 
         Args:
@@ -356,6 +357,7 @@ class AmberClient:
             learning_rate_denominator (int): see learning_rate_numerator
             learning_max_clusters (int): sensor graduates if this many clusters are created
             learning_max_samples (int): sensor graduates if this many samples are processed
+            features (list): optional list of per feature settings (minVal, maxVal, and label)
 
         Returns:
             A dictionary containing:
@@ -368,13 +370,17 @@ class AmberClient:
                     &#39;learning_rate_numerator&#39;: int,
                     &#39;learning_rate_denominator&#39;: int,
                     &#39;learning_max_clusters&#39;: int,
-                    &#39;learning_max_samples&#39;: int
+                    &#39;learning_max_samples&#39;: int,
+                    &#39;features&#39;: [ {&#39;minVal&#39;: float, &#39;maxVal&#39;: float, &#39;label&#39;: string}, {...} ]
                 }
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid options
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
+        if features is None:
+            features = []
+
         if not feature_count &gt; 0 or not isinstance(feature_count, Integral):
             raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
 
@@ -394,7 +400,8 @@ class AmberClient:
             &#39;learningRateNumerator&#39;: learning_rate_numerator,
             &#39;learningRateDenominator&#39;: learning_rate_denominator,
             &#39;learningMaxClusters&#39;: learning_max_clusters,
-            &#39;learningMaxSamples&#39;: learning_max_samples
+            &#39;learningMaxSamples&#39;: learning_max_samples,
+            &#39;features&#39;: features
         }
         config = self._api_call(&#39;POST&#39;, url, headers, body=body)
 
@@ -1201,7 +1208,8 @@ home directory, or optionally overridden using environment variables.</p>
                          learning_rate_numerator=10,
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
-                         learning_max_samples=1000000):
+                         learning_max_samples=1000000,
+                         features=None):
         &#34;&#34;&#34;Configure an amber sensor instance
 
         Args:
@@ -1216,6 +1224,7 @@ home directory, or optionally overridden using environment variables.</p>
             learning_rate_denominator (int): see learning_rate_numerator
             learning_max_clusters (int): sensor graduates if this many clusters are created
             learning_max_samples (int): sensor graduates if this many samples are processed
+            features (list): optional list of per feature settings (minVal, maxVal, and label)
 
         Returns:
             A dictionary containing:
@@ -1228,13 +1237,17 @@ home directory, or optionally overridden using environment variables.</p>
                     &#39;learning_rate_numerator&#39;: int,
                     &#39;learning_rate_denominator&#39;: int,
                     &#39;learning_max_clusters&#39;: int,
-                    &#39;learning_max_samples&#39;: int
+                    &#39;learning_max_samples&#39;: int,
+                    &#39;features&#39;: [ {&#39;minVal&#39;: float, &#39;maxVal&#39;: float, &#39;label&#39;: string}, {...} ]
                 }
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid options
             AmberCloudError: if Amber cloud gives non-200 response
         &#34;&#34;&#34;
+        if features is None:
+            features = []
+
         if not feature_count &gt; 0 or not isinstance(feature_count, Integral):
             raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
 
@@ -1254,7 +1267,8 @@ home directory, or optionally overridden using environment variables.</p>
             &#39;learningRateNumerator&#39;: learning_rate_numerator,
             &#39;learningRateDenominator&#39;: learning_rate_denominator,
             &#39;learningMaxClusters&#39;: learning_max_clusters,
-            &#39;learningMaxSamples&#39;: learning_max_samples
+            &#39;learningMaxSamples&#39;: learning_max_samples,
+            &#39;features&#39;: features
         }
         config = self._api_call(&#39;POST&#39;, url, headers, body=body)
 
@@ -1735,7 +1749,7 @@ home directory, or optionally overridden using environment variables.</p>
 <h3>Methods</h3>
 <dl>
 <dt id="boonamber.AmberClient.configure_sensor"><code class="name flex">
-<span>def <span class="ident">configure_sensor</span></span>(<span>self, sensor_id, feature_count=1, streaming_window_size=25, samples_to_buffer=10000, anomaly_history_window=10000, learning_rate_numerator=10, learning_rate_denominator=10000, learning_max_clusters=1000, learning_max_samples=1000000)</span>
+<span>def <span class="ident">configure_sensor</span></span>(<span>self, sensor_id, feature_count=1, streaming_window_size=25, samples_to_buffer=10000, anomaly_history_window=10000, learning_rate_numerator=10, learning_rate_denominator=10000, learning_max_clusters=1000, learning_max_samples=1000000, features=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Configure an amber sensor instance</p>
@@ -1761,6 +1775,8 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>sensor graduates if this many clusters are created</dd>
 <dt><strong><code>learning_max_samples</code></strong> :&ensp;<code>int</code></dt>
 <dd>sensor graduates if this many samples are processed</dd>
+<dt><strong><code>features</code></strong> :&ensp;<code>list</code></dt>
+<dd>optional list of per feature settings (minVal, maxVal, and label)</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>A dictionary containing:</p>
@@ -1772,7 +1788,8 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     'learning_rate_numerator': int,
     'learning_rate_denominator': int,
     'learning_max_clusters': int,
-    'learning_max_samples': int
+    'learning_max_samples': int,
+    'features': [ {'minVal': float, 'maxVal': float, 'label': string}, {...} ]
 }
 </code></pre>
 <h2 id="raises">Raises</h2>
@@ -1792,7 +1809,8 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
                      learning_rate_numerator=10,
                      learning_rate_denominator=10000,
                      learning_max_clusters=1000,
-                     learning_max_samples=1000000):
+                     learning_max_samples=1000000,
+                     features=None):
     &#34;&#34;&#34;Configure an amber sensor instance
 
     Args:
@@ -1807,6 +1825,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         learning_rate_denominator (int): see learning_rate_numerator
         learning_max_clusters (int): sensor graduates if this many clusters are created
         learning_max_samples (int): sensor graduates if this many samples are processed
+        features (list): optional list of per feature settings (minVal, maxVal, and label)
 
     Returns:
         A dictionary containing:
@@ -1819,13 +1838,17 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
                 &#39;learning_rate_numerator&#39;: int,
                 &#39;learning_rate_denominator&#39;: int,
                 &#39;learning_max_clusters&#39;: int,
-                &#39;learning_max_samples&#39;: int
+                &#39;learning_max_samples&#39;: int,
+                &#39;features&#39;: [ {&#39;minVal&#39;: float, &#39;maxVal&#39;: float, &#39;label&#39;: string}, {...} ]
             }
 
     Raises:
         AmberUserError: if client is not authenticated or supplies invalid options
         AmberCloudError: if Amber cloud gives non-200 response
     &#34;&#34;&#34;
+    if features is None:
+        features = []
+
     if not feature_count &gt; 0 or not isinstance(feature_count, Integral):
         raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
 
@@ -1845,7 +1868,8 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         &#39;learningRateNumerator&#39;: learning_rate_numerator,
         &#39;learningRateDenominator&#39;: learning_rate_denominator,
         &#39;learningMaxClusters&#39;: learning_max_clusters,
-        &#39;learningMaxSamples&#39;: learning_max_samples
+        &#39;learningMaxSamples&#39;: learning_max_samples,
+        &#39;features&#39;: features
     }
     config = self._api_call(&#39;POST&#39;, url, headers, body=body)
 

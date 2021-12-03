@@ -12,7 +12,7 @@ class AmberStream:
 
     def __init__(self, sensor_id=None, label=None, feature_count=1, streaming_window_size=25, samples_to_buffer=10000,
                  anomaly_history_window=10000, learning_rate_numerator=10, learning_rate_denominator=10000,
-                 learning_max_clusters=1000, learning_max_samples=1000000):
+                 learning_max_clusters=1000, learning_max_samples=1000000, features=None):
         """
         Initializes the AmberStream example class.
         :param sensor_id: The sensor_id to be used by AmberStream.  If sensor_id is None, then a sensor is created
@@ -29,6 +29,7 @@ class AmberStream:
         self.learning_max_samples = learning_max_samples
         self.learning_rate_numerator = learning_rate_numerator
         self.learning_rate_denominator = learning_rate_denominator
+        self.features = features
 
         try:
             self.amber = AmberClient()
@@ -45,7 +46,9 @@ class AmberStream:
                                                  learning_max_clusters=self.learning_max_clusters,
                                                  learning_max_samples=self.learning_max_samples,
                                                  learning_rate_numerator=self.learning_rate_numerator,
-                                                 learning_rate_denominator=self.learning_rate_denominator)
+                                                 learning_rate_denominator=self.learning_rate_denominator,
+                                                 features=self.features)
+ 
             print("{} config: {}".format(self.sensor_id, config))
         except AmberCloudError as e:
             print(e)
@@ -112,8 +115,16 @@ class AmberStream:
 
 
 # Specifying sensor_id will use existing over creating a new one
-streamer = AmberStream(sensor_id=None, feature_count=1, streaming_window_size=25,
+features = [
+    {
+       "minVal": 0,
+       "maxVal": 75
+    }
+]
+
+streamer = AmberStream(sensor_id=None, feature_count=1, streaming_window_size=120,
                        samples_to_buffer=10000, anomaly_history_window=10000,
                        learning_rate_numerator=10, learning_rate_denominator=10000,
-                       learning_max_clusters=1000, learning_max_samples=1000000)
-streamer.stream_csv('output_current.csv', samples_per_request=10)
+                       learning_max_clusters=1000, learning_max_samples=1000000,
+                       features=features)
+streamer.stream_csv('DCD_AssemblyRoom_Hp-training.csv', samples_per_request=10)
