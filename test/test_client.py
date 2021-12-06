@@ -255,6 +255,7 @@ class Test_03_SensorOps:
             'features': [{
                 'minVal': 0,
                 'maxVal': 1,
+                'label': 'feature-0'
             }]
         }
         config = Test_03_SensorOps.amber.configure_sensor(Test_03_SensorOps.sensor_id, feature_count=1,
@@ -294,7 +295,7 @@ class Test_03_SensorOps:
             'learningMaxClusters': 1000,
             'learningMaxSamples': 1000000,
             'percentVariation': 0.05,
-            'features': [{'minVal': 0, 'maxVal': 1}]
+            'features': [{'minVal': 0, 'maxVal': 1, 'label': 'feature-0'}]
         }
         config = Test_03_SensorOps.amber.get_config(Test_03_SensorOps.sensor_id)
         assert_equal(config, expected)

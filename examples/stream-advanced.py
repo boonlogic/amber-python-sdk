@@ -115,16 +115,20 @@ class AmberStream:
 
 
 # Specifying sensor_id will use existing over creating a new one
-features = [
-    {
-       "minVal": 0,
-       "maxVal": 75
-    }
-]
 
-streamer = AmberStream(sensor_id=None, feature_count=1, streaming_window_size=120,
+# set features if minVal and maxVal are to be manually set
+# features = [
+#    {
+#       "minVal": 0,
+#       "maxVal": 75
+#    }
+#]
+
+features=[]
+
+streamer = AmberStream(sensor_id=None, feature_count=1, streaming_window_size=25,
                        samples_to_buffer=10000, anomaly_history_window=10000,
                        learning_rate_numerator=10, learning_rate_denominator=10000,
                        learning_max_clusters=1000, learning_max_samples=1000000,
                        features=features)
-streamer.stream_csv('DCD_AssemblyRoom_Hp-training.csv', samples_per_request=10)
+streamer.stream_csv('output_current.csv', samples_per_request=10)
