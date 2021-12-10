@@ -67,7 +67,7 @@ class AmberClient:
         """
 
         self.token = None
-        self.reauth_time = time.time()
+        self.reauth_time = 0
         self.user_agent = 'Boon Logic / amber-python-sdk / requests'
         self.timeout = timeout
 

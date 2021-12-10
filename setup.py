@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='boonamber',
-    version='1.0.23',
+    version='1.0.24',
     author="BoonLogic",
     author_email="amber-support@boonlogic.com",
     packages=['boonamber'],
