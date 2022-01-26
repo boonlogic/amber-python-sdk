@@ -1,3 +1,5 @@
+![Logo](https://github.com/boonlogic/amber-python-sdk/blob/master/docs/BoonLogic.png?raw=true)
+
 # Boon Amber Python SDK
 
 An SDK for Boon Amber sensor analytics
