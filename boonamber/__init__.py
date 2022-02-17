@@ -104,7 +104,9 @@ class AmberClient:
             self.license_profile['username'] = os.environ.get('AMBER_USERNAME', self.license_profile['username'])
             self.license_profile['password'] = os.environ.get('AMBER_PASSWORD', self.license_profile['password'])
             self.license_profile['server'] = os.environ.get('AMBER_SERVER', self.license_profile['server'])
-            self.license_profile['oauth-server'] = os.environ.get('AMBER_OAUTH_SERVER', self.license_profile['server'])
+            if 'oauth-server' not in self.license_profile:
+                self.license_profile['oauth-server'] = self.license_profile['server']
+            self.license_profile['oauth-server'] = os.environ.get('AMBER_OAUTH_SERVER', self.license_profile['oauth-server'])
             self.license_profile['cert'] = os.environ.get('AMBER_SSL_CERT', cert)
             verify_str = os.environ.get('AMBER_SSL_VERIFY', "true").lower()
             self.license_profile['verify'] = True  # Default
