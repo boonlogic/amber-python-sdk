@@ -162,16 +162,7 @@ class Test_03_SensorOps:
 
         Test_03_SensorOps.amber = AmberClient(license_file=None, license_id=None)
         try:
-
-            sensor_list = Test_03_SensorOps.amber.list_sensors()
-            for sensor, label in sensor_list.items():
-                # look for existing test sensors
-                if label == 'test-sensor-python':
-                    Test_03_SensorOps.sensor_id = sensor
-                    break
-            if Test_03_SensorOps.sensor_id is None:
-                # create a sensor if no test sensors found
-                Test_03_SensorOps.sensor_id = Test_03_SensorOps.amber.create_sensor('test-sensor-python')
+            Test_03_SensorOps.sensor_id = Test_03_SensorOps.amber.create_sensor('test-sensor-python')
             assert_not_equal(Test_03_SensorOps.sensor_id, None)
             assert_not_equal(Test_03_SensorOps.sensor_id, "")
         except Exception as e:
