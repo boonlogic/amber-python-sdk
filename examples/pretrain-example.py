@@ -4,8 +4,7 @@ import json
 import time
 from boonamber import AmberClient, AmberCloudError, AmberUserError
 
-"""Demonstrates a use case in which we pretrain on data in a CSV file."""
-
+"""Demonstrates pretraining of data in a CSV file."""
 
 class AmberStream:
 
@@ -21,10 +20,10 @@ class AmberStream:
             self.amber = AmberClient()
             if sensor_id is None:
                 self.sensor_id = self.amber.create_sensor(label='stream-example-sensor')
-                print("created sensor {}".format(sensor_id))
+                print("created sensor {}".format(self.sensor_id))
             else:
                 self.sensor_id = sensor_id
-                print("using sensor {}".format(sensor_id))
+                print("using sensor {}".format(self.sensor_id))
 
             config = self.amber.configure_sensor(self.sensor_id, feature_count=1, streaming_window_size=25,
                                                  samples_to_buffer=1000, learning_max_clusters=1000,
@@ -102,6 +101,6 @@ class AmberStream:
             sys.exit(1)
 
 # Specifying sensor_id will use existing over creating a new one
-streamer = AmberStream(sensor_id='6ed988ad8b729aed')
+streamer = AmberStream()
 streamer.pretrain_csv('output_current.csv')
 # streamer.pretrain_csv_nonblocking('output_current.csv')
