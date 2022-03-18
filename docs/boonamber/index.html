@@ -26,11 +26,12 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import itertools
+<pre><code class="python">import base64
+import itertools
 import numpy as np
 import json
+import gzip
 import os
-import requests
 import time
 import requests
 from collections.abc import Iterable
@@ -132,7 +133,10 @@ class AmberClient:
             self.license_profile[&#39;username&#39;] = os.environ.get(&#39;AMBER_USERNAME&#39;, self.license_profile[&#39;username&#39;])
             self.license_profile[&#39;password&#39;] = os.environ.get(&#39;AMBER_PASSWORD&#39;, self.license_profile[&#39;password&#39;])
             self.license_profile[&#39;server&#39;] = os.environ.get(&#39;AMBER_SERVER&#39;, self.license_profile[&#39;server&#39;])
-            self.license_profile[&#39;oauth-server&#39;] = os.environ.get(&#39;AMBER_OAUTH_SERVER&#39;, self.license_profile[&#39;server&#39;])
+            if &#39;oauth-server&#39; not in self.license_profile or not self.license_profile:
+                self.license_profile[&#39;oauth-server&#39;] = self.license_profile[&#39;server&#39;]
+            self.license_profile[&#39;oauth-server&#39;] = os.environ.get(&#39;AMBER_OAUTH_SERVER&#39;,
+                                                                  self.license_profile[&#39;oauth-server&#39;])
             self.license_profile[&#39;cert&#39;] = os.environ.get(&#39;AMBER_SSL_CERT&#39;, cert)
             verify_str = os.environ.get(&#39;AMBER_SSL_VERIFY&#39;, &#34;true&#34;).lower()
             self.license_profile[&#39;verify&#39;] = True  # Default
@@ -202,8 +206,15 @@ class AmberClient:
 
         headers[&#39;Authorization&#39;] = &#39;Bearer {}&#39;.format(self.token)
         headers[&#39;User-Agent&#39;] = self.user_agent
+        headers[&#39;Content-Type&#39;] = &#39;application/json&#39;
+
+        body = json.dumps(body)
+        if method == &#39;POST&#39; and len(body) &gt; 10000:
+            headers[&#39;content-encoding&#39;] = &#39;gzip&#39;
+            body = gzip.compress(body.encode(&#39;utf-8&#39;))
+
         try:
-            response = requests.request(method=method, url=url, headers=headers, json=body,
+            response = requests.request(method=method, url=url, headers=headers, data=body,
                                         verify=self.license_profile[&#39;verify&#39;],
                                         cert=self.license_profile[&#39;cert&#39;],
                                         timeout=self.timeout)
@@ -999,7 +1010,10 @@ home directory, or optionally overridden using environment variables.</p>
             self.license_profile[&#39;username&#39;] = os.environ.get(&#39;AMBER_USERNAME&#39;, self.license_profile[&#39;username&#39;])
             self.license_profile[&#39;password&#39;] = os.environ.get(&#39;AMBER_PASSWORD&#39;, self.license_profile[&#39;password&#39;])
             self.license_profile[&#39;server&#39;] = os.environ.get(&#39;AMBER_SERVER&#39;, self.license_profile[&#39;server&#39;])
-            self.license_profile[&#39;oauth-server&#39;] = os.environ.get(&#39;AMBER_OAUTH_SERVER&#39;, self.license_profile[&#39;server&#39;])
+            if &#39;oauth-server&#39; not in self.license_profile or not self.license_profile:
+                self.license_profile[&#39;oauth-server&#39;] = self.license_profile[&#39;server&#39;]
+            self.license_profile[&#39;oauth-server&#39;] = os.environ.get(&#39;AMBER_OAUTH_SERVER&#39;,
+                                                                  self.license_profile[&#39;oauth-server&#39;])
             self.license_profile[&#39;cert&#39;] = os.environ.get(&#39;AMBER_SSL_CERT&#39;, cert)
             verify_str = os.environ.get(&#39;AMBER_SSL_VERIFY&#39;, &#34;true&#34;).lower()
             self.license_profile[&#39;verify&#39;] = True  # Default
@@ -1069,8 +1083,15 @@ home directory, or optionally overridden using environment variables.</p>
 
         headers[&#39;Authorization&#39;] = &#39;Bearer {}&#39;.format(self.token)
         headers[&#39;User-Agent&#39;] = self.user_agent
+        headers[&#39;Content-Type&#39;] = &#39;application/json&#39;
+
+        body = json.dumps(body)
+        if method == &#39;POST&#39; and len(body) &gt; 10000:
+            headers[&#39;content-encoding&#39;] = &#39;gzip&#39;
+            body = gzip.compress(body.encode(&#39;utf-8&#39;))
+
         try:
-            response = requests.request(method=method, url=url, headers=headers, json=body,
+            response = requests.request(method=method, url=url, headers=headers, data=body,
                                         verify=self.license_profile[&#39;verify&#39;],
                                         cert=self.license_profile[&#39;cert&#39;],
                                         timeout=self.timeout)

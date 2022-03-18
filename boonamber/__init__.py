@@ -1,8 +1,9 @@
+import base64
 import itertools
 import numpy as np
 import json
+import gzip
 import os
-import requests
 import time
 import requests
 from collections.abc import Iterable
@@ -106,7 +107,8 @@ class AmberClient:
             self.license_profile['server'] = os.environ.get('AMBER_SERVER', self.license_profile['server'])
             if 'oauth-server' not in self.license_profile or not self.license_profile:
                 self.license_profile['oauth-server'] = self.license_profile['server']
-            self.license_profile['oauth-server'] = os.environ.get('AMBER_OAUTH_SERVER', self.license_profile['oauth-server'])
+            self.license_profile['oauth-server'] = os.environ.get('AMBER_OAUTH_SERVER',
+                                                                  self.license_profile['oauth-server'])
             self.license_profile['cert'] = os.environ.get('AMBER_SSL_CERT', cert)
             verify_str = os.environ.get('AMBER_SSL_VERIFY', "true").lower()
             self.license_profile['verify'] = True  # Default
@@ -176,8 +178,15 @@ class AmberClient:
 
         headers['Authorization'] = 'Bearer {}'.format(self.token)
         headers['User-Agent'] = self.user_agent
+        headers['Content-Type'] = 'application/json'
+
+        body = json.dumps(body)
+        if method == 'POST' and len(body) > 10000:
+            headers['content-encoding'] = 'gzip'
+            body = gzip.compress(body.encode('utf-8'))
+
         try:
-            response = requests.request(method=method, url=url, headers=headers, json=body,
+            response = requests.request(method=method, url=url, headers=headers, data=body,
                                         verify=self.license_profile['verify'],
                                         cert=self.license_profile['cert'],
                                         timeout=self.timeout)
