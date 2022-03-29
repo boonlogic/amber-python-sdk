@@ -21,7 +21,6 @@ license_profile = {}
 def amber_set_test_profile():
     global license_id, license_profile
 
-    local_license_file = os.environ.get('AMBER_LICENSE_FILE')
     if os.environ.get('AMBER_LICENSE_FILE', None) is not None:
         # load credential set for test using the AMBER_LICENSE_FILE specified
         # in the environment
@@ -200,7 +199,6 @@ class Test_03_SensorOps:
     def test_06_configure_sensor(self):
         # configure sensor with custom features
         expected = {
-            'anomalyHistoryWindow': 0,
             'featureCount': 1,
             'streamingWindowSize': 25,
             'samplesToBuffer': 1000,
@@ -212,7 +210,8 @@ class Test_03_SensorOps:
             'features': [{
                 'minVal': 1,
                 'maxVal': 50,
-                'label': 'fancy-label'
+                'label': 'fancy-label',
+                'submitRule': 'submit'
             }]
         }
         features = [{
@@ -234,7 +233,6 @@ class Test_03_SensorOps:
 
         # configure sensor with default features
         expected = {
-            'anomalyHistoryWindow': 0,
             'featureCount': 1,
             'streamingWindowSize': 25,
             'samplesToBuffer': 1000,
@@ -244,9 +242,10 @@ class Test_03_SensorOps:
             'learningMaxClusters': 1000,
             'learningMaxSamples': 1000000,
             'features': [{
-                'minVal': 0,
                 'maxVal': 1,
-                'label': 'feature-0'
+                'minVal': 0,
+                'label': 'feature-0',
+                'submitRule': 'submit'
             }]
         }
         config = Test_03_SensorOps.amber.configure_sensor(Test_03_SensorOps.sensor_id, feature_count=1,
@@ -276,7 +275,6 @@ class Test_03_SensorOps:
 
     def test_08_get_config(self):
         expected = {
-            'anomalyHistoryWindow': 0,
             'featureCount': 1,
             'streamingWindowSize': 25,
             'samplesToBuffer': 1000,
@@ -286,7 +284,7 @@ class Test_03_SensorOps:
             'learningMaxClusters': 1000,
             'learningMaxSamples': 1000000,
             'percentVariation': 0.05,
-            'features': [{'minVal': 0, 'maxVal': 1, 'label': 'feature-0'}]
+            'features': [{'minVal': 0, 'maxVal': 1, 'label': 'feature-0', 'submitRule': 'submit'}]
         }
         config = Test_03_SensorOps.amber.get_config(Test_03_SensorOps.sensor_id)
         assert_equal(config, expected)
@@ -296,7 +294,75 @@ class Test_03_SensorOps:
             config = Test_03_SensorOps.amber.get_config('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_10_stream_sensor(self):
+    def test_10_configure_fusion(self):
+        # fusion tests setup
+        Test_03_SensorOps.amber.configure_sensor(Test_03_SensorOps.sensor_id, feature_count=5, streaming_window_size=1)
+
+        f = [{'label': 'f{}'.format(i), 'submitRule': 'submit'} for i in range(5)]
+        resp = Test_03_SensorOps.amber.configure_fusion(Test_03_SensorOps.sensor_id, features=f)
+        assert_equal(resp, f)
+
+    def test_11_configure_fusion_negative(self):
+        f = [{'label': 'f{}'.format(i), 'submitRule': 'submit'} for i in range(5)]
+
+        # missing sensor
+        with assert_raises(AmberCloudError) as context:
+            Test_03_SensorOps.amber.configure_fusion('nonexistent-sensor-id', features=f)
+        assert_equal(context.exception.code, 404)
+
+        # number of features doesn't match configured feature_count
+        with assert_raises(AmberCloudError) as context:
+            Test_03_SensorOps.amber.configure_fusion(Test_03_SensorOps.sensor_id, features=f[:4])
+        assert_equal(context.exception.code, 400)
+
+        # duplicate feature in configuration
+        badf = f.copy()
+        badf[3] = badf[2]
+        with assert_raises(AmberCloudError) as context:
+            Test_03_SensorOps.amber.configure_fusion(Test_03_SensorOps.sensor_id, features=badf)
+        assert_equal(context.exception.code, 400)
+
+        # unrecognized submit rule in configuration
+        badf = f.copy()
+        badf[2]['submitRule'] = 'badsubmitrule'
+        with assert_raises(AmberCloudError) as context:
+            Test_03_SensorOps.amber.configure_fusion(Test_03_SensorOps.sensor_id, features=badf)
+        assert_equal(context.exception.code, 400)
+
+    def test_12_stream_fusion(self):
+        # stream partial vector (204 response)
+        v = [{'label': 'f1', 'value': 2}, {'label': 'f3', 'value': 4}]
+        exp = [None, 2, None, 4, None]
+        resp = Test_03_SensorOps.amber.stream_fusion(Test_03_SensorOps.sensor_id, vector=v)
+        assert_equal(resp, exp)
+
+        # stream full vector (200 response)
+        v = [{'label': 'f0', 'value': 1}, {'label': 'f2', 'value': 3}, {'label': 'f4', 'value': 5}]
+        exp = {
+            'clusterCount': 0, 'message': '', 'progress': 0, 'retryCount': 0,
+            'state': "Buffering", 'streamingWindowSize': 1, 'totalInferences': 0,
+            'AD': [0], 'AH': [0], 'AM': [0], 'AW': [0], 'ID': [0], 'RI': [0], 'SI': [0]
+        }
+        resp = Test_03_SensorOps.amber.stream_fusion(Test_03_SensorOps.sensor_id, vector=v)
+        assert_equal(resp, exp)
+
+    def test_13_stream_fusion_negative(self):
+        # fusion vector contains label not in fusion configuration
+        v = [{'label': 'badfeature', 'value': 2}, {'label': 'f3', 'value': 4}]
+        with assert_raises(AmberCloudError) as context:
+            Test_03_SensorOps.amber.stream_fusion(Test_03_SensorOps.sensor_id, vector=v)
+        assert_equal(context.exception.code, 400)
+
+        # fusion vector contains duplicate label
+        v = [{'label': 'f3', 'value': 2}, {'label': 'f3', 'value': 4}]
+        with assert_raises(AmberCloudError) as context:
+            Test_03_SensorOps.amber.stream_fusion(Test_03_SensorOps.sensor_id, vector=v)
+        assert_equal(context.exception.code, 400)
+
+        # fusion tests teardown
+        Test_03_SensorOps.amber.configure_sensor(Test_03_SensorOps.sensor_id, feature_count=1, streaming_window_size=25)  # teardown
+
+    def test_14_stream_sensor(self):
         results = Test_03_SensorOps.amber.stream_sensor(Test_03_SensorOps.sensor_id, 1)
         assert_true('state' in results)
         assert_true('message' in results)
@@ -317,7 +383,7 @@ class Test_03_SensorOps:
         results = Test_03_SensorOps.amber.stream_sensor(Test_03_SensorOps.sensor_id, [1, 2, 3, 4, 5])
         assert_true(len(results['SI']) == 5)
 
-    def test_11_stream_sensor_negative(self):
+    def test_15_stream_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             results = Test_03_SensorOps.amber.stream_sensor('nonexistent-sensor-id', [1, 2, 3, 4, 5])
         assert_equal(context.exception.code, 404)
@@ -328,7 +394,7 @@ class Test_03_SensorOps:
         assert_raises(AmberUserError, Test_03_SensorOps.amber.stream_sensor, Test_03_SensorOps.sensor_id,
                       [1, [2, 3], 4])
 
-    def test_12_get_root_cause(self):
+    def test_16_get_root_cause(self):
         config = Test_03_SensorOps.amber.get_config(Test_03_SensorOps.sensor_id)
         expected = [[0] * len(config['features']) * config['streamingWindowSize']] * 2
         config = Test_03_SensorOps.amber.get_root_cause(Test_03_SensorOps.sensor_id,
@@ -339,7 +405,7 @@ class Test_03_SensorOps:
                                                                 'streamingWindowSize']])
         assert_equal(config, expected)
 
-    def test_13_get_root_cause_negative(self):
+    def test_17_get_root_cause_negative(self):
         with assert_raises(AmberCloudError) as context:
             config = Test_03_SensorOps.amber.get_root_cause('nonexistent-sensor-id', id_list=[1])
         assert_equal(context.exception.code, 404)
@@ -355,27 +421,27 @@ class Test_03_SensorOps:
 
         assert_raises(AmberCloudError, Test_03_SensorOps.amber.get_root_cause, Test_03_SensorOps.sensor_id, [1])
 
-    def test_14_get_status(self):
+    def test_18_get_status(self):
         status = Test_03_SensorOps.amber.get_status(Test_03_SensorOps.sensor_id)
         assert_true('pca' in status)
         assert_true('numClusters' in status)
 
-    def test_15_get_status_negative(self):
+    def test_19_get_status_negative(self):
         with assert_raises(AmberCloudError) as context:
             status = Test_03_SensorOps.amber.get_status('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_16_get_pretrain_state(self):
+    def test_20_get_pretrain_state(self):
         response = Test_03_SensorOps.amber.get_pretrain_state(Test_03_SensorOps.sensor_id)
         assert_true('state' in response)
         assert_equal(response['state'], 'None')
 
-    def test_17_get_pretrain_state_negative(self):
+    def test_21_get_pretrain_state_negative(self):
         with assert_raises(AmberCloudError) as context:
             response = Test_03_SensorOps.amber.get_pretrain_state('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_18_pretrain_sensor(self):
+    def test_22_pretrain_sensor(self):
         with open('output_current.csv', 'r') as f:
             csv_reader = csv.reader(f, delimiter=',')
             data = []
@@ -397,7 +463,7 @@ class Test_03_SensorOps:
                 break
         assert_equal(results['state'], 'Pretrained')
 
-    def test_19_pretrain_sensor_negative(self):
+    def test_23_pretrain_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             response = Test_03_SensorOps.amber.pretrain_sensor('nonexistent-sensor-id', [1, 2, 3, 4, 5], block=True)
         assert_equal(context.exception.code, 404)
@@ -407,12 +473,12 @@ class Test_03_SensorOps:
             response = Test_03_SensorOps.amber.pretrain_sensor(Test_03_SensorOps.sensor_id, [1, 2, 3, 4, 5], block=True)
         assert_equal(context.exception.code, 400)
 
-    def test_20_delete_sensor_negative(self):
+    def test_24_delete_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             Test_03_SensorOps.amber.delete_sensor('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_21_delete_sensor(self):
+    def test_25_delete_sensor(self):
         try:
             Test_03_SensorOps.amber.delete_sensor(Test_03_SensorOps.sensor_id)
         except Exception as e:

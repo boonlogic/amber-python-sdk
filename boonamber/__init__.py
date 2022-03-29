@@ -195,7 +195,15 @@ class AmberClient:
             raise AmberCloudError(500, "request timed out")
 
         if response.status_code != 200 and response.status_code != 202:
-            raise AmberCloudError(response.status_code, response.json().get('message', 'no message'))
+            try:
+                msg = response.json()
+                try:
+                    msg = msg.get('message', 'no message')
+                except AttributeError:
+                    pass
+            except json.JSONDecodeError:
+                msg = response.text
+            raise AmberCloudError(response.status_code, msg)
 
         if 'code' in response.json() and response.json()['code'] != response.status_code:
             # todo: if this happens, there is a bug in the amber service.
@@ -354,7 +362,16 @@ class AmberClient:
                     'learning_rate_denominator': int,
                     'learning_max_clusters': int,
                     'learning_max_samples': int,
-                    'features': [ {'minVal': float, 'maxVal': float, 'label': string}, {...} ]
+                    'features': [
+                        {
+                            'minVal': float,
+                            'maxVal': float,
+                            'label': string,
+                            'weight': float,
+                            'submitRule': string
+                        },
+                        ...
+                    ]
                 }
 
         Raises:
@@ -389,6 +406,46 @@ class AmberClient:
         config = self._api_call('POST', url, headers, body=body)
 
         return config
+
+    def configure_fusion(self, sensor_id, feature_count=5, features=None):
+        """Configure an Amber instance for sensor fusion
+
+        Args:
+            sensor_id (str): sensor identifier
+            feature_count (int): number of features or data streams to fuse together
+            features (list): optional list of per feature settings overriding feature_count.
+                Allows direct setting of feature labels and rules for submitting the fusion vector:
+                [
+                    {
+                        'label': string,
+                        'submitRule': string (one of: 'submit', 'nosubmit')
+                    },
+                    ...
+                ]
+
+        Returns:
+            A list of features as configured
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response.
+        """
+        if not features:
+            if not feature_count > 0 or not isinstance(feature_count, Integral):
+                raise AmberUserError("invalid 'feature_count': must be positive integer")
+            for i in range(feature_count):
+                features.append({
+                    "labels": "",     # allow server to fill in default values
+                    "submitRule": ""
+                })
+
+        url = self.license_profile['server'] + '/config'
+        headers = {
+            'Content-Type': 'application/json',
+            'sensorId': sensor_id
+        }
+        body = {'features': features}
+        return self._api_call('PUT', url, headers, body=body)['features']
 
     def _isiterable(self, x):
         # consider strings non-iterable for shape validation purposes,
@@ -551,6 +608,53 @@ class AmberClient:
         results = self._api_call('GET', url, headers)
 
         return results
+
+    def stream_fusion(self, sensor_id, vector, submit=None):
+        """Stream data to a fusion-configured sensor
+
+        Args:
+            sensor_id (str): sensor identifier
+            vector (list of dict): list of one or more dictionaries, each
+                giving an updated value for one of the sensor fusion features:
+                [
+                    {
+                        "label": str,
+                        "value": float,
+                    },
+                    ...
+                ]
+            submit (bool or None): whether to submit the fusion vector after this update.
+                If None, whether to submit will be determined by the per-feature submit rules.
+
+        Returns:
+            - if 200 response (vector was updated and analytics were run):
+                Dict of streaming results identical to that returned by stream_sensor().
+            - if 204 response (vector was updated but no analytics were run):
+                The updated fusion vector as a list of floats.
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response.
+        """
+        sopts = {True: 'submit', False: 'nosubmit', None: 'default'}
+        try:
+            rule = sopts[submit]
+        except KeyError as e:
+            raise ValueError("'submit' must be one of {}, got {}".format(sopts.keys(), submit))
+
+        url = self.license_profile['server'] + '/stream'
+        headers = {
+            'Content-Type': 'application/json',
+            'sensorId': sensor_id
+        }
+        body = {
+            'vector': vector,
+            'submitRule': rule
+        }
+        resp = self._api_call('PUT', url, headers, body=body)
+        if 'vector' in resp:
+            return resp['vector']  # 204
+        return resp                # 200
 
     def stream_sensor(self, sensor_id, data, save_image=True):
         """Stream data to an amber sensor and return the inference result
