@@ -1,4 +1,5 @@
 import base64
+import sys
 import itertools
 import numpy as np
 import json
@@ -152,23 +153,25 @@ class AmberClient:
                                         verify=self.license_profile['verify'],
                                         cert=self.license_profile['cert'],
                                         timeout=self.timeout)
+
+            if response.status_code != 200:
+                message = "authentication failed: {}".format(response.json().get('message', 'no message'))
+                raise AmberCloudError(response.status_code, message)
+
+            # invalid credentials return a 200 where token is an empty string
+            self.token = response.json().get('idToken')
+            if self.token is None:
+                raise AmberCloudError(401, "authentication failed: invalid credentials")
+
+            expire_secs = int(response.json().get('expiresIn'))
+            if expire_secs is None:
+                raise AmberCloudError(401, "authentication failed: missing expiration")
+            self.reauth_time = time.time() + expire_secs - 60
+
         except requests.exceptions.Timeout:
             raise AmberCloudError(500, "request timed out")
         except Exception as e:
             raise AmberCloudError(401, 'invalid server connection')
-        if response.status_code != 200:
-            message = "authentication failed: {}".format(response.json().get('message', 'no message'))
-            raise AmberCloudError(response.status_code, message)
-
-        # invalid credentials return a 200 where token is an empty string
-        self.token = response.json().get('idToken')
-        if self.token is None:
-            raise AmberCloudError(401, "authentication failed: invalid credentials")
-
-        expire_secs = int(response.json().get('expiresIn'))
-        if expire_secs is None:
-            raise AmberCloudError(401, "authentication failed: missing expiration")
-        self.reauth_time = time.time() + expire_secs - 60
 
     def _api_call(self, method, url, headers, body=None):
         """Make a REST call to the Amber server and handle the response"""
@@ -435,7 +438,7 @@ class AmberClient:
                 raise AmberUserError("invalid 'feature_count': must be positive integer")
             for i in range(feature_count):
                 features.append({
-                    "labels": "",     # allow server to fill in default values
+                    "labels": "",  # allow server to fill in default values
                     "submitRule": ""
                 })
 
@@ -654,7 +657,7 @@ class AmberClient:
         resp = self._api_call('PUT', url, headers, body=body)
         if 'vector' in resp:
             return resp['vector']  # 204
-        return resp                # 200
+        return resp  # 200
 
     def stream_sensor(self, sensor_id, data, save_image=True):
         """Stream data to an amber sensor and return the inference result

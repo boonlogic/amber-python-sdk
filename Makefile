@@ -14,20 +14,18 @@ format-check:
 	@. local-env/bin/activate && \
 	pycodestyle --first boonamber/__init__.py
 
-# test-v1, test-v1next, test-dev, test-qa, test-aoc, test-oap
-# add additional .license files in test directory to expand / customize tests
+# test-v1, test-v1next, test-dev, test-qa
+# run stock profiles from secrets manager
 test-%:
 	@. local-env/bin/activate && \
 	cd test && \
-	AMBER_LICENSE_ID=$* coverage run --source=boonamber -m nose -x -verbosity=2 test_client.py && \
+	AMBER_TEST_LICENSE_ID=$* coverage run --source=boonamber -m nose -x test_client.py && \
 	coverage html
 
-# run test profile from 'default' profile in test.Amber.license
-test-local:
+# run custom test profile from local file, must have AMBER_TEST_LICENSE_FILE and AMBER_TEST_LICENSE_ID set in env
+test-local: test-env-check
 	@. local-env/bin/activate && \
 	cd test && \
-	AMBER_LICENSE_ID=default \
-	AMBER_LICENSE_FILE=test.Amber.license \
 	coverage run --source=boonamber -m nose -x -verbosity=2 test_client.py && \
 	coverage html
 
@@ -49,5 +47,10 @@ docs:
 	@. local-env/bin/activate && \
 	pdoc3 --force -o docs --html boonamber
 
-.PHONY: docs format-check init test pypi local-env-check
+test-env-check:
+	@if [[ "${AMBER_TEST_LICENSE_FILE}" == "" || "${AMBER_TEST_LICENSE_ID}" == "" ]]; then \
+		echo "AMBER_TEST_LICENSE_FILE and AMBER_TEST_LICENSE_ID are required in environment"; \
+		exit 1; \
+	fi
 
+.PHONY: docs format-check init test pypi local-env-check test-env-check

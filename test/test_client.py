@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import time
 from nose.tools import assert_equal
@@ -8,40 +9,35 @@ from nose.tools import assert_raises
 from nose.tools import assert_not_equal
 from nose.tools import assert_is_not_none
 from nose.tools import assert_greater
-from nose.tools import with_setup
 from boonamber import AmberClient, AmberUserError, AmberCloudError
 from secrets import get_secrets
 
-saved_license_id = None
-license_id = None
-license_profile = {}
-
 
 # secrets downloaded from points beyond
-def amber_set_test_profile():
-    global license_id, license_profile
+def create_amber_client():
+    amber_license_file = os.environ.get('AMBER_TEST_LICENSE_FILE', None)
+    amber_license_id = os.environ.get('AMBER_TEST_LICENSE_ID', None)
+    assert_is_not_none(amber_license_id, 'AMBER_TEST_LICENSE_ID is missing in test environment')
 
-    if os.environ.get('AMBER_LICENSE_FILE', None) is not None:
-        # load credential set for test using the AMBER_LICENSE_FILE specified
-        # in the environment
-        amber_client = AmberClient()
-        os.environ['AMBER_USERNAME'] = amber_client.license_profile['username']
-        os.environ['AMBER_PASSWORD'] = amber_client.license_profile['password']
-        os.environ['AMBER_SERVER'] = amber_client.license_profile['server']
-        os.environ['AMBER_OAUTH_SERVER'] = amber_client.license_profile['oauth-server']
+    # purge AMBER environment variables
+    for key in Test_01_AmberInstance.saved_env.keys():
+        if key in os.environ:
+            del os.environ[key]
+
+    if amber_license_file is not None:
+        # load license profile using a local license file
+        amber_client = AmberClient(amber_license_id, amber_license_file)
     else:
-        # load credential set from secrets manager, AMBER_LICENSE_ID must be specified in environment
-        # to select which credential set to use
-        if license_id is None:
-            license_id = os.environ.get('AMBER_LICENSE_ID', None)
-            assert_is_not_none(license_id, 'AMBER_LICENSE_ID must be specified in environment')
-            secret_dict = get_secrets()
-            license_profile = secret_dict.get(license_id, None)
-            assert_is_not_none(license_profile, 'license_id {} not found'.format(license_id))
+        # load license profile from secrets manager
+        secret_dict = get_secrets()
+        license_profile = secret_dict.get(amber_license_id, None)
         os.environ['AMBER_USERNAME'] = license_profile['username']
         os.environ['AMBER_PASSWORD'] = license_profile['password']
         os.environ['AMBER_SERVER'] = license_profile['server']
-        os.environ['AMBER_OAUTH_SERVER'] = license_profile.get('oauth-server', license_profile['server'])
+        os.environ['AMBER_OAUTH_SERVER'] = license_profile['oauth-server']
+        amber_client = AmberClient(None, None)
+
+    return amber_client
 
 
 class Test_01_AmberInstance:
@@ -133,46 +129,47 @@ class Test_01_AmberInstance:
 class Test_02_Authenticate:
 
     def test_01_authenticate(self):
-        global license_id
-        amber_set_test_profile()
-        amber = AmberClient(license_file=None, license_id=None)
+        amber = create_amber_client()
+        print(json.dumps(amber.license_profile, indent=4))
         amber._authenticate()
         assert_not_equal(amber.token, None)
         assert_not_equal(amber.token, '')
 
     def test_02_authenticate_negative(self):
-        # wrong password
-        os.environ['AMBER_PASSWORD'] = "not-valid"
-        self.amber = AmberClient(license_file=None, license_id=None)
+        amber = create_amber_client()
+        # modify the password
+        amber.license_profile['password'] = "not-valid"
         with assert_raises(AmberCloudError) as context:
-            self.amber._authenticate()
+            amber._authenticate()
         assert_equal(context.exception.code, 401)
-        del os.environ['AMBER_PASSWORD']
 
 
 class Test_03_SensorOps:
-    # class variables
+
     amber = None
     sensor_id = None
 
+    def __init__(self):
+        if Test_03_SensorOps.amber is None:
+            Test_03_SensorOps.amber = create_amber_client()
+            Test_03_SensorOps.sensor_id = Test_03_SensorOps.amber.create_sensor('test-sensor-python')
+        self.amber = Test_03_SensorOps.amber
+        self.sensor_id = Test_03_SensorOps.sensor_id
+
     def test_01_create_sensor(self):
 
-        amber_set_test_profile()
-
-        Test_03_SensorOps.amber = AmberClient(license_file=None, license_id=None)
         try:
-            Test_03_SensorOps.sensor_id = Test_03_SensorOps.amber.create_sensor('test-sensor-python')
-            assert_not_equal(Test_03_SensorOps.sensor_id, None)
-            assert_not_equal(Test_03_SensorOps.sensor_id, "")
+            assert_not_equal(self.sensor_id, None)
+            assert_not_equal(self.sensor_id, "")
         except Exception as e:
             raise RuntimeError("setup failed: {}".format(e))
 
     def test_02_update_label(self):
-        label = Test_03_SensorOps.amber.update_label(Test_03_SensorOps.sensor_id, 'new-label')
+        label = Test_03_SensorOps.amber.update_label(self.sensor_id, 'new-label')
         assert_equal(label, 'new-label')
 
         try:
-            Test_03_SensorOps.amber.update_label(Test_03_SensorOps.sensor_id, 'test-sensor-python')
+            Test_03_SensorOps.amber.update_label(self.sensor_id, 'test-sensor-python')
         except Exception as e:
             raise RuntimeError("teardown failed, label was not changed back to 'test-sensor-python': {}".format(e))
 
@@ -360,7 +357,8 @@ class Test_03_SensorOps:
         assert_equal(context.exception.code, 400)
 
         # fusion tests teardown
-        Test_03_SensorOps.amber.configure_sensor(Test_03_SensorOps.sensor_id, feature_count=1, streaming_window_size=25)  # teardown
+        Test_03_SensorOps.amber.configure_sensor(Test_03_SensorOps.sensor_id, feature_count=1,
+                                                 streaming_window_size=25)  # teardown
 
     def test_14_stream_sensor(self):
         results = Test_03_SensorOps.amber.stream_sensor(Test_03_SensorOps.sensor_id, 1)
@@ -488,10 +486,8 @@ class Test_03_SensorOps:
 class Test_04_ApiReauth:
 
     def test_api_reauth(self):
-        amber_set_test_profile()
-
         # create amber instance and mark auth_time
-        amber = AmberClient(license_id=None, license_file=None)
+        amber = create_amber_client()
         saved_reauth_time = amber.reauth_time
 
         # first call covers reauth case, reauth time should be set bigger than initial time
@@ -512,9 +508,7 @@ class Test_04_ApiReauth:
 class Test_04_CSVConvert:
 
     def test_convert_to_csv(self):
-        amber_set_test_profile()
-
-        amber = AmberClient(license_id=None, license_file=None)
+        amber = create_amber_client()
 
         # valid scalar inputs
         assert_equal("1.0", amber._convert_to_csv(1))
@@ -533,7 +527,7 @@ class Test_04_CSVConvert:
         assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1.0, 2.0], [3.0, 4.0]]))
 
     def test_convert_to_csv_negative(self):
-        amber = AmberClient(license_id=None, license_file=None)
+        amber = create_amber_client()
 
         # empty data
         assert_raises(ValueError, amber._convert_to_csv, [])
@@ -561,7 +555,7 @@ class Test_04_CSVConvert:
 class Test_05_Version:
 
     def test_01_version(self):
-        amber = AmberClient(license_id=None, license_file=None)
+        amber = create_amber_client()
         version = amber.get_version()
         assert_equal(7, len(version.keys()))
         assert_true('api-version' in version.keys())
