@@ -329,16 +329,24 @@ class Test_03_SensorOps:
     def test_12_stream_fusion(self):
         # stream partial vector (204 response)
         v = [{'label': 'f1', 'value': 2}, {'label': 'f3', 'value': 4}]
-        exp = [None, 2, None, 4, None]
+        exp = {'vector': [None, 2, None, 4, None]}
         resp = Test_03_SensorOps.amber.stream_fusion(Test_03_SensorOps.sensor_id, vector=v)
         assert_equal(resp, exp)
 
         # stream full vector (200 response)
         v = [{'label': 'f0', 'value': 1}, {'label': 'f2', 'value': 3}, {'label': 'f4', 'value': 5}]
         exp = {
-            'clusterCount': 0, 'message': '', 'progress': 0, 'retryCount': 0,
-            'state': "Buffering", 'streamingWindowSize': 1, 'totalInferences': 0,
-            'AD': [0], 'AH': [0], 'AM': [0], 'AW': [0], 'ID': [0], 'RI': [0], 'SI': [0]
+            'vector': [1, 2, 3, 4, 5],
+            'results': {
+                'clusterCount': 0,
+                'message': '',
+                'progress': 0,
+                'retryCount': 0,
+                'state': "Buffering",
+                'streamingWindowSize': 1,
+                'totalInferences': 0,
+                'AD': [0], 'AH': [0], 'AM': [0], 'AW': [0], 'ID': [0], 'RI': [0], 'SI': [0]
+            }
         }
         resp = Test_03_SensorOps.amber.stream_fusion(Test_03_SensorOps.sensor_id, vector=v)
         assert_equal(resp, exp)
