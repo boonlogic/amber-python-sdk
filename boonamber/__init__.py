@@ -630,10 +630,30 @@ class AmberClient:
                 If None, whether to submit will be determined by the per-feature submit rules.
 
         Returns:
-            - if 200 response (vector was updated and analytics were run):
-                Dict of streaming results identical to that returned by stream_sensor().
-            - if 204 response (vector was updated but no analytics were run):
-                The updated fusion vector as a list of floats.
+            - When no analytics were generated: A Dict containing current sample vector
+            {
+                "vector": "[sample, sample, sample, ...]",
+            }
+
+            - When analytics were generated: A Dict containing both the current sample vector and results
+            {
+                "vector": "[sample, sample, sample, ...]",
+                "results": {
+                    'state': str,
+                    'message': str,
+                    'progress': int,
+                    'clusterCount': int,
+                    'retryCount': int,
+                    'streamingWindowSize': int,
+                    'totalInferences': int,
+                    'ID': [int],
+                    'SI': [int],
+                    'AD': [int],
+                    'AH': [int],
+                    'AM': [float],
+                    'AW': [int]
+                }
+            }
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid data
@@ -655,9 +675,9 @@ class AmberClient:
             'submitRule': rule
         }
         resp = self._api_call('PUT', url, headers, body=body)
-        if 'vector' in resp:
-            return resp['vector']  # 204
-        return resp  # 200
+        if 'vectorCSV' in resp:
+            del resp['vectorCSV']
+        return resp
 
     def stream_sensor(self, sensor_id, data, save_image=True):
         """Stream data to an amber sensor and return the inference result
