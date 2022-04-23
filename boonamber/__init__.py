@@ -450,6 +450,31 @@ class AmberClient:
         body = {'features': features}
         return self._api_call('PUT', url, headers, body=body)['features']
 
+    def enable_learning(self, sensor_id, anomaly_history_window=None,
+                        learning_rate_numerator=None, learning_rate_denominator=None,
+                        learning_max_clusters=None,
+                        learning_max_samples=None):
+
+        streaming = {}
+        if anomaly_history_window:
+            streaming['anomalyHistoryWindow'] = anomaly_history_window
+        if learning_rate_numerator:
+            streaming['learningRateNumerator'] = learning_rate_numerator
+        if learning_rate_denominator:
+            streaming['learningRateDenominator'] = learning_rate_denominator
+        if learning_max_samples:
+            streaming['learningMaxSamples'] = learning_max_samples
+        if learning_max_clusters:
+            streaming['learningMaxClusters'] = learning_max_clusters
+
+        url = self.license_profile['server'] + '/config'
+        headers = {
+            'Content-Type': 'application/json',
+            'sensorId': sensor_id
+        }
+        body = {'streaming': streaming}
+        return self._api_call('PUT', url, headers, body=body)['streaming']
+
     def _isiterable(self, x):
         # consider strings non-iterable for shape validation purposes,
         # that way they are printed out whole when caught as nonnumeric
@@ -790,6 +815,7 @@ class AmberClient:
                 {
                     'label': str,
                     'sensorId': str,
+                    'tenantId': str,
                     'usageInfo': {
                         putSensor {
                             'callsTotal': int
@@ -823,6 +849,7 @@ class AmberClient:
 
                 'label' (str): sensor label
                 'sensorId' (str): sensor identifier
+                'tenantId' (str): username of associated Amber account
                 'callsTotal': total number of calls to this endpoint
                 'callsThisPeriod': calls this billing period to this endpoint
                 'lastCalled': ISO formatted time of last call to this endpoint

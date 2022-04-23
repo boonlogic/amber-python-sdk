@@ -479,12 +479,51 @@ class Test_03_SensorOps:
             response = Test_03_SensorOps.amber.pretrain_sensor(Test_03_SensorOps.sensor_id, [1, 2, 3, 4, 5], block=True)
         assert_equal(context.exception.code, 400)
 
-    def test_24_delete_sensor_negative(self):
+    def test_24_enable_learning(self):
+        # enable learning tests setup
+        exp = {
+                "anomalyHistoryWindow": 1000,
+                "learningRateNumerator": 10,
+                "learningRateDenominator": 10000,
+                "learningMaxClusters": 1000,
+                "learningMaxSamples": 1000000
+              }
+        resp = Test_03_SensorOps.amber.enable_learning(Test_03_SensorOps.sensor_id, anomaly_history_window=1000,
+                                                       learning_rate_numerator=10,
+                                                       learning_rate_denominator=10000,
+                                                       learning_max_clusters=1000,
+                                                       learning_max_samples=1000000)
+        assert_equal(resp, exp)
+
+    def test_25_enable_learning_negative(self):
+        exp = {"streaming": {
+                "anomalyHistoryWindow": 1000,
+                "learningRateNumerator": 10,
+                "learningRateDenominator": 10000,
+                "learningMaxClusters": 1000,
+                "learningMaxSamples": 1000000}
+              }
+        # missing sensor
+        with assert_raises(AmberCloudError) as context:
+            Test_03_SensorOps.amber.enable_learning('nonexistent-sensor-id', learning_max_samples=1000000)
+        assert_equal(context.exception.code, 404)
+
+        with assert_raises(AmberCloudError) as context:
+            Test_03_SensorOps.amber.enable_learning(Test_03_SensorOps.sensor_id, learning_max_samples=-1)
+        assert_equal(context.exception.code, 400)
+
+        # not in learning state
+        Test_03_SensorOps.amber.configure_sensor(Test_03_SensorOps.sensor_id, feature_count=5, streaming_window_size=1)
+        with assert_raises(AmberCloudError) as context:
+            Test_03_SensorOps.amber.enable_learning(Test_03_SensorOps.sensor_id, learning_max_samples=1000000)
+        assert_equal(context.exception.code, 400)
+
+    def test_26_delete_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             Test_03_SensorOps.amber.delete_sensor('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_25_delete_sensor(self):
+    def test_27_delete_sensor(self):
         try:
             Test_03_SensorOps.amber.delete_sensor(Test_03_SensorOps.sensor_id)
         except Exception as e:
