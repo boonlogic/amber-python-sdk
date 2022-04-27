@@ -329,14 +329,14 @@ class Test_03_SensorOps:
     def test_12_stream_fusion(self):
         # stream partial vector (204 response)
         v = [{'label': 'f1', 'value': 2}, {'label': 'f3', 'value': 4}]
-        exp = {'vector': [None, 2, None, 4, None]}
+        exp = {'vector': "None,2,None,4,None"}
         resp = Test_03_SensorOps.amber.stream_fusion(Test_03_SensorOps.sensor_id, vector=v)
         assert_equal(resp, exp)
 
         # stream full vector (200 response)
         v = [{'label': 'f0', 'value': 1}, {'label': 'f2', 'value': 3}, {'label': 'f4', 'value': 5}]
         exp = {
-            'vector': [1, 2, 3, 4, 5],
+            'vector': "1,2,3,4,5",
             'results': {
                 'clusterCount': 0,
                 'message': '',
