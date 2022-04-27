@@ -27,6 +27,7 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">import base64
+import sys
 import itertools
 import numpy as np
 import json
@@ -180,23 +181,25 @@ class AmberClient:
                                         verify=self.license_profile[&#39;verify&#39;],
                                         cert=self.license_profile[&#39;cert&#39;],
                                         timeout=self.timeout)
+
+            if response.status_code != 200:
+                message = &#34;authentication failed: {}&#34;.format(response.json().get(&#39;message&#39;, &#39;no message&#39;))
+                raise AmberCloudError(response.status_code, message)
+
+            # invalid credentials return a 200 where token is an empty string
+            self.token = response.json().get(&#39;idToken&#39;)
+            if self.token is None:
+                raise AmberCloudError(401, &#34;authentication failed: invalid credentials&#34;)
+
+            expire_secs = int(response.json().get(&#39;expiresIn&#39;))
+            if expire_secs is None:
+                raise AmberCloudError(401, &#34;authentication failed: missing expiration&#34;)
+            self.reauth_time = time.time() + expire_secs - 60
+
         except requests.exceptions.Timeout:
             raise AmberCloudError(500, &#34;request timed out&#34;)
         except Exception as e:
             raise AmberCloudError(401, &#39;invalid server connection&#39;)
-        if response.status_code != 200:
-            message = &#34;authentication failed: {}&#34;.format(response.json().get(&#39;message&#39;, &#39;no message&#39;))
-            raise AmberCloudError(response.status_code, message)
-
-        # invalid credentials return a 200 where token is an empty string
-        self.token = response.json().get(&#39;idToken&#39;)
-        if self.token is None:
-            raise AmberCloudError(401, &#34;authentication failed: invalid credentials&#34;)
-
-        expire_secs = int(response.json().get(&#39;expiresIn&#39;))
-        if expire_secs is None:
-            raise AmberCloudError(401, &#34;authentication failed: missing expiration&#34;)
-        self.reauth_time = time.time() + expire_secs - 60
 
     def _api_call(self, method, url, headers, body=None):
         &#34;&#34;&#34;Make a REST call to the Amber server and handle the response&#34;&#34;&#34;
@@ -223,7 +226,15 @@ class AmberClient:
             raise AmberCloudError(500, &#34;request timed out&#34;)
 
         if response.status_code != 200 and response.status_code != 202:
-            raise AmberCloudError(response.status_code, response.json().get(&#39;message&#39;, &#39;no message&#39;))
+            try:
+                msg = response.json()
+                try:
+                    msg = msg.get(&#39;message&#39;, &#39;no message&#39;)
+                except AttributeError:
+                    pass
+            except json.JSONDecodeError:
+                msg = response.text
+            raise AmberCloudError(response.status_code, msg)
 
         if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != response.status_code:
             # todo: if this happens, there is a bug in the amber service.
@@ -382,7 +393,16 @@ class AmberClient:
                     &#39;learning_rate_denominator&#39;: int,
                     &#39;learning_max_clusters&#39;: int,
                     &#39;learning_max_samples&#39;: int,
-                    &#39;features&#39;: [ {&#39;minVal&#39;: float, &#39;maxVal&#39;: float, &#39;label&#39;: string}, {...} ]
+                    &#39;features&#39;: [
+                        {
+                            &#39;minVal&#39;: float,
+                            &#39;maxVal&#39;: float,
+                            &#39;label&#39;: string,
+                            &#39;weight&#39;: float,
+                            &#39;submitRule&#39;: string
+                        },
+                        ...
+                    ]
                 }
 
         Raises:
@@ -417,6 +437,71 @@ class AmberClient:
         config = self._api_call(&#39;POST&#39;, url, headers, body=body)
 
         return config
+
+    def configure_fusion(self, sensor_id, feature_count=5, features=None):
+        &#34;&#34;&#34;Configure an Amber instance for sensor fusion
+
+        Args:
+            sensor_id (str): sensor identifier
+            feature_count (int): number of features or data streams to fuse together
+            features (list): optional list of per feature settings overriding feature_count.
+                Allows direct setting of feature labels and rules for submitting the fusion vector:
+                [
+                    {
+                        &#39;label&#39;: string,
+                        &#39;submitRule&#39;: string (one of: &#39;submit&#39;, &#39;nosubmit&#39;)
+                    },
+                    ...
+                ]
+
+        Returns:
+            A list of features as configured
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response.
+        &#34;&#34;&#34;
+        if not features:
+            if not feature_count &gt; 0 or not isinstance(feature_count, Integral):
+                raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
+            for i in range(feature_count):
+                features.append({
+                    &#34;labels&#34;: &#34;&#34;,  # allow server to fill in default values
+                    &#34;submitRule&#34;: &#34;&#34;
+                })
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        body = {&#39;features&#39;: features}
+        return self._api_call(&#39;PUT&#39;, url, headers, body=body)[&#39;features&#39;]
+
+    def enable_learning(self, sensor_id, anomaly_history_window=None,
+                        learning_rate_numerator=None, learning_rate_denominator=None,
+                        learning_max_clusters=None,
+                        learning_max_samples=None):
+
+        streaming = {}
+        if anomaly_history_window:
+            streaming[&#39;anomalyHistoryWindow&#39;] = anomaly_history_window
+        if learning_rate_numerator:
+            streaming[&#39;learningRateNumerator&#39;] = learning_rate_numerator
+        if learning_rate_denominator:
+            streaming[&#39;learningRateDenominator&#39;] = learning_rate_denominator
+        if learning_max_samples:
+            streaming[&#39;learningMaxSamples&#39;] = learning_max_samples
+        if learning_max_clusters:
+            streaming[&#39;learningMaxClusters&#39;] = learning_max_clusters
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        body = {&#39;streaming&#39;: streaming}
+        return self._api_call(&#39;PUT&#39;, url, headers, body=body)[&#39;streaming&#39;]
 
     def _isiterable(self, x):
         # consider strings non-iterable for shape validation purposes,
@@ -580,6 +665,71 @@ class AmberClient:
 
         return results
 
+    def stream_fusion(self, sensor_id, vector, submit=None):
+        &#34;&#34;&#34;Stream data to a fusion-configured sensor
+
+        Args:
+            sensor_id (str): sensor identifier
+            vector (list of dict): list of one or more dictionaries, each
+                giving an updated value for one of the sensor fusion features:
+                [
+                    {
+                        &#34;label&#34;: str,
+                        &#34;value&#34;: float,
+                    },
+                    ...
+                ]
+            submit (bool or None): whether to submit the fusion vector after this update.
+                If None, whether to submit will be determined by the per-feature submit rules.
+
+        Returns:
+            - When no analytics were generated: A Dict containing current sample vector
+            {
+                &#34;vector&#34;: &#34;sample, sample, sample, ...&#34;,
+            }
+
+            - When analytics were generated: A Dict containing both the current sample vector and results
+            {
+                &#34;vector&#34;: &#34;sample, sample, sample, ...&#34;,
+                &#34;results&#34;: {
+                    &#39;state&#39;: str,
+                    &#39;message&#39;: str,
+                    &#39;progress&#39;: int,
+                    &#39;clusterCount&#39;: int,
+                    &#39;retryCount&#39;: int,
+                    &#39;streamingWindowSize&#39;: int,
+                    &#39;totalInferences&#39;: int,
+                    &#39;ID&#39;: [int],
+                    &#39;SI&#39;: [int],
+                    &#39;AD&#39;: [int],
+                    &#39;AH&#39;: [int],
+                    &#39;AM&#39;: [float],
+                    &#39;AW&#39;: [int]
+                }
+            }
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response.
+        &#34;&#34;&#34;
+        sopts = [&#39;submit&#39;, &#39;nosubmit&#39;, &#39;default&#39;]
+        if submit is None:
+            submit = &#39;default&#39;
+        if submit not in sopts:
+            raise ValueError(&#34;&#39;submit&#39; must be one of {}, got {}&#34;.format(sopts, submit))
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/stream&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        body = {
+            &#39;vector&#39;: vector,
+            &#39;submitRule&#39;: submit
+        }
+        resp = self._api_call(&#39;PUT&#39;, url, headers, body=body)
+        return resp
+
     def stream_sensor(self, sensor_id, data, save_image=True):
         &#34;&#34;&#34;Stream data to an amber sensor and return the inference result
 
@@ -691,6 +841,7 @@ class AmberClient:
                 {
                     &#39;label&#39;: str,
                     &#39;sensorId&#39;: str,
+                    &#39;tenantId&#39;: str,
                     &#39;usageInfo&#39;: {
                         putSensor {
                             &#39;callsTotal&#39;: int
@@ -724,6 +875,7 @@ class AmberClient:
 
                 &#39;label&#39; (str): sensor label
                 &#39;sensorId&#39; (str): sensor identifier
+                &#39;tenantId&#39; (str): username of associated Amber account
                 &#39;callsTotal&#39;: total number of calls to this endpoint
                 &#39;callsThisPeriod&#39;: calls this billing period to this endpoint
                 &#39;lastCalled&#39;: ISO formatted time of last call to this endpoint
@@ -1057,23 +1209,25 @@ home directory, or optionally overridden using environment variables.</p>
                                         verify=self.license_profile[&#39;verify&#39;],
                                         cert=self.license_profile[&#39;cert&#39;],
                                         timeout=self.timeout)
+
+            if response.status_code != 200:
+                message = &#34;authentication failed: {}&#34;.format(response.json().get(&#39;message&#39;, &#39;no message&#39;))
+                raise AmberCloudError(response.status_code, message)
+
+            # invalid credentials return a 200 where token is an empty string
+            self.token = response.json().get(&#39;idToken&#39;)
+            if self.token is None:
+                raise AmberCloudError(401, &#34;authentication failed: invalid credentials&#34;)
+
+            expire_secs = int(response.json().get(&#39;expiresIn&#39;))
+            if expire_secs is None:
+                raise AmberCloudError(401, &#34;authentication failed: missing expiration&#34;)
+            self.reauth_time = time.time() + expire_secs - 60
+
         except requests.exceptions.Timeout:
             raise AmberCloudError(500, &#34;request timed out&#34;)
         except Exception as e:
             raise AmberCloudError(401, &#39;invalid server connection&#39;)
-        if response.status_code != 200:
-            message = &#34;authentication failed: {}&#34;.format(response.json().get(&#39;message&#39;, &#39;no message&#39;))
-            raise AmberCloudError(response.status_code, message)
-
-        # invalid credentials return a 200 where token is an empty string
-        self.token = response.json().get(&#39;idToken&#39;)
-        if self.token is None:
-            raise AmberCloudError(401, &#34;authentication failed: invalid credentials&#34;)
-
-        expire_secs = int(response.json().get(&#39;expiresIn&#39;))
-        if expire_secs is None:
-            raise AmberCloudError(401, &#34;authentication failed: missing expiration&#34;)
-        self.reauth_time = time.time() + expire_secs - 60
 
     def _api_call(self, method, url, headers, body=None):
         &#34;&#34;&#34;Make a REST call to the Amber server and handle the response&#34;&#34;&#34;
@@ -1100,7 +1254,15 @@ home directory, or optionally overridden using environment variables.</p>
             raise AmberCloudError(500, &#34;request timed out&#34;)
 
         if response.status_code != 200 and response.status_code != 202:
-            raise AmberCloudError(response.status_code, response.json().get(&#39;message&#39;, &#39;no message&#39;))
+            try:
+                msg = response.json()
+                try:
+                    msg = msg.get(&#39;message&#39;, &#39;no message&#39;)
+                except AttributeError:
+                    pass
+            except json.JSONDecodeError:
+                msg = response.text
+            raise AmberCloudError(response.status_code, msg)
 
         if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != response.status_code:
             # todo: if this happens, there is a bug in the amber service.
@@ -1259,7 +1421,16 @@ home directory, or optionally overridden using environment variables.</p>
                     &#39;learning_rate_denominator&#39;: int,
                     &#39;learning_max_clusters&#39;: int,
                     &#39;learning_max_samples&#39;: int,
-                    &#39;features&#39;: [ {&#39;minVal&#39;: float, &#39;maxVal&#39;: float, &#39;label&#39;: string}, {...} ]
+                    &#39;features&#39;: [
+                        {
+                            &#39;minVal&#39;: float,
+                            &#39;maxVal&#39;: float,
+                            &#39;label&#39;: string,
+                            &#39;weight&#39;: float,
+                            &#39;submitRule&#39;: string
+                        },
+                        ...
+                    ]
                 }
 
         Raises:
@@ -1294,6 +1465,71 @@ home directory, or optionally overridden using environment variables.</p>
         config = self._api_call(&#39;POST&#39;, url, headers, body=body)
 
         return config
+
+    def configure_fusion(self, sensor_id, feature_count=5, features=None):
+        &#34;&#34;&#34;Configure an Amber instance for sensor fusion
+
+        Args:
+            sensor_id (str): sensor identifier
+            feature_count (int): number of features or data streams to fuse together
+            features (list): optional list of per feature settings overriding feature_count.
+                Allows direct setting of feature labels and rules for submitting the fusion vector:
+                [
+                    {
+                        &#39;label&#39;: string,
+                        &#39;submitRule&#39;: string (one of: &#39;submit&#39;, &#39;nosubmit&#39;)
+                    },
+                    ...
+                ]
+
+        Returns:
+            A list of features as configured
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response.
+        &#34;&#34;&#34;
+        if not features:
+            if not feature_count &gt; 0 or not isinstance(feature_count, Integral):
+                raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
+            for i in range(feature_count):
+                features.append({
+                    &#34;labels&#34;: &#34;&#34;,  # allow server to fill in default values
+                    &#34;submitRule&#34;: &#34;&#34;
+                })
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        body = {&#39;features&#39;: features}
+        return self._api_call(&#39;PUT&#39;, url, headers, body=body)[&#39;features&#39;]
+
+    def enable_learning(self, sensor_id, anomaly_history_window=None,
+                        learning_rate_numerator=None, learning_rate_denominator=None,
+                        learning_max_clusters=None,
+                        learning_max_samples=None):
+
+        streaming = {}
+        if anomaly_history_window:
+            streaming[&#39;anomalyHistoryWindow&#39;] = anomaly_history_window
+        if learning_rate_numerator:
+            streaming[&#39;learningRateNumerator&#39;] = learning_rate_numerator
+        if learning_rate_denominator:
+            streaming[&#39;learningRateDenominator&#39;] = learning_rate_denominator
+        if learning_max_samples:
+            streaming[&#39;learningMaxSamples&#39;] = learning_max_samples
+        if learning_max_clusters:
+            streaming[&#39;learningMaxClusters&#39;] = learning_max_clusters
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        body = {&#39;streaming&#39;: streaming}
+        return self._api_call(&#39;PUT&#39;, url, headers, body=body)[&#39;streaming&#39;]
 
     def _isiterable(self, x):
         # consider strings non-iterable for shape validation purposes,
@@ -1457,6 +1693,71 @@ home directory, or optionally overridden using environment variables.</p>
 
         return results
 
+    def stream_fusion(self, sensor_id, vector, submit=None):
+        &#34;&#34;&#34;Stream data to a fusion-configured sensor
+
+        Args:
+            sensor_id (str): sensor identifier
+            vector (list of dict): list of one or more dictionaries, each
+                giving an updated value for one of the sensor fusion features:
+                [
+                    {
+                        &#34;label&#34;: str,
+                        &#34;value&#34;: float,
+                    },
+                    ...
+                ]
+            submit (bool or None): whether to submit the fusion vector after this update.
+                If None, whether to submit will be determined by the per-feature submit rules.
+
+        Returns:
+            - When no analytics were generated: A Dict containing current sample vector
+            {
+                &#34;vector&#34;: &#34;sample, sample, sample, ...&#34;,
+            }
+
+            - When analytics were generated: A Dict containing both the current sample vector and results
+            {
+                &#34;vector&#34;: &#34;sample, sample, sample, ...&#34;,
+                &#34;results&#34;: {
+                    &#39;state&#39;: str,
+                    &#39;message&#39;: str,
+                    &#39;progress&#39;: int,
+                    &#39;clusterCount&#39;: int,
+                    &#39;retryCount&#39;: int,
+                    &#39;streamingWindowSize&#39;: int,
+                    &#39;totalInferences&#39;: int,
+                    &#39;ID&#39;: [int],
+                    &#39;SI&#39;: [int],
+                    &#39;AD&#39;: [int],
+                    &#39;AH&#39;: [int],
+                    &#39;AM&#39;: [float],
+                    &#39;AW&#39;: [int]
+                }
+            }
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response.
+        &#34;&#34;&#34;
+        sopts = [&#39;submit&#39;, &#39;nosubmit&#39;, &#39;default&#39;]
+        if submit is None:
+            submit = &#39;default&#39;
+        if submit not in sopts:
+            raise ValueError(&#34;&#39;submit&#39; must be one of {}, got {}&#34;.format(sopts, submit))
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/stream&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        body = {
+            &#39;vector&#39;: vector,
+            &#39;submitRule&#39;: submit
+        }
+        resp = self._api_call(&#39;PUT&#39;, url, headers, body=body)
+        return resp
+
     def stream_sensor(self, sensor_id, data, save_image=True):
         &#34;&#34;&#34;Stream data to an amber sensor and return the inference result
 
@@ -1568,6 +1869,7 @@ home directory, or optionally overridden using environment variables.</p>
                 {
                     &#39;label&#39;: str,
                     &#39;sensorId&#39;: str,
+                    &#39;tenantId&#39;: str,
                     &#39;usageInfo&#39;: {
                         putSensor {
                             &#39;callsTotal&#39;: int
@@ -1601,6 +1903,7 @@ home directory, or optionally overridden using environment variables.</p>
 
                 &#39;label&#39; (str): sensor label
                 &#39;sensorId&#39; (str): sensor identifier
+                &#39;tenantId&#39; (str): username of associated Amber account
                 &#39;callsTotal&#39;: total number of calls to this endpoint
                 &#39;callsThisPeriod&#39;: calls this billing period to this endpoint
                 &#39;lastCalled&#39;: ISO formatted time of last call to this endpoint
@@ -1769,6 +2072,82 @@ home directory, or optionally overridden using environment variables.</p>
 </details>
 <h3>Methods</h3>
 <dl>
+<dt id="boonamber.AmberClient.configure_fusion"><code class="name flex">
+<span>def <span class="ident">configure_fusion</span></span>(<span>self, sensor_id, feature_count=5, features=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Configure an Amber instance for sensor fusion</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>feature_count</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of features or data streams to fuse together</dd>
+<dt><strong><code>features</code></strong> :&ensp;<code>list</code></dt>
+<dd>optional list of per feature settings overriding feature_count.
+Allows direct setting of feature labels and rules for submitting the fusion vector:
+[
+{
+'label': string,
+'submitRule': string (one of: 'submit', 'nosubmit')
+},
+&hellip;
+]</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A list of features as configured</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code><a title="boonamber.AmberCloudError" href="#boonamber.AmberCloudError">AmberCloudError</a></code></dt>
+<dd>if Amber cloud gives non-200 response.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def configure_fusion(self, sensor_id, feature_count=5, features=None):
+    &#34;&#34;&#34;Configure an Amber instance for sensor fusion
+
+    Args:
+        sensor_id (str): sensor identifier
+        feature_count (int): number of features or data streams to fuse together
+        features (list): optional list of per feature settings overriding feature_count.
+            Allows direct setting of feature labels and rules for submitting the fusion vector:
+            [
+                {
+                    &#39;label&#39;: string,
+                    &#39;submitRule&#39;: string (one of: &#39;submit&#39;, &#39;nosubmit&#39;)
+                },
+                ...
+            ]
+
+    Returns:
+        A list of features as configured
+
+    Raises:
+        AmberUserError: if client is not authenticated or supplies invalid data
+        AmberCloudError: if Amber cloud gives non-200 response.
+    &#34;&#34;&#34;
+    if not features:
+        if not feature_count &gt; 0 or not isinstance(feature_count, Integral):
+            raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
+        for i in range(feature_count):
+            features.append({
+                &#34;labels&#34;: &#34;&#34;,  # allow server to fill in default values
+                &#34;submitRule&#34;: &#34;&#34;
+            })
+
+    url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/json&#39;,
+        &#39;sensorId&#39;: sensor_id
+    }
+    body = {&#39;features&#39;: features}
+    return self._api_call(&#39;PUT&#39;, url, headers, body=body)[&#39;features&#39;]</code></pre>
+</details>
+</dd>
 <dt id="boonamber.AmberClient.configure_sensor"><code class="name flex">
 <span>def <span class="ident">configure_sensor</span></span>(<span>self, sensor_id, feature_count=1, streaming_window_size=25, samples_to_buffer=10000, anomaly_history_window=10000, learning_rate_numerator=10, learning_rate_denominator=10000, learning_max_clusters=1000, learning_max_samples=1000000, features=None)</span>
 </code></dt>
@@ -1810,7 +2189,16 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     'learning_rate_denominator': int,
     'learning_max_clusters': int,
     'learning_max_samples': int,
-    'features': [ {'minVal': float, 'maxVal': float, 'label': string}, {...} ]
+    'features': [
+        {
+            'minVal': float,
+            'maxVal': float,
+            'label': string,
+            'weight': float,
+            'submitRule': string
+        },
+        ...
+    ]
 }
 </code></pre>
 <h2 id="raises">Raises</h2>
@@ -1860,7 +2248,16 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
                 &#39;learning_rate_denominator&#39;: int,
                 &#39;learning_max_clusters&#39;: int,
                 &#39;learning_max_samples&#39;: int,
-                &#39;features&#39;: [ {&#39;minVal&#39;: float, &#39;maxVal&#39;: float, &#39;label&#39;: string}, {...} ]
+                &#39;features&#39;: [
+                    {
+                        &#39;minVal&#39;: float,
+                        &#39;maxVal&#39;: float,
+                        &#39;label&#39;: string,
+                        &#39;weight&#39;: float,
+                        &#39;submitRule&#39;: string
+                    },
+                    ...
+                ]
             }
 
     Raises:
@@ -1985,6 +2382,41 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         &#39;sensorId&#39;: sensor_id
     }
     response = self._api_call(&#39;DELETE&#39;, url, headers)</code></pre>
+</details>
+</dd>
+<dt id="boonamber.AmberClient.enable_learning"><code class="name flex">
+<span>def <span class="ident">enable_learning</span></span>(<span>self, sensor_id, anomaly_history_window=None, learning_rate_numerator=None, learning_rate_denominator=None, learning_max_clusters=None, learning_max_samples=None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def enable_learning(self, sensor_id, anomaly_history_window=None,
+                    learning_rate_numerator=None, learning_rate_denominator=None,
+                    learning_max_clusters=None,
+                    learning_max_samples=None):
+
+    streaming = {}
+    if anomaly_history_window:
+        streaming[&#39;anomalyHistoryWindow&#39;] = anomaly_history_window
+    if learning_rate_numerator:
+        streaming[&#39;learningRateNumerator&#39;] = learning_rate_numerator
+    if learning_rate_denominator:
+        streaming[&#39;learningRateDenominator&#39;] = learning_rate_denominator
+    if learning_max_samples:
+        streaming[&#39;learningMaxSamples&#39;] = learning_max_samples
+    if learning_max_clusters:
+        streaming[&#39;learningMaxClusters&#39;] = learning_max_clusters
+
+    url = self.license_profile[&#39;server&#39;] + &#39;/config&#39;
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/json&#39;,
+        &#39;sensorId&#39;: sensor_id
+    }
+    body = {&#39;streaming&#39;: streaming}
+    return self._api_call(&#39;PUT&#39;, url, headers, body=body)[&#39;streaming&#39;]</code></pre>
 </details>
 </dd>
 <dt id="boonamber.AmberClient.get_config"><code class="name flex">
@@ -2248,6 +2680,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <pre><code>{
     'label': str,
     'sensorId': str,
+    'tenantId': str,
     'usageInfo': {
         putSensor {
             'callsTotal': int
@@ -2281,6 +2714,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 
 'label' (str): sensor label
 'sensorId' (str): sensor identifier
+'tenantId' (str): username of associated Amber account
 'callsTotal': total number of calls to this endpoint
 'callsThisPeriod': calls this billing period to this endpoint
 'lastCalled': ISO formatted time of last call to this endpoint
@@ -2310,6 +2744,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
             {
                 &#39;label&#39;: str,
                 &#39;sensorId&#39;: str,
+                &#39;tenantId&#39;: str,
                 &#39;usageInfo&#39;: {
                     putSensor {
                         &#39;callsTotal&#39;: int
@@ -2343,6 +2778,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 
             &#39;label&#39; (str): sensor label
             &#39;sensorId&#39; (str): sensor identifier
+            &#39;tenantId&#39; (str): username of associated Amber account
             &#39;callsTotal&#39;: total number of calls to this endpoint
             &#39;callsThisPeriod&#39;: calls this billing period to this endpoint
             &#39;lastCalled&#39;: ISO formatted time of last call to this endpoint
@@ -2633,6 +3069,136 @@ status can be checked using get_pretrain_state endpoint.</dd>
             continue
         else:
             return results</code></pre>
+</details>
+</dd>
+<dt id="boonamber.AmberClient.stream_fusion"><code class="name flex">
+<span>def <span class="ident">stream_fusion</span></span>(<span>self, sensor_id, vector, submit=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Stream data to a fusion-configured sensor</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>vector</code></strong> :&ensp;<code>list</code> of <code>dict</code></dt>
+<dd>list of one or more dictionaries, each
+giving an updated value for one of the sensor fusion features:
+[
+{
+"label": str,
+"value": float,
+},
+&hellip;
+]</dd>
+<dt><strong><code>submit</code></strong> :&ensp;<code>bool</code> or <code>None</code></dt>
+<dd>whether to submit the fusion vector after this update.
+If None, whether to submit will be determined by the per-feature submit rules.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<ul>
+<li>
+<p>When no analytics were generated: A Dict containing current sample vector
+{
+"vector": "sample, sample, sample, &hellip;",
+}</p>
+</li>
+<li>
+<p>When analytics were generated: A Dict containing both the current sample vector and results
+{
+"vector": "sample, sample, sample, &hellip;",
+"results": {
+'state': str,
+'message': str,
+'progress': int,
+'clusterCount': int,
+'retryCount': int,
+'streamingWindowSize': int,
+'totalInferences': int,
+'ID': [int],
+'SI': [int],
+'AD': [int],
+'AH': [int],
+'AM': [float],
+'AW': [int]
+}
+}</p>
+</li>
+</ul>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code><a title="boonamber.AmberCloudError" href="#boonamber.AmberCloudError">AmberCloudError</a></code></dt>
+<dd>if Amber cloud gives non-200 response.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stream_fusion(self, sensor_id, vector, submit=None):
+    &#34;&#34;&#34;Stream data to a fusion-configured sensor
+
+    Args:
+        sensor_id (str): sensor identifier
+        vector (list of dict): list of one or more dictionaries, each
+            giving an updated value for one of the sensor fusion features:
+            [
+                {
+                    &#34;label&#34;: str,
+                    &#34;value&#34;: float,
+                },
+                ...
+            ]
+        submit (bool or None): whether to submit the fusion vector after this update.
+            If None, whether to submit will be determined by the per-feature submit rules.
+
+    Returns:
+        - When no analytics were generated: A Dict containing current sample vector
+        {
+            &#34;vector&#34;: &#34;sample, sample, sample, ...&#34;,
+        }
+
+        - When analytics were generated: A Dict containing both the current sample vector and results
+        {
+            &#34;vector&#34;: &#34;sample, sample, sample, ...&#34;,
+            &#34;results&#34;: {
+                &#39;state&#39;: str,
+                &#39;message&#39;: str,
+                &#39;progress&#39;: int,
+                &#39;clusterCount&#39;: int,
+                &#39;retryCount&#39;: int,
+                &#39;streamingWindowSize&#39;: int,
+                &#39;totalInferences&#39;: int,
+                &#39;ID&#39;: [int],
+                &#39;SI&#39;: [int],
+                &#39;AD&#39;: [int],
+                &#39;AH&#39;: [int],
+                &#39;AM&#39;: [float],
+                &#39;AW&#39;: [int]
+            }
+        }
+
+    Raises:
+        AmberUserError: if client is not authenticated or supplies invalid data
+        AmberCloudError: if Amber cloud gives non-200 response.
+    &#34;&#34;&#34;
+    sopts = [&#39;submit&#39;, &#39;nosubmit&#39;, &#39;default&#39;]
+    if submit is None:
+        submit = &#39;default&#39;
+    if submit not in sopts:
+        raise ValueError(&#34;&#39;submit&#39; must be one of {}, got {}&#34;.format(sopts, submit))
+
+    url = self.license_profile[&#39;server&#39;] + &#39;/stream&#39;
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/json&#39;,
+        &#39;sensorId&#39;: sensor_id
+    }
+    body = {
+        &#39;vector&#39;: vector,
+        &#39;submitRule&#39;: submit
+    }
+    resp = self._api_call(&#39;PUT&#39;, url, headers, body=body)
+    return resp</code></pre>
 </details>
 </dd>
 <dt id="boonamber.AmberClient.stream_sensor"><code class="name flex">
@@ -2941,9 +3507,11 @@ equal length.</dd>
 <li>
 <h4><code><a title="boonamber.AmberClient" href="#boonamber.AmberClient">AmberClient</a></code></h4>
 <ul class="two-column">
+<li><code><a title="boonamber.AmberClient.configure_fusion" href="#boonamber.AmberClient.configure_fusion">configure_fusion</a></code></li>
 <li><code><a title="boonamber.AmberClient.configure_sensor" href="#boonamber.AmberClient.configure_sensor">configure_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.create_sensor" href="#boonamber.AmberClient.create_sensor">create_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.delete_sensor" href="#boonamber.AmberClient.delete_sensor">delete_sensor</a></code></li>
+<li><code><a title="boonamber.AmberClient.enable_learning" href="#boonamber.AmberClient.enable_learning">enable_learning</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_config" href="#boonamber.AmberClient.get_config">get_config</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_pretrain_state" href="#boonamber.AmberClient.get_pretrain_state">get_pretrain_state</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_root_cause" href="#boonamber.AmberClient.get_root_cause">get_root_cause</a></code></li>
@@ -2952,6 +3520,7 @@ equal length.</dd>
 <li><code><a title="boonamber.AmberClient.get_version" href="#boonamber.AmberClient.get_version">get_version</a></code></li>
 <li><code><a title="boonamber.AmberClient.list_sensors" href="#boonamber.AmberClient.list_sensors">list_sensors</a></code></li>
 <li><code><a title="boonamber.AmberClient.pretrain_sensor" href="#boonamber.AmberClient.pretrain_sensor">pretrain_sensor</a></code></li>
+<li><code><a title="boonamber.AmberClient.stream_fusion" href="#boonamber.AmberClient.stream_fusion">stream_fusion</a></code></li>
 <li><code><a title="boonamber.AmberClient.stream_sensor" href="#boonamber.AmberClient.stream_sensor">stream_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.update_label" href="#boonamber.AmberClient.update_label">update_label</a></code></li>
 </ul>

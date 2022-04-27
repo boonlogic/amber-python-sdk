@@ -657,12 +657,12 @@ class AmberClient:
         Returns:
             - When no analytics were generated: A Dict containing current sample vector
             {
-                "vector": "[sample, sample, sample, ...]",
+                "vector": "sample, sample, sample, ...",
             }
 
             - When analytics were generated: A Dict containing both the current sample vector and results
             {
-                "vector": "[sample, sample, sample, ...]",
+                "vector": "sample, sample, sample, ...",
                 "results": {
                     'state': str,
                     'message': str,
@@ -684,11 +684,11 @@ class AmberClient:
             AmberUserError: if client is not authenticated or supplies invalid data
             AmberCloudError: if Amber cloud gives non-200 response.
         """
-        sopts = {True: 'submit', False: 'nosubmit', None: 'default'}
-        try:
-            rule = sopts[submit]
-        except KeyError as e:
-            raise ValueError("'submit' must be one of {}, got {}".format(sopts.keys(), submit))
+        sopts = ['submit', 'nosubmit', 'default']
+        if submit is None:
+            submit = 'default'
+        if submit not in sopts:
+            raise ValueError("'submit' must be one of {}, got {}".format(sopts, submit))
 
         url = self.license_profile['server'] + '/stream'
         headers = {
@@ -697,11 +697,9 @@ class AmberClient:
         }
         body = {
             'vector': vector,
-            'submitRule': rule
+            'submitRule': submit
         }
         resp = self._api_call('PUT', url, headers, body=body)
-        if 'vectorCSV' in resp:
-            del resp['vectorCSV']
         return resp
 
     def stream_sensor(self, sensor_id, data, save_image=True):
