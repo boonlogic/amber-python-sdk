@@ -1,5 +1,4 @@
 import base64
-import csv
 import itertools
 import numpy as np
 import json
@@ -7,11 +6,9 @@ import gzip
 import os
 import time
 import requests
-import struct
 import urllib3
 from collections.abc import Iterable
 from numbers import Number, Integral
-from numpy.typing import NDArray
 
 from urllib3.exceptions import InsecureRequestWarning
 
