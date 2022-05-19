@@ -11,6 +11,7 @@ import struct
 import urllib3
 from collections.abc import Iterable
 from numbers import Number, Integral
+from numpy.typing import NDArray
 
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -571,11 +572,10 @@ class AmberClient:
         """
 
         # Server expects data as a plaintext string of comma-separated values.
-        if type(data) == "list":
-            try:
-                data = float_list_to_packed_floats(data)
-            except ValueError as e:
-                raise AmberUserError("invalid data: {}".format(e))
+        try:
+            data = packed_floats(data)
+        except ValueError as e:
+            raise AmberUserError("invalid data: {}".format(e))
 
         url = self.license_profile['server'] + '/pretrain'
         headers = {
@@ -1110,39 +1110,29 @@ def float_list_to_csv_string(float_list):
     return ','.join([str(float(d)) for d in data_flat])
 
 
-def float_list_to_packed_floats(float_list):
+def packed_floats(data):
     """Validate data and convert to a packed float buffer"""
 
-    # Note: as in the Boon Nano SDK, there is no check that data dimensions
-    # align with number of features and streaming window size.
-    ndim = validate_dims(float_list)
+    if isinstance(data, str):
+        data = data.split(',')
 
-    if ndim == 0:
-        data_flat = [float_list]
-    elif ndim == 1:
-        data_flat = list(float_list)
-    elif ndim == 2:
-        data_flat = list(itertools.chain.from_iterable(float_list))
-    else:
-        raise ValueError("float_list is not in known format")
+    data = np.array(data, dtype='float32')
+    data = data.flatten()
+    data = data.tobytes()
 
-    for d in data_flat:
-        if not isinstance(d, Number):
-            raise ValueError("contained {} which is not numeric".format(d.__repr__()))
+    return data
 
-    return struct.pack('%sf' % len(data_flat), *data_flat)
-
-
-def create_packed_float_file(input, output):
-    list_data = []
-    with open(input, 'r') as f:
-        csv_reader = csv.reader(f, delimiter=',')
-        for row in csv_reader:
-            for d in row:
-                list_data.append(float(d))
-
-    packed_floats = float_list_to_packed_floats(list_data)
-
-    with open(output, "wb") as f:
-        f.write(packed_floats)
-    print("wrote {} bytes to {}".format(len(packed_floats), output))
+#def create_packed_float_file(input, output):
+#    list_data = []
+#    with open(input, 'r') as f:
+#        csv_reader = csv.reader(f, delimiter=',')
+#        for row in csv_reader:
+#            for d in row:
+#                list_data.append(float(d))
+#
+#    packed_floats = packed_floats(list_data)
+#
+#    with open(output, "wb") as f:
+#        f.write(packed_floats)
+#    print("wrote {} bytes to {}".format(len(packed_floats), output))
+#
