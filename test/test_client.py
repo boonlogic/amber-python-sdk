@@ -9,7 +9,7 @@ from nose.tools import assert_raises
 from nose.tools import assert_not_equal
 from nose.tools import assert_is_not_none
 from nose.tools import assert_greater
-from boonamber import AmberClient, AmberUserError, AmberCloudError
+from boonamber import AmberClient, AmberUserError, AmberCloudError, float_list_to_csv_string, float_list_to_packed_floats
 from secrets import get_secrets
 
 
@@ -471,7 +471,7 @@ class Test_03_SensorOps:
 
     def test_23_pretrain_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
-            response = Test_03_SensorOps.amber.pretrain_sensor('nonexistent-sensor-id', [1, 2, 3, 4, 5], block=True)
+            response = Test_03_SensorOps.amber.pretrain_sensor('123456abcdef', [1, 2, 3, 4, 5], block=True)
         assert_equal(context.exception.code, 404)
 
         # not enough data to fill sample buffer
@@ -558,45 +558,45 @@ class Test_04_CSVConvert:
         amber = create_amber_client()
 
         # valid scalar inputs
-        assert_equal("1.0", amber._convert_to_csv(1))
-        assert_equal("1.0", amber._convert_to_csv(1.0))
+        assert_equal("1.0", float_list_to_csv_string(1))
+        assert_equal("1.0", float_list_to_csv_string(1.0))
 
         # valid 1d inputs
-        assert_equal("1.0,2.0,3.0", amber._convert_to_csv([1, 2, 3]))
-        assert_equal("1.0,2.0,3.0", amber._convert_to_csv([1, 2, 3.0]))
-        assert_equal("1.0,2.0,3.0", amber._convert_to_csv([1.0, 2.0, 3.0]))
+        assert_equal("1.0,2.0,3.0", float_list_to_csv_string([1, 2, 3]))
+        assert_equal("1.0,2.0,3.0", float_list_to_csv_string([1, 2, 3.0]))
+        assert_equal("1.0,2.0,3.0", float_list_to_csv_string([1.0, 2.0, 3.0]))
 
         # valid 2d inputs
-        assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1, 2], [3, 4]]))
-        assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1, 2, 3, 4]]))
-        assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1], [2], [3], [4]]))
-        assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1, 2], [3, 4.0]]))
-        assert_equal("1.0,2.0,3.0,4.0", amber._convert_to_csv([[1.0, 2.0], [3.0, 4.0]]))
+        assert_equal("1.0,2.0,3.0,4.0", float_list_to_csv_string([[1, 2], [3, 4]]))
+        assert_equal("1.0,2.0,3.0,4.0", float_list_to_csv_string([[1, 2, 3, 4]]))
+        assert_equal("1.0,2.0,3.0,4.0", float_list_to_csv_string([[1], [2], [3], [4]]))
+        assert_equal("1.0,2.0,3.0,4.0", float_list_to_csv_string([[1, 2], [3, 4.0]]))
+        assert_equal("1.0,2.0,3.0,4.0", float_list_to_csv_string([[1.0, 2.0], [3.0, 4.0]]))
 
     def test_convert_to_csv_negative(self):
         amber = create_amber_client()
 
         # empty data
-        assert_raises(ValueError, amber._convert_to_csv, [])
-        assert_raises(ValueError, amber._convert_to_csv, [[]])
-        assert_raises(ValueError, amber._convert_to_csv, [[], []])
+        assert_raises(ValueError, float_list_to_csv_string, [])
+        assert_raises(ValueError, float_list_to_csv_string, [[]])
+        assert_raises(ValueError, float_list_to_csv_string, [[], []])
 
         # non-numeric data
-        assert_raises(ValueError, amber._convert_to_csv, None)
-        assert_raises(ValueError, amber._convert_to_csv, 'a')
-        assert_raises(ValueError, amber._convert_to_csv, 'abc')
-        assert_raises(ValueError, amber._convert_to_csv, [1, None, 3])
-        assert_raises(ValueError, amber._convert_to_csv, [1, 'a', 3])
-        assert_raises(ValueError, amber._convert_to_csv, [1, 'abc', 3])
-        assert_raises(ValueError, amber._convert_to_csv, [[1, None], [3, 4]])
-        assert_raises(ValueError, amber._convert_to_csv, [[1, 'a'], [3, 4]])
-        assert_raises(ValueError, amber._convert_to_csv, [[1, 'abc'], [3, 4]])
+        assert_raises(ValueError, float_list_to_csv_string, None)
+        assert_raises(ValueError, float_list_to_csv_string, 'a')
+        assert_raises(ValueError, float_list_to_csv_string, 'abc')
+        assert_raises(ValueError, float_list_to_csv_string, [1, None, 3])
+        assert_raises(ValueError, float_list_to_csv_string, [1, 'a', 3])
+        assert_raises(ValueError, float_list_to_csv_string, [1, 'abc', 3])
+        assert_raises(ValueError, float_list_to_csv_string, [[1, None], [3, 4]])
+        assert_raises(ValueError, float_list_to_csv_string, [[1, 'a'], [3, 4]])
+        assert_raises(ValueError, float_list_to_csv_string, [[1, 'abc'], [3, 4]])
 
         # badly-shaped data
-        assert_raises(ValueError, amber._convert_to_csv, [1, [2, 3], 4])  # mixed nesting
-        assert_raises(ValueError, amber._convert_to_csv, [[1, 2], [3, 4, 5]])  # ragged array
-        assert_raises(ValueError, amber._convert_to_csv, [[[1, 2, 3, 4]]])  # nested too deep
-        assert_raises(ValueError, amber._convert_to_csv, [[[1], [2], [3], [4]]])
+        assert_raises(ValueError, float_list_to_csv_string, [1, [2, 3], 4])  # mixed nesting
+        assert_raises(ValueError, float_list_to_csv_string, [[1, 2], [3, 4, 5]])  # ragged array
+        assert_raises(ValueError, float_list_to_csv_string, [[[1, 2, 3, 4]]])  # nested too deep
+        assert_raises(ValueError, float_list_to_csv_string, [[[1], [2], [3], [4]]])
 
 
 class Test_05_Version:

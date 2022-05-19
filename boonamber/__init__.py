@@ -1,5 +1,5 @@
 import base64
-import sys
+import csv
 import itertools
 import numpy as np
 import json
@@ -7,8 +7,11 @@ import gzip
 import os
 import time
 import requests
+import struct
+import urllib3
 from collections.abc import Iterable
 from numbers import Number, Integral
+
 from urllib3.exceptions import InsecureRequestWarning
 
 
@@ -78,8 +81,7 @@ class AmberClient:
         self.license_file = os.environ.get('AMBER_LICENSE_FILE', self.license_file)
 
         # determine which license_id to use, override from environment if specified
-        self.license_id = license_id
-        self.license_id = os.environ.get('AMBER_LICENSE_ID', self.license_id)
+        self.license_id = os.environ.get('AMBER_LICENSE_ID', license_id)
 
         # create license profile
         if self.license_file is not None:
@@ -119,7 +121,7 @@ class AmberClient:
             raise AmberUserError("missing field")
 
         if self.license_profile['verify'] is False:
-            requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+            urllib3.disable_warnings(category=InsecureRequestWarning)
 
         # verify required profile elements have been created
         if self.license_profile['username'] == "":
@@ -170,7 +172,7 @@ class AmberClient:
 
         except requests.exceptions.Timeout:
             raise AmberCloudError(500, "request timed out")
-        except Exception as e:
+        except Exception:
             raise AmberCloudError(401, 'invalid server connection')
 
     def _api_call(self, method, url, headers, body=None):
@@ -184,6 +186,7 @@ class AmberClient:
         headers['Content-Type'] = 'application/json'
 
         body = json.dumps(body)
+
         if method == 'POST' and len(body) > 10000:
             headers['content-encoding'] = 'gzip'
             body = gzip.compress(body.encode('utf-8'))
@@ -197,7 +200,7 @@ class AmberClient:
             # request timed out
             raise AmberCloudError(500, "request timed out")
 
-        if response.status_code != 200 and response.status_code != 202:
+        if response.status_code > 299:
             try:
                 msg = response.json()
                 try:
@@ -209,15 +212,13 @@ class AmberClient:
             raise AmberCloudError(response.status_code, msg)
 
         if 'code' in response.json() and response.json()['code'] != response.status_code:
-            # todo: if this happens, there is a bug in the amber service.
             # is returned in the message, it should agree with the header
             raise AmberCloudError(response.json()['code'], response.json().get('message', 'no message'))
 
-        # todo: we should not see errorMessage in the response.  It indicates a misconfigured API gateway
         if 'errorMessage' in response.json():
             raise AmberCloudError(500, response.json()['errorMessage'])
 
-        return response.json()
+        return response
 
     def get_version(self):
         """Get version information for Amber
@@ -235,7 +236,7 @@ class AmberClient:
         }
         response = self._api_call('GET', url, headers)
 
-        return response
+        return response.json()
 
     def create_sensor(self, label=''):
         """Create a new sensor instance
@@ -259,7 +260,7 @@ class AmberClient:
             'label': label
         }
         response = self._api_call('POST', url, headers, body=body)
-        sensor_id = response['sensorId']
+        sensor_id = response.json()['sensorId']
 
         return sensor_id
 
@@ -287,7 +288,7 @@ class AmberClient:
             'label': label
         }
         response = self._api_call('PUT', url, headers, body=body)
-        label = response['label']
+        label = response.json()['label']
 
         return label
 
@@ -308,6 +309,7 @@ class AmberClient:
             'sensorId': sensor_id
         }
         response = self._api_call('DELETE', url, headers)
+        return response.json()
 
     def list_sensors(self):
         """List all sensor instances currently associated with Amber account
@@ -325,7 +327,7 @@ class AmberClient:
             'Content-Type': 'application/json'
         }
         response = self._api_call('GET', url, headers)
-        sensors = {s['sensorId']: s.get('label', None) for s in response}
+        sensors = {s['sensorId']: s.get('label', None) for s in response.json()}
 
         return sensors
 
@@ -408,7 +410,7 @@ class AmberClient:
         }
         config = self._api_call('POST', url, headers, body=body)
 
-        return config
+        return config.json()
 
     def configure_fusion(self, sensor_id, feature_count=5, features=None):
         """Configure an Amber instance for sensor fusion
@@ -448,7 +450,8 @@ class AmberClient:
             'sensorId': sensor_id
         }
         body = {'features': features}
-        return self._api_call('PUT', url, headers, body=body)['features']
+        response = self._api_call('PUT', url, headers, body=body)
+        return response.json()['features']
 
     def enable_learning(self, sensor_id, anomaly_history_window=None,
                         learning_rate_numerator=None, learning_rate_denominator=None,
@@ -473,78 +476,8 @@ class AmberClient:
             'sensorId': sensor_id
         }
         body = {'streaming': streaming}
-        return self._api_call('PUT', url, headers, body=body)['streaming']
-
-    def _isiterable(self, x):
-        # consider strings non-iterable for shape validation purposes,
-        # that way they are printed out whole when caught as nonnumeric
-        if isinstance(x, str):
-            return False
-
-        # collections.abc docs: "The only reliable way to determine
-        # whether an object is iterable is to call iter(obj)."
-        try:
-            iter(x)
-        except TypeError:
-            return False
-
-        return True
-
-    def _validate_dims(self, data):
-        """Validate that data is non-empty and one of the following:
-           scalar value, list-like or list-of-lists-like where all
-           sublists have equal length. Return 0, 1 or 2 as inferred
-           number of array dimensions
-        """
-
-        # not-iterable data is a single scalar data point
-        if not self._isiterable(data):
-            return 0
-
-        # iterable and unnested data is a 1-d array
-        if not any(self._isiterable(d) for d in data):
-            if len(list(data)) == 0:
-                raise ValueError("empty")
-
-            return 1
-
-        # iterable and nested data is 2-d array
-        if not all(self._isiterable(d) for d in data):
-            raise ValueError("cannot mix nested scalars and iterables")
-
-        sublengths = [len(list(d)) for d in data]
-        if len(set(sublengths)) > 1:
-            raise ValueError("nested sublists must have equal length")
-
-        flattened_2d = list(itertools.chain.from_iterable(data))
-
-        if any(isinstance(i, Iterable) for i in flattened_2d):
-            raise ValueError("cannot be nested deeper than list-of-lists")
-
-        if sublengths[0] == 0:
-            raise ValueError("empty")
-
-        return 2
-
-    def _convert_to_csv(self, data):
-        """Validate data and convert to a comma-separated plaintext string"""
-
-        # Note: as in the Boon Nano SDK, there is no check that data dimensions
-        # align with number of features and streaming window size.
-        ndim = self._validate_dims(data)
-
-        if ndim == 0:
-            data_flat = [data]
-        elif ndim == 1:
-            data_flat = list(data)
-        elif ndim == 2:
-            data_flat = list(itertools.chain.from_iterable(data))
-
-        for d in data_flat:
-            if not isinstance(d, Number):
-                raise ValueError("contained {} which is not numeric".format(d.__repr__()))
-
-        return ','.join([str(float(d)) for d in data_flat])
+        response = self._api_call('PUT', url, headers, body=body)
+        return response.json()['streaming']
 
     def pretrain_sensor(self, sensor_id, data, autotune_config=True, block=True):
         """Pretrain a sensor with historical data
@@ -579,7 +512,7 @@ class AmberClient:
 
         # Server expects data as a plaintext string of comma-separated values.
         try:
-            data_csv = self._convert_to_csv(data)
+            data_csv = float_list_to_csv_string(data)
         except ValueError as e:
             raise AmberUserError("invalid data: {}".format(e))
 
@@ -596,7 +529,94 @@ class AmberClient:
         results = self._api_call('POST', url, headers, body=body)
 
         if not block:
-            return results
+            return results.json()
+
+        while True:
+            results = self.get_pretrain_state(sensor_id)
+            if results['state'] == "Pretraining":
+                time.sleep(5)
+                continue
+            else:
+                return results
+
+    def pretrain_sensor_xl(self, sensor_id, data, autotune_config=True, block=True):
+        """Pretrain a sensor with extra large sets of historical data.
+
+        Args:
+            sensor_id (str): sensor identifier
+            data (array-like): data to be inferenced. Must be non-empty,
+                entirely numeric and one of the following: scalar value,
+                list-like or list-of-lists-like where all sublists have
+                equal length.
+            autotune_config (bool): if True, the sensor will be reconfigured based
+                on the training data provided so that the sensor will be in monitoring
+                once the data is through. If False, the sensor uses the already
+                configured values to train the sensor.
+            block (bool): if True, will block until pretraining is complete.
+                Otherwise, will return immediately; in this case pretraining
+                status can be checked using get_pretrain_state endpoint.
+
+        Returns:
+
+            {
+                'state': str
+            }
+
+            'state': current state of the sensor.
+                "Pretraining": pretraining is in progress
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response
+        """
+
+        # Server expects data as a plaintext string of comma-separated values.
+        if type(data) == "list":
+            try:
+                data = float_list_to_packed_floats(data)
+            except ValueError as e:
+                raise AmberUserError("invalid data: {}".format(e))
+
+        url = self.license_profile['server'] + '/pretrain'
+        headers = {
+            'content-type': 'application/octet-stream',
+            'sensorId': sensor_id
+        }
+        body = {
+            'data': '',
+            'format': "packed-float",
+            'autotuneConfig': autotune_config
+        }
+
+        # chunk size is set at 4MB (1 million floats * 4 bytes)
+        chunk_size = 4 * 1000 * 1000
+
+        # compute number of 4MB chunks to send
+        num_chunks = int(len(data) / chunk_size)
+        if len(data) % chunk_size != 0:
+            num_chunks += 1
+
+        amber_transaction = None
+        response = None
+        for chunk_num in range(0, num_chunks):
+            # include amberChunk header designation, .ie 1:3, 2:3, 3:3
+            headers['amberchunk'] = '{}:{}'.format(chunk_num + 1, num_chunks)
+            if amber_transaction is not None:
+                headers['ambertransaction'] = amber_transaction
+
+            # compute start and end range of next chunk
+            start = chunk_num * chunk_size
+            end = start + chunk_size
+            if end > len(data):
+                end = len(data)
+
+            body['data'] = base64.b64encode(data[start:end]).decode('ascii')
+            response = self._api_call('POST', url, headers, body=body)
+            if 'amberTransaction' in response.headers:
+                amber_transaction = response.headers['ambertransaction']
+
+        if not block:
+            return response.json()
 
         while True:
             results = self.get_pretrain_state(sensor_id)
@@ -633,9 +653,8 @@ class AmberClient:
             'sensorId': sensor_id
         }
 
-        results = self._api_call('GET', url, headers)
-
-        return results
+        response = self._api_call('GET', url, headers)
+        return response.json()
 
     def stream_fusion(self, sensor_id, vector, submit=None):
         """Stream data to a fusion-configured sensor
@@ -699,8 +718,8 @@ class AmberClient:
             'vector': vector,
             'submitRule': submit
         }
-        resp = self._api_call('PUT', url, headers, body=body)
-        return resp
+        response = self._api_call('PUT', url, headers, body=body)
+        return response.json()
 
     def stream_sensor(self, sensor_id, data, save_image=True):
         """Stream data to an amber sensor and return the inference result
@@ -783,7 +802,7 @@ class AmberClient:
 
         # Server expects data as a plaintext string of comma-separated values.
         try:
-            data_csv = self._convert_to_csv(data)
+            data_csv = float_list_to_csv_string(data)
         except ValueError as e:
             raise AmberUserError("invalid data: {}".format(e))
 
@@ -796,10 +815,8 @@ class AmberClient:
             'saveImage': save_image,
             'data': data_csv
         }
-
-        results = self._api_call('POST', url, headers, body=body)
-
-        return results
+        response = self._api_call('POST', url, headers, body=body)
+        return response.json()
 
     def get_sensor(self, sensor_id):
         """Get info about a sensor
@@ -864,9 +881,8 @@ class AmberClient:
             'Content-Type': 'application/json',
             'sensorId': sensor_id
         }
-        sensor = self._api_call('GET', url, headers)
-
-        return sensor
+        response = self._api_call('GET', url, headers)
+        return response.json()
 
     def get_config(self, sensor_id):
         """Get current sensor configuration
@@ -918,9 +934,9 @@ class AmberClient:
             'Content-Type': 'application/json',
             'sensorId': sensor_id
         }
-        config = self._api_call('GET', url, headers)
+        response = self._api_call('GET', url, headers)
 
-        return config
+        return response.json()
 
     def get_status(self, sensor_id):
         """Get sensor status
@@ -965,11 +981,11 @@ class AmberClient:
             'Content-Type': 'application/json',
             'sensorId': sensor_id
         }
-        status = self._api_call('GET', url, headers)
+        response = self._api_call('GET', url, headers)
 
-        return status
+        return response.json()
 
-    def get_root_cause(self, sensor_id, id_list=[], pattern_list=[]):
+    def get_root_cause(self, sensor_id, id_list=None, pattern_list=None):
         """Get root cause
 
         Args:
@@ -987,8 +1003,15 @@ class AmberClient:
             AmberCloudError: if Amber cloud gives non-200 response
         """
 
-        if len(id_list) != 0 and len(pattern_list) != 0:
-            raise AmberUserError('Cannot specify both patterns and cluster IDs for analysis')
+        if id_list is None:
+            if pattern_list is None:
+                raise AmberUserError('Must specify either id_list or pattern_list for analysis')
+            id_list = []
+        else:
+            if pattern_list is not None:
+                raise AmberUserError('Cannot specify both patterns and cluster IDs for analysis')
+            pattern_list = []
+
         url_call = 'rootCause?'
         if len(id_list) != 0:
             # IDs
@@ -1010,6 +1033,116 @@ class AmberClient:
             'Content-Type': 'application/json',
             'sensorId': sensor_id
         }
-        status = self._api_call('GET', url, headers)
+        response = self._api_call('GET', url, headers)
 
-        return status
+        return response.json()
+
+
+def validate_dims(data):
+    """Validate that data is non-empty and one of the following:
+       scalar value, list-like or list-of-lists-like where all
+       sublists have equal length. Return 0, 1 or 2 as inferred
+       number of array dimensions
+    """
+
+    # not-iterable data is a single scalar data point
+    if not _isiterable(data):
+        return 0
+
+    # iterable and unnested data is a 1-d array
+    if not any(_isiterable(d) for d in data):
+        if len(list(data)) == 0:
+            raise ValueError("empty")
+        return 1
+
+    # iterable and nested data is 2-d array
+    if not all(_isiterable(d) for d in data):
+        raise ValueError("cannot mix nested scalars and iterables")
+
+    sublengths = [len(list(d)) for d in data]
+    if len(set(sublengths)) > 1:
+        raise ValueError("nested sublists must have equal length")
+
+    flattened_2d = list(itertools.chain.from_iterable(data))
+
+    if any(isinstance(i, Iterable) for i in flattened_2d):
+        raise ValueError("cannot be nested deeper than list-of-lists")
+
+    if sublengths[0] == 0:
+        raise ValueError("empty")
+
+    return 2
+
+
+def _isiterable(x):
+    # consider strings non-iterable for shape validation purposes,
+    # that way they are printed out whole when caught as nonnumeric
+    if isinstance(x, str):
+        return False
+
+    # collections.abc docs: "The only reliable way to determine
+    # whether an object is iterable is to call iter(obj)."
+    try:
+        iter(x)
+    except TypeError:
+        return False
+
+    return True
+
+
+def float_list_to_csv_string(float_list):
+    # Note: as in the Boon Nano SDK, there is no check that data dimensions
+    # align with number of features and streaming window size.
+    ndim = validate_dims(float_list)
+
+    if ndim == 0:
+        data_flat = [float_list]
+    elif ndim == 1:
+        data_flat = list(float_list)
+    elif ndim == 2:
+        data_flat = list(itertools.chain.from_iterable(float_list))
+    else:
+        raise ValueError("float_list is not in known format")
+
+    for d in data_flat:
+        if not isinstance(d, Number):
+            raise ValueError("contained {} which is not numeric".format(d.__repr__()))
+    return ','.join([str(float(d)) for d in data_flat])
+
+
+def float_list_to_packed_floats(float_list):
+    """Validate data and convert to a packed float buffer"""
+
+    # Note: as in the Boon Nano SDK, there is no check that data dimensions
+    # align with number of features and streaming window size.
+    ndim = validate_dims(float_list)
+
+    if ndim == 0:
+        data_flat = [float_list]
+    elif ndim == 1:
+        data_flat = list(float_list)
+    elif ndim == 2:
+        data_flat = list(itertools.chain.from_iterable(float_list))
+    else:
+        raise ValueError("float_list is not in known format")
+
+    for d in data_flat:
+        if not isinstance(d, Number):
+            raise ValueError("contained {} which is not numeric".format(d.__repr__()))
+
+    return struct.pack('%sf' % len(data_flat), *data_flat)
+
+
+def create_packed_float_file(input, output):
+    list_data = []
+    with open(input, 'r') as f:
+        csv_reader = csv.reader(f, delimiter=',')
+        for row in csv_reader:
+            for d in row:
+                list_data.append(float(d))
+
+    packed_floats = float_list_to_packed_floats(list_data)
+
+    with open(output, "wb") as f:
+        f.write(packed_floats)
+    print("wrote {} bytes to {}".format(len(packed_floats), output))
