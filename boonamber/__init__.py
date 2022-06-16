@@ -329,6 +329,16 @@ class AmberClient:
 
         return sensors
 
+    def post_outage(self, sensor_id):
+
+        url = self.license_profile['server'] + '/outage'
+        headers = {
+            'Content-Type': 'application/json',
+            'sensorId': sensor_id
+        }
+        response = self._api_call('POST', url, headers)
+        return response.json()
+
     def configure_sensor(self, sensor_id, feature_count=1, streaming_window_size=25,
                          samples_to_buffer=10000,
                          anomaly_history_window=10000,

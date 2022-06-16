@@ -126,6 +126,19 @@ except AmberUserError as e:
 print("status: {}".format(status))
 print()
 
+# Post Outage
+print("post outage")
+try:
+    post_outage = amber.post_outage(sensor_id)
+except AmberCloudError as e:
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
+print("post_outage : {}".format(post_outage))
+print()
+
 # Get clustering status from a sensor
 print("getting root cause")
 try:
@@ -137,6 +150,19 @@ except AmberUserError as e:
     print("Amber user error: {}".format(e))
     sys.exit(1)
 print("root cause: {}".format(root_cause))
+print()
+
+# Enable learning
+print("enabling learning")
+try:
+    enable_learning = amber.enable_learning(sensor_id)
+except AmberCloudError as e:
+    print("Amber Cloud error: {}".format(e))
+    sys.exit(1)
+except AmberUserError as e:
+    print("Amber user error: {}".format(e))
+    sys.exit(1)
+print("enable_learning: {}".format(enable_learning))
 print()
 
 # Delete a sensor instance
