@@ -400,7 +400,19 @@ class Test_03_SensorOps:
         assert_raises(AmberUserError, Test_03_SensorOps.amber.stream_sensor, Test_03_SensorOps.sensor_id,
                       [1, [2, 3], 4])
 
-    def test_16_get_root_cause(self):
+    def test_16_post_outage(self):
+        results = Test_03_SensorOps.amber.post_outage(Test_03_SensorOps.sensor_id)
+        assert_equal("Buffering", results["state"])
+
+        results = Test_03_SensorOps.amber.stream_sensor(Test_03_SensorOps.sensor_id, [1, 2, 3, 4, 5])
+        assert_true(list(set(results['ID'])) == [0])
+
+    def test_17_post_outage_negative(self):
+        with assert_raises(AmberCloudError) as context:
+            results = Test_03_SensorOps.amber.post_outage('nonexistent-sensor-id')
+        assert_equal(context.exception.code, 404)
+
+    def test_18_get_root_cause(self):
         config = Test_03_SensorOps.amber.get_config(Test_03_SensorOps.sensor_id)
         expected = [[0] * len(config['features']) * config['streamingWindowSize']] * 2
         config = Test_03_SensorOps.amber.get_root_cause(Test_03_SensorOps.sensor_id,
@@ -411,7 +423,7 @@ class Test_03_SensorOps:
                                                                 'streamingWindowSize']])
         assert_equal(config, expected)
 
-    def test_17_get_root_cause_negative(self):
+    def test_19_get_root_cause_negative(self):
         with assert_raises(AmberCloudError) as context:
             config = Test_03_SensorOps.amber.get_root_cause('nonexistent-sensor-id', id_list=[1])
         assert_equal(context.exception.code, 404)
@@ -427,27 +439,27 @@ class Test_03_SensorOps:
 
         assert_raises(AmberCloudError, Test_03_SensorOps.amber.get_root_cause, Test_03_SensorOps.sensor_id, [1])
 
-    def test_18_get_status(self):
+    def test_20_get_status(self):
         status = Test_03_SensorOps.amber.get_status(Test_03_SensorOps.sensor_id)
         assert_true('pca' in status)
         assert_true('numClusters' in status)
 
-    def test_19_get_status_negative(self):
+    def test_21_get_status_negative(self):
         with assert_raises(AmberCloudError) as context:
             status = Test_03_SensorOps.amber.get_status('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_20_get_pretrain_state(self):
+    def test_22_get_pretrain_state(self):
         response = Test_03_SensorOps.amber.get_pretrain_state(Test_03_SensorOps.sensor_id)
         assert_true('state' in response)
         assert_equal(response['state'], 'None')
 
-    def test_21_get_pretrain_state_negative(self):
+    def test_23_get_pretrain_state_negative(self):
         with assert_raises(AmberCloudError) as context:
             response = Test_03_SensorOps.amber.get_pretrain_state('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_22_pretrain_sensor(self):
+    def test_24_pretrain_sensor(self):
         with open('output_current.csv', 'r') as f:
             csv_reader = csv.reader(f, delimiter=',')
             data = []
@@ -469,7 +481,7 @@ class Test_03_SensorOps:
                 break
         assert_equal(results['state'], 'Pretrained')
 
-    def test_23_pretrain_sensor_negative(self):
+    def test_25_pretrain_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             response = Test_03_SensorOps.amber.pretrain_sensor('123456abcdef', [1, 2, 3, 4, 5], block=True)
         assert_equal(context.exception.code, 404)
@@ -479,7 +491,7 @@ class Test_03_SensorOps:
             response = Test_03_SensorOps.amber.pretrain_sensor(Test_03_SensorOps.sensor_id, [1, 2, 3, 4, 5], block=True)
         assert_equal(context.exception.code, 400)
 
-    def test_24_enable_learning(self):
+    def test_26_enable_learning(self):
         # enable learning tests setup
         exp = {
                 "anomalyHistoryWindow": 1000,
@@ -495,7 +507,7 @@ class Test_03_SensorOps:
                                                        learning_max_samples=1000000)
         assert_equal(resp, exp)
 
-    def test_25_enable_learning_negative(self):
+    def test_27_enable_learning_negative(self):
         exp = {"streaming": {
                 "anomalyHistoryWindow": 1000,
                 "learningRateNumerator": 10,
@@ -518,12 +530,12 @@ class Test_03_SensorOps:
             Test_03_SensorOps.amber.enable_learning(Test_03_SensorOps.sensor_id, learning_max_samples=1000000)
         assert_equal(context.exception.code, 400)
 
-    def test_26_delete_sensor_negative(self):
+    def test_28_delete_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             Test_03_SensorOps.amber.delete_sensor('nonexistent-sensor-id')
         assert_equal(context.exception.code, 404)
 
-    def test_27_delete_sensor(self):
+    def test_29_delete_sensor(self):
         try:
             Test_03_SensorOps.amber.delete_sensor(Test_03_SensorOps.sensor_id)
         except Exception as e:
