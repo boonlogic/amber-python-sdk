@@ -183,6 +183,12 @@ class AmberClient:
         headers['User-Agent'] = self.user_agent
         headers['Content-Type'] = 'application/json'
 
+        impersonate = os.environ.get('AMBER_IMPERSONATE', '')
+        if impersonate != '':
+            headers['impersonate'] = impersonate
+
+        self.license_file = os.environ.get('AMBER_LICENSE_FILE', self.license_file)
+
         body = json.dumps(body)
 
         if method == 'POST' and len(body) > 10000:
