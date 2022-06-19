@@ -110,6 +110,8 @@ class AmberClient:
                 self.license_profile['oauth-server'] = self.license_profile['server']
             self.license_profile['oauth-server'] = os.environ.get('AMBER_OAUTH_SERVER',
                                                                   self.license_profile['oauth-server'])
+            if self.license_profile['oauth-server'] == "":
+                self.license_profile['oauth-server'] = self.license_profile['server']
             self.license_profile['cert'] = os.environ.get('AMBER_SSL_CERT', cert)
             verify_str = os.environ.get('AMBER_SSL_VERIFY', "true").lower()
             self.license_profile['verify'] = True  # Default
@@ -223,6 +225,25 @@ class AmberClient:
             raise AmberCloudError(500, response.json()['errorMessage'])
 
         return response
+
+    def get_summary(self, sensor_id):
+        """Get summary information for a sensor
+
+        Returns:
+            json summary information
+
+        Raises:
+            AmberCloudError: if Amber cloud gives non-200 response
+        """
+
+        url = self.license_profile['server'] + '/__summary'
+        headers = {
+            'Content-Type': 'application/json',
+            'sensorId': sensor_id
+        }
+        response = self._api_call('GET', url, headers)
+
+        return response.json()
 
     def get_version(self):
         """Get version information for Amber
