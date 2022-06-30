@@ -475,7 +475,7 @@ class AmberClient:
                 raise AmberUserError("invalid 'feature_count': must be positive integer")
             for i in range(feature_count):
                 features.append({
-                    "labels": "",  # allow server to fill in default values
+                    "label": "",  # allow server to fill in default values
                     "submitRule": ""
                 })
 
