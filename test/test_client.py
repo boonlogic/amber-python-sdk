@@ -10,7 +10,7 @@ from nose.tools import assert_not_equal
 from nose.tools import assert_is_not_none
 from nose.tools import assert_greater
 from boonamber import AmberClient, AmberUserError, AmberCloudError, float_list_to_csv_string
-from secrets import get_secrets
+from amber_secrets import get_secrets
 
 
 # secrets downloaded from points beyond
