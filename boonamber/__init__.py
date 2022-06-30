@@ -217,12 +217,18 @@ class AmberClient:
                 msg = response.text
             raise AmberCloudError(response.status_code, msg)
 
-        if 'code' in response.json() and response.json()['code'] != response.status_code:
-            # is returned in the message, it should agree with the header
-            raise AmberCloudError(response.json()['code'], response.json().get('message', 'no message'))
+        try:
+            respbody = response.json()
+        except json.JSONDecodeError:
+            msg = response.text
+            raise AmberCloudError(response.status_code, f"could not decode response as JSON: '{msg}'")
 
-        if 'errorMessage' in response.json():
-            raise AmberCloudError(500, response.json()['errorMessage'])
+        # if code is returned in the message, it should agree with the header
+        if 'code' in respbody and respbody['code'] != response.status_code:
+            raise AmberCloudError(respbody['code'], respbody.get('message', 'no message'))
+
+        if 'errorMessage' in respbody:
+            raise AmberCloudError(500, respbody['errorMessage'])
 
         return response
 
