@@ -138,6 +138,8 @@ class AmberClient:
                 self.license_profile[&#39;oauth-server&#39;] = self.license_profile[&#39;server&#39;]
             self.license_profile[&#39;oauth-server&#39;] = os.environ.get(&#39;AMBER_OAUTH_SERVER&#39;,
                                                                   self.license_profile[&#39;oauth-server&#39;])
+            if self.license_profile[&#39;oauth-server&#39;] == &#34;&#34;:
+                self.license_profile[&#39;oauth-server&#39;] = self.license_profile[&#39;server&#39;]
             self.license_profile[&#39;cert&#39;] = os.environ.get(&#39;AMBER_SSL_CERT&#39;, cert)
             verify_str = os.environ.get(&#39;AMBER_SSL_VERIFY&#39;, &#34;true&#34;).lower()
             self.license_profile[&#39;verify&#39;] = True  # Default
@@ -211,6 +213,12 @@ class AmberClient:
         headers[&#39;User-Agent&#39;] = self.user_agent
         headers[&#39;Content-Type&#39;] = &#39;application/json&#39;
 
+        impersonate = os.environ.get(&#39;AMBER_IMPERSONATE&#39;, &#39;&#39;)
+        if impersonate != &#39;&#39;:
+            headers[&#39;impersonate&#39;] = impersonate
+
+        self.license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, self.license_file)
+
         body = json.dumps(body)
 
         if method == &#39;POST&#39; and len(body) &gt; 10000:
@@ -237,14 +245,39 @@ class AmberClient:
                 msg = response.text
             raise AmberCloudError(response.status_code, msg)
 
-        if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != response.status_code:
-            # is returned in the message, it should agree with the header
-            raise AmberCloudError(response.json()[&#39;code&#39;], response.json().get(&#39;message&#39;, &#39;no message&#39;))
+        try:
+            respbody = response.json()
+        except json.JSONDecodeError:
+            msg = response.text
+            raise AmberCloudError(response.status_code, f&#34;could not decode response as JSON: &#39;{msg}&#39;&#34;)
 
-        if &#39;errorMessage&#39; in response.json():
-            raise AmberCloudError(500, response.json()[&#39;errorMessage&#39;])
+        # if code is returned in the message, it should agree with the header
+        if &#39;code&#39; in respbody and respbody[&#39;code&#39;] != response.status_code:
+            raise AmberCloudError(respbody[&#39;code&#39;], respbody.get(&#39;message&#39;, &#39;no message&#39;))
+
+        if &#39;errorMessage&#39; in respbody:
+            raise AmberCloudError(500, respbody[&#39;errorMessage&#39;])
 
         return response
+
+    def get_summary(self, sensor_id):
+        &#34;&#34;&#34;Get summary information for a sensor
+
+        Returns:
+            json summary information
+
+        Raises:
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/__summary&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        response = self._api_call(&#39;GET&#39;, url, headers)
+
+        return response.json()
 
     def get_version(self):
         &#34;&#34;&#34;Get version information for Amber
@@ -357,6 +390,16 @@ class AmberClient:
 
         return sensors
 
+    def post_outage(self, sensor_id):
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/outage&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        response = self._api_call(&#39;POST&#39;, url, headers)
+        return response.json()
+
     def configure_sensor(self, sensor_id, feature_count=1, streaming_window_size=25,
                          samples_to_buffer=10000,
                          anomaly_history_window=10000,
@@ -466,7 +509,7 @@ class AmberClient:
                 raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
             for i in range(feature_count):
                 features.append({
-                    &#34;labels&#34;: &#34;&#34;,  # allow server to fill in default values
+                    &#34;label&#34;: &#34;&#34;,  # allow server to fill in default values
                     &#34;submitRule&#34;: &#34;&#34;
                 })
 
@@ -1147,7 +1190,7 @@ def packed_floats(data):
 
     return data
 
-#def create_packed_float_file(input, output):
+# def create_packed_float_file(input, output):
 #    list_data = []
 #    with open(input, &#39;r&#39;) as f:
 #        csv_reader = csv.reader(f, delimiter=&#39;,&#39;)
@@ -1387,6 +1430,8 @@ home directory, or optionally overridden using environment variables.</p>
                 self.license_profile[&#39;oauth-server&#39;] = self.license_profile[&#39;server&#39;]
             self.license_profile[&#39;oauth-server&#39;] = os.environ.get(&#39;AMBER_OAUTH_SERVER&#39;,
                                                                   self.license_profile[&#39;oauth-server&#39;])
+            if self.license_profile[&#39;oauth-server&#39;] == &#34;&#34;:
+                self.license_profile[&#39;oauth-server&#39;] = self.license_profile[&#39;server&#39;]
             self.license_profile[&#39;cert&#39;] = os.environ.get(&#39;AMBER_SSL_CERT&#39;, cert)
             verify_str = os.environ.get(&#39;AMBER_SSL_VERIFY&#39;, &#34;true&#34;).lower()
             self.license_profile[&#39;verify&#39;] = True  # Default
@@ -1460,6 +1505,12 @@ home directory, or optionally overridden using environment variables.</p>
         headers[&#39;User-Agent&#39;] = self.user_agent
         headers[&#39;Content-Type&#39;] = &#39;application/json&#39;
 
+        impersonate = os.environ.get(&#39;AMBER_IMPERSONATE&#39;, &#39;&#39;)
+        if impersonate != &#39;&#39;:
+            headers[&#39;impersonate&#39;] = impersonate
+
+        self.license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, self.license_file)
+
         body = json.dumps(body)
 
         if method == &#39;POST&#39; and len(body) &gt; 10000:
@@ -1486,14 +1537,39 @@ home directory, or optionally overridden using environment variables.</p>
                 msg = response.text
             raise AmberCloudError(response.status_code, msg)
 
-        if &#39;code&#39; in response.json() and response.json()[&#39;code&#39;] != response.status_code:
-            # is returned in the message, it should agree with the header
-            raise AmberCloudError(response.json()[&#39;code&#39;], response.json().get(&#39;message&#39;, &#39;no message&#39;))
+        try:
+            respbody = response.json()
+        except json.JSONDecodeError:
+            msg = response.text
+            raise AmberCloudError(response.status_code, f&#34;could not decode response as JSON: &#39;{msg}&#39;&#34;)
 
-        if &#39;errorMessage&#39; in response.json():
-            raise AmberCloudError(500, response.json()[&#39;errorMessage&#39;])
+        # if code is returned in the message, it should agree with the header
+        if &#39;code&#39; in respbody and respbody[&#39;code&#39;] != response.status_code:
+            raise AmberCloudError(respbody[&#39;code&#39;], respbody.get(&#39;message&#39;, &#39;no message&#39;))
+
+        if &#39;errorMessage&#39; in respbody:
+            raise AmberCloudError(500, respbody[&#39;errorMessage&#39;])
 
         return response
+
+    def get_summary(self, sensor_id):
+        &#34;&#34;&#34;Get summary information for a sensor
+
+        Returns:
+            json summary information
+
+        Raises:
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/__summary&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        response = self._api_call(&#39;GET&#39;, url, headers)
+
+        return response.json()
 
     def get_version(self):
         &#34;&#34;&#34;Get version information for Amber
@@ -1606,6 +1682,16 @@ home directory, or optionally overridden using environment variables.</p>
 
         return sensors
 
+    def post_outage(self, sensor_id):
+
+        url = self.license_profile[&#39;server&#39;] + &#39;/outage&#39;
+        headers = {
+            &#39;Content-Type&#39;: &#39;application/json&#39;,
+            &#39;sensorId&#39;: sensor_id
+        }
+        response = self._api_call(&#39;POST&#39;, url, headers)
+        return response.json()
+
     def configure_sensor(self, sensor_id, feature_count=1, streaming_window_size=25,
                          samples_to_buffer=10000,
                          anomaly_history_window=10000,
@@ -1715,7 +1801,7 @@ home directory, or optionally overridden using environment variables.</p>
                 raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
             for i in range(feature_count):
                 features.append({
-                    &#34;labels&#34;: &#34;&#34;,  # allow server to fill in default values
+                    &#34;label&#34;: &#34;&#34;,  # allow server to fill in default values
                     &#34;submitRule&#34;: &#34;&#34;
                 })
 
@@ -2376,7 +2462,7 @@ Allows direct setting of feature labels and rules for submitting the fusion vect
             raise AmberUserError(&#34;invalid &#39;feature_count&#39;: must be positive integer&#34;)
         for i in range(feature_count):
             features.append({
-                &#34;labels&#34;: &#34;&#34;,  # allow server to fill in default values
+                &#34;label&#34;: &#34;&#34;,  # allow server to fill in default values
                 &#34;submitRule&#34;: &#34;&#34;
             })
 
@@ -3144,6 +3230,42 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     return response.json()</code></pre>
 </details>
 </dd>
+<dt id="boonamber.AmberClient.get_summary"><code class="name flex">
+<span>def <span class="ident">get_summary</span></span>(<span>self, sensor_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get summary information for a sensor</p>
+<h2 id="returns">Returns</h2>
+<p>json summary information</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code><a title="boonamber.AmberCloudError" href="#boonamber.AmberCloudError">AmberCloudError</a></code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_summary(self, sensor_id):
+    &#34;&#34;&#34;Get summary information for a sensor
+
+    Returns:
+        json summary information
+
+    Raises:
+        AmberCloudError: if Amber cloud gives non-200 response
+    &#34;&#34;&#34;
+
+    url = self.license_profile[&#39;server&#39;] + &#39;/__summary&#39;
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/json&#39;,
+        &#39;sensorId&#39;: sensor_id
+    }
+    response = self._api_call(&#39;GET&#39;, url, headers)
+
+    return response.json()</code></pre>
+</details>
+</dd>
 <dt id="boonamber.AmberClient.get_version"><code class="name flex">
 <span>def <span class="ident">get_version</span></span>(<span>self)</span>
 </code></dt>
@@ -3216,6 +3338,26 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
     sensors = {s[&#39;sensorId&#39;]: s.get(&#39;label&#39;, None) for s in response.json()}
 
     return sensors</code></pre>
+</details>
+</dd>
+<dt id="boonamber.AmberClient.post_outage"><code class="name flex">
+<span>def <span class="ident">post_outage</span></span>(<span>self, sensor_id)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def post_outage(self, sensor_id):
+
+    url = self.license_profile[&#39;server&#39;] + &#39;/outage&#39;
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/json&#39;,
+        &#39;sensorId&#39;: sensor_id
+    }
+    response = self._api_call(&#39;POST&#39;, url, headers)
+    return response.json()</code></pre>
 </details>
 </dd>
 <dt id="boonamber.AmberClient.pretrain_sensor"><code class="name flex">
@@ -3899,8 +4041,10 @@ equal length.</dd>
 <li><code><a title="boonamber.AmberClient.get_root_cause" href="#boonamber.AmberClient.get_root_cause">get_root_cause</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_sensor" href="#boonamber.AmberClient.get_sensor">get_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_status" href="#boonamber.AmberClient.get_status">get_status</a></code></li>
+<li><code><a title="boonamber.AmberClient.get_summary" href="#boonamber.AmberClient.get_summary">get_summary</a></code></li>
 <li><code><a title="boonamber.AmberClient.get_version" href="#boonamber.AmberClient.get_version">get_version</a></code></li>
 <li><code><a title="boonamber.AmberClient.list_sensors" href="#boonamber.AmberClient.list_sensors">list_sensors</a></code></li>
+<li><code><a title="boonamber.AmberClient.post_outage" href="#boonamber.AmberClient.post_outage">post_outage</a></code></li>
 <li><code><a title="boonamber.AmberClient.pretrain_sensor" href="#boonamber.AmberClient.pretrain_sensor">pretrain_sensor</a></code></li>
 <li><code><a title="boonamber.AmberClient.pretrain_sensor_xl" href="#boonamber.AmberClient.pretrain_sensor_xl">pretrain_sensor_xl</a></code></li>
 <li><code><a title="boonamber.AmberClient.stream_fusion" href="#boonamber.AmberClient.stream_fusion">stream_fusion</a></code></li>
