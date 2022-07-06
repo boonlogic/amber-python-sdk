@@ -93,6 +93,12 @@ Example to demonstrate each API call
 
 [full-example.py](examples/full-example.py)
 
+## Fusion Example
+
+Example to demonstrate submitting data via the label for individual features of a fusion vector.
+
+[fusion-example.py](examples/fusion-example.py)
+
 ## Advanced CSV file processor
 
 Example of streaming a .csv file.  Full Amber analytic results will be displayed after each streaming request.  
