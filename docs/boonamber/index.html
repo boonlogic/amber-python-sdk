@@ -407,7 +407,8 @@ class AmberClient:
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
                          learning_max_samples=1000000,
-                         features=None):
+                         features=None,
+                         override_pv=None):
         &#34;&#34;&#34;Configure an amber sensor instance
 
         Args:
@@ -423,6 +424,7 @@ class AmberClient:
             learning_max_clusters (int): sensor graduates if this many clusters are created
             learning_max_samples (int): sensor graduates if this many samples are processed
             features (list): optional list of per feature settings (minVal, maxVal, and label)
+            override_pv (float): force percent variation to specific value
 
         Returns:
             A dictionary containing:
@@ -477,6 +479,8 @@ class AmberClient:
             &#39;learningMaxSamples&#39;: learning_max_samples,
             &#39;features&#39;: features
         }
+        if override_pv is not None:
+            body[&#39;percentVariationOverride&#39;] = override_pv
         config = self._api_call(&#39;POST&#39;, url, headers, body=body)
 
         return config.json()
@@ -1699,7 +1703,8 @@ home directory, or optionally overridden using environment variables.</p>
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
                          learning_max_samples=1000000,
-                         features=None):
+                         features=None,
+                         override_pv=None):
         &#34;&#34;&#34;Configure an amber sensor instance
 
         Args:
@@ -1715,6 +1720,7 @@ home directory, or optionally overridden using environment variables.</p>
             learning_max_clusters (int): sensor graduates if this many clusters are created
             learning_max_samples (int): sensor graduates if this many samples are processed
             features (list): optional list of per feature settings (minVal, maxVal, and label)
+            override_pv (float): force percent variation to specific value
 
         Returns:
             A dictionary containing:
@@ -1769,6 +1775,8 @@ home directory, or optionally overridden using environment variables.</p>
             &#39;learningMaxSamples&#39;: learning_max_samples,
             &#39;features&#39;: features
         }
+        if override_pv is not None:
+            body[&#39;percentVariationOverride&#39;] = override_pv
         config = self._api_call(&#39;POST&#39;, url, headers, body=body)
 
         return config.json()
@@ -2477,7 +2485,7 @@ Allows direct setting of feature labels and rules for submitting the fusion vect
 </details>
 </dd>
 <dt id="boonamber.AmberClient.configure_sensor"><code class="name flex">
-<span>def <span class="ident">configure_sensor</span></span>(<span>self, sensor_id, feature_count=1, streaming_window_size=25, samples_to_buffer=10000, anomaly_history_window=10000, learning_rate_numerator=10, learning_rate_denominator=10000, learning_max_clusters=1000, learning_max_samples=1000000, features=None)</span>
+<span>def <span class="ident">configure_sensor</span></span>(<span>self, sensor_id, feature_count=1, streaming_window_size=25, samples_to_buffer=10000, anomaly_history_window=10000, learning_rate_numerator=10, learning_rate_denominator=10000, learning_max_clusters=1000, learning_max_samples=1000000, features=None, override_pv=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Configure an amber sensor instance</p>
@@ -2505,6 +2513,8 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>sensor graduates if this many samples are processed</dd>
 <dt><strong><code>features</code></strong> :&ensp;<code>list</code></dt>
 <dd>optional list of per feature settings (minVal, maxVal, and label)</dd>
+<dt><strong><code>override_pv</code></strong> :&ensp;<code>float</code></dt>
+<dd>force percent variation to specific value</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>A dictionary containing:</p>
@@ -2547,7 +2557,8 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
                      learning_rate_denominator=10000,
                      learning_max_clusters=1000,
                      learning_max_samples=1000000,
-                     features=None):
+                     features=None,
+                     override_pv=None):
     &#34;&#34;&#34;Configure an amber sensor instance
 
     Args:
@@ -2563,6 +2574,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         learning_max_clusters (int): sensor graduates if this many clusters are created
         learning_max_samples (int): sensor graduates if this many samples are processed
         features (list): optional list of per feature settings (minVal, maxVal, and label)
+        override_pv (float): force percent variation to specific value
 
     Returns:
         A dictionary containing:
@@ -2617,6 +2629,8 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
         &#39;learningMaxSamples&#39;: learning_max_samples,
         &#39;features&#39;: features
     }
+    if override_pv is not None:
+        body[&#39;percentVariationOverride&#39;] = override_pv
     config = self._api_call(&#39;POST&#39;, url, headers, body=body)
 
     return config.json()</code></pre>

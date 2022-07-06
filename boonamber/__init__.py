@@ -379,7 +379,8 @@ class AmberClient:
                          learning_rate_denominator=10000,
                          learning_max_clusters=1000,
                          learning_max_samples=1000000,
-                         features=None):
+                         features=None,
+                         override_pv=None):
         """Configure an amber sensor instance
 
         Args:
@@ -395,6 +396,7 @@ class AmberClient:
             learning_max_clusters (int): sensor graduates if this many clusters are created
             learning_max_samples (int): sensor graduates if this many samples are processed
             features (list): optional list of per feature settings (minVal, maxVal, and label)
+            override_pv (float): force percent variation to specific value
 
         Returns:
             A dictionary containing:
@@ -449,6 +451,8 @@ class AmberClient:
             'learningMaxSamples': learning_max_samples,
             'features': features
         }
+        if override_pv is not None:
+            body['percentVariationOverride'] = override_pv
         config = self._api_call('POST', url, headers, body=body)
 
         return config.json()

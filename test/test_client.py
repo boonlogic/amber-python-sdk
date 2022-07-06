@@ -255,6 +255,20 @@ class Test_03_SensorOps:
                                                           learning_max_samples=1000000)
         assert_equal(config, expected)
 
+        # configure sensor with percent variation overridden
+        config = Test_03_SensorOps.amber.configure_sensor(Test_03_SensorOps.sensor_id, feature_count=1,
+                                                          streaming_window_size=25,
+                                                          samples_to_buffer=1000,
+                                                          anomaly_history_window=1000,
+                                                          learning_rate_numerator=10,
+                                                          learning_rate_denominator=10000,
+                                                          learning_max_clusters=1000,
+                                                          learning_max_samples=1000000,
+                                                          override_pv=.055)
+        expected['percentVariationOverride'] = .055
+        assert_equal(config, expected)
+
+
     def test_07_configure_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             config = Test_03_SensorOps.amber.configure_sensor('nonexistent-sensor-id')
@@ -280,7 +294,8 @@ class Test_03_SensorOps:
             'learningRateDenominator': 10000,
             'learningMaxClusters': 1000,
             'learningMaxSamples': 1000000,
-            'percentVariation': 0.05,
+            'percentVariation': 0.055,
+            'percentVariationOverride': 0.055,
             'features': [{'minVal': 0, 'maxVal': 1, 'label': 'feature-0', 'submitRule': 'submit'}]
         }
         config = Test_03_SensorOps.amber.get_config(Test_03_SensorOps.sensor_id)
