@@ -526,14 +526,37 @@ class AmberClient:
         response = self._api_call(&#39;PUT&#39;, url, headers, body=body)
         return response.json()[&#39;features&#39;]
 
-    def enable_learning(self, sensor_id, anomaly_history_window=None,
-                        learning_rate_numerator=None, learning_rate_denominator=None,
+    def enable_learning(self, sensor_id, learning_rate_numerator=None,
+                        learning_rate_denominator=None,
                         learning_max_clusters=None,
                         learning_max_samples=None):
+        &#34;&#34;&#34;Enable learning for a sensor thats in monitoring state
+
+
+        Args:
+            sensor_id (str): sensor identifier
+            learning_rate_numerator (int): number of new clusters created as a max before turning off learning
+            learning_rate_denominator (int): number of recent inferences to count the number of new clusters over
+            learning_max_clusters (int): maximum number of clusters allowed to be created
+            learning_max_samples (int): maximum number of samples to process in learning
+
+        Returns:
+
+            {
+                &#39;learning_rate_numerator&#39;: int,
+                &#39;learning_rate_denominator&#39;: int,
+                &#39;learning_max_clusters&#39;: int,
+                &#39;learning_max_samples&#39;: int
+            }
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        # Server expects data as a plaintext string of comma-separated values.
 
         streaming = {}
-        if anomaly_history_window:
-            streaming[&#39;anomalyHistoryWindow&#39;] = anomaly_history_window
         if learning_rate_numerator:
             streaming[&#39;learningRateNumerator&#39;] = learning_rate_numerator
         if learning_rate_denominator:
@@ -1822,14 +1845,37 @@ home directory, or optionally overridden using environment variables.</p>
         response = self._api_call(&#39;PUT&#39;, url, headers, body=body)
         return response.json()[&#39;features&#39;]
 
-    def enable_learning(self, sensor_id, anomaly_history_window=None,
-                        learning_rate_numerator=None, learning_rate_denominator=None,
+    def enable_learning(self, sensor_id, learning_rate_numerator=None,
+                        learning_rate_denominator=None,
                         learning_max_clusters=None,
                         learning_max_samples=None):
+        &#34;&#34;&#34;Enable learning for a sensor thats in monitoring state
+
+
+        Args:
+            sensor_id (str): sensor identifier
+            learning_rate_numerator (int): number of new clusters created as a max before turning off learning
+            learning_rate_denominator (int): number of recent inferences to count the number of new clusters over
+            learning_max_clusters (int): maximum number of clusters allowed to be created
+            learning_max_samples (int): maximum number of samples to process in learning
+
+        Returns:
+
+            {
+                &#39;learning_rate_numerator&#39;: int,
+                &#39;learning_rate_denominator&#39;: int,
+                &#39;learning_max_clusters&#39;: int,
+                &#39;learning_max_samples&#39;: int
+            }
+
+        Raises:
+            AmberUserError: if client is not authenticated or supplies invalid data
+            AmberCloudError: if Amber cloud gives non-200 response
+        &#34;&#34;&#34;
+
+        # Server expects data as a plaintext string of comma-separated values.
 
         streaming = {}
-        if anomaly_history_window:
-            streaming[&#39;anomalyHistoryWindow&#39;] = anomaly_history_window
         if learning_rate_numerator:
             streaming[&#39;learningRateNumerator&#39;] = learning_rate_numerator
         if learning_rate_denominator:
@@ -2728,22 +2774,72 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 </details>
 </dd>
 <dt id="boonamber.AmberClient.enable_learning"><code class="name flex">
-<span>def <span class="ident">enable_learning</span></span>(<span>self, sensor_id, anomaly_history_window=None, learning_rate_numerator=None, learning_rate_denominator=None, learning_max_clusters=None, learning_max_samples=None)</span>
+<span>def <span class="ident">enable_learning</span></span>(<span>self, sensor_id, learning_rate_numerator=None, learning_rate_denominator=None, learning_max_clusters=None, learning_max_samples=None)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Enable learning for a sensor thats in monitoring state</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>learning_rate_numerator</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of new clusters created as a max before turning off learning</dd>
+<dt><strong><code>learning_rate_denominator</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of recent inferences to count the number of new clusters over</dd>
+<dt><strong><code>learning_max_clusters</code></strong> :&ensp;<code>int</code></dt>
+<dd>maximum number of clusters allowed to be created</dd>
+<dt><strong><code>learning_max_samples</code></strong> :&ensp;<code>int</code></dt>
+<dd>maximum number of samples to process in learning</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>{
+'learning_rate_numerator': int,
+'learning_rate_denominator': int,
+'learning_max_clusters': int,
+'learning_max_samples': int
+}</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code><a title="boonamber.AmberUserError" href="#boonamber.AmberUserError">AmberUserError</a></code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code><a title="boonamber.AmberCloudError" href="#boonamber.AmberCloudError">AmberCloudError</a></code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def enable_learning(self, sensor_id, anomaly_history_window=None,
-                    learning_rate_numerator=None, learning_rate_denominator=None,
+<pre><code class="python">def enable_learning(self, sensor_id, learning_rate_numerator=None,
+                    learning_rate_denominator=None,
                     learning_max_clusters=None,
                     learning_max_samples=None):
+    &#34;&#34;&#34;Enable learning for a sensor thats in monitoring state
+
+
+    Args:
+        sensor_id (str): sensor identifier
+        learning_rate_numerator (int): number of new clusters created as a max before turning off learning
+        learning_rate_denominator (int): number of recent inferences to count the number of new clusters over
+        learning_max_clusters (int): maximum number of clusters allowed to be created
+        learning_max_samples (int): maximum number of samples to process in learning
+
+    Returns:
+
+        {
+            &#39;learning_rate_numerator&#39;: int,
+            &#39;learning_rate_denominator&#39;: int,
+            &#39;learning_max_clusters&#39;: int,
+            &#39;learning_max_samples&#39;: int
+        }
+
+    Raises:
+        AmberUserError: if client is not authenticated or supplies invalid data
+        AmberCloudError: if Amber cloud gives non-200 response
+    &#34;&#34;&#34;
+
+    # Server expects data as a plaintext string of comma-separated values.
 
     streaming = {}
-    if anomaly_history_window:
-        streaming[&#39;anomalyHistoryWindow&#39;] = anomaly_history_window
     if learning_rate_numerator:
         streaming[&#39;learningRateNumerator&#39;] = learning_rate_numerator
     if learning_rate_denominator:
