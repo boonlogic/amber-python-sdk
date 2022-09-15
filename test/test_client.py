@@ -509,13 +509,12 @@ class Test_03_SensorOps:
     def test_26_enable_learning(self):
         # enable learning tests setup
         exp = {
-                "anomalyHistoryWindow": 1000,
                 "learningRateNumerator": 10,
                 "learningRateDenominator": 10000,
                 "learningMaxClusters": 1000,
                 "learningMaxSamples": 1000000
               }
-        resp = Test_03_SensorOps.amber.enable_learning(Test_03_SensorOps.sensor_id, anomaly_history_window=1000,
+        resp = Test_03_SensorOps.amber.enable_learning(Test_03_SensorOps.sensor_id,
                                                        learning_rate_numerator=10,
                                                        learning_rate_denominator=10000,
                                                        learning_max_clusters=1000,
@@ -524,7 +523,6 @@ class Test_03_SensorOps:
 
     def test_27_enable_learning_negative(self):
         exp = {"streaming": {
-                "anomalyHistoryWindow": 1000,
                 "learningRateNumerator": 10,
                 "learningRateDenominator": 10000,
                 "learningMaxClusters": 1000,
