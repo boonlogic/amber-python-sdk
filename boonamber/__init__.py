@@ -4,6 +4,7 @@ import numpy as np
 import json
 import gzip
 import os
+import sys
 import time
 import requests
 import urllib3
@@ -607,7 +608,7 @@ class AmberClient:
             else:
                 return results
 
-    def pretrain_sensor_xl(self, sensor_id, data, autotune_config=True, block=True):
+    def pretrain_sensor_xl(self, sensor_id, data, autotune_config=True, block=True, chunk_size=4000000):
         """Pretrain a sensor with extra large sets of historical data.
 
         Args:
@@ -656,9 +657,10 @@ class AmberClient:
         }
 
         # chunk size is set at 4MB (1 million floats * 4 bytes)
-        chunk_size = 4 * 1000 * 1000
+        if chunk_size > 4000000:
+            raise AmberCloudError(400, "chunk_size must be <= 4000000")
 
-        # compute number of 4MB chunks to send
+        # compute number of chunks to send
         num_chunks = int(len(data) / chunk_size)
         if len(data) % chunk_size != 0:
             num_chunks += 1
@@ -679,7 +681,7 @@ class AmberClient:
 
             body['data'] = base64.b64encode(data[start:end]).decode('ascii')
             response = self._api_call('POST', url, headers, body=body)
-            if 'amberTransaction' in response.headers:
+            if 'ambertransaction' in response.headers:
                 amber_transaction = response.headers['ambertransaction']
 
         if not block:

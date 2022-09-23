@@ -496,6 +496,28 @@ class Test_03_SensorOps:
                 break
         assert_equal(results['state'], 'Pretrained')
 
+    def test_24a_pretrain_xl_sensor(self):
+        with open('output_current.csv', 'r') as f:
+            csv_reader = csv.reader(f, delimiter=',')
+            data = []
+            for row in csv_reader:
+                for d in row:
+                    data.append(float(d))
+
+        results = Test_03_SensorOps.amber.pretrain_sensor_xl(Test_03_SensorOps.sensor_id, data, block=True, chunk_size=100000)
+        assert_equal(results['state'], 'Pretrained')
+
+        results = Test_03_SensorOps.amber.pretrain_sensor_xl(Test_03_SensorOps.sensor_id, data, block=False, chunk_size=100000)
+        assert_true('Pretraining' in results['state'] or 'Pretrained' in results['state'])
+        while True:
+            time.sleep(5)
+            results = Test_03_SensorOps.amber.get_pretrain_state(Test_03_SensorOps.sensor_id)
+            if results['state'] == 'Pretraining':
+                continue
+            else:
+                break
+        assert_equal(results['state'], 'Pretrained')
+
     def test_25_pretrain_sensor_negative(self):
         with assert_raises(AmberCloudError) as context:
             response = Test_03_SensorOps.amber.pretrain_sensor('123456abcdef', [1, 2, 3, 4, 5], block=True)
@@ -505,6 +527,18 @@ class Test_03_SensorOps:
         with assert_raises(AmberCloudError) as context:
             response = Test_03_SensorOps.amber.pretrain_sensor(Test_03_SensorOps.sensor_id, [1, 2, 3, 4, 5], block=True)
         assert_equal(context.exception.code, 400)
+
+
+    def test_25a_pretrain_sensor_negative(self):
+        with assert_raises(AmberCloudError) as context:
+            response = Test_03_SensorOps.amber.pretrain_sensor_xl('123456abcdef', [1, 2, 3, 4, 5], block=True)
+        assert_equal(context.exception.code, 404)
+
+        # send a chunk size that is too big
+        with assert_raises(AmberCloudError) as context:
+            response = Test_03_SensorOps.amber.pretrain_sensor_xl(Test_03_SensorOps.sensor_id, [1, 2, 3, 4, 5], block=True, chunk_size=4000001)
+        assert_equal(context.exception.code, 400)
+
 
     def test_26_enable_learning(self):
         # enable learning tests setup
