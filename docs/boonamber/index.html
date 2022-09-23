@@ -32,6 +32,7 @@ import numpy as np
 import json
 import gzip
 import os
+import sys
 import time
 import requests
 import urllib3
@@ -635,7 +636,7 @@ class AmberClient:
             else:
                 return results
 
-    def pretrain_sensor_xl(self, sensor_id, data, autotune_config=True, block=True):
+    def pretrain_sensor_xl(self, sensor_id, data, autotune_config=True, block=True, chunk_size=4000000):
         &#34;&#34;&#34;Pretrain a sensor with extra large sets of historical data.
 
         Args:
@@ -684,9 +685,10 @@ class AmberClient:
         }
 
         # chunk size is set at 4MB (1 million floats * 4 bytes)
-        chunk_size = 4 * 1000 * 1000
+        if chunk_size &gt; 4000000:
+            raise AmberCloudError(400, &#34;chunk_size must be &lt;= 4000000&#34;)
 
-        # compute number of 4MB chunks to send
+        # compute number of chunks to send
         num_chunks = int(len(data) / chunk_size)
         if len(data) % chunk_size != 0:
             num_chunks += 1
@@ -707,7 +709,7 @@ class AmberClient:
 
             body[&#39;data&#39;] = base64.b64encode(data[start:end]).decode(&#39;ascii&#39;)
             response = self._api_call(&#39;POST&#39;, url, headers, body=body)
-            if &#39;amberTransaction&#39; in response.headers:
+            if &#39;ambertransaction&#39; in response.headers:
                 amber_transaction = response.headers[&#39;ambertransaction&#39;]
 
         if not block:
@@ -1954,7 +1956,7 @@ home directory, or optionally overridden using environment variables.</p>
             else:
                 return results
 
-    def pretrain_sensor_xl(self, sensor_id, data, autotune_config=True, block=True):
+    def pretrain_sensor_xl(self, sensor_id, data, autotune_config=True, block=True, chunk_size=4000000):
         &#34;&#34;&#34;Pretrain a sensor with extra large sets of historical data.
 
         Args:
@@ -2003,9 +2005,10 @@ home directory, or optionally overridden using environment variables.</p>
         }
 
         # chunk size is set at 4MB (1 million floats * 4 bytes)
-        chunk_size = 4 * 1000 * 1000
+        if chunk_size &gt; 4000000:
+            raise AmberCloudError(400, &#34;chunk_size must be &lt;= 4000000&#34;)
 
-        # compute number of 4MB chunks to send
+        # compute number of chunks to send
         num_chunks = int(len(data) / chunk_size)
         if len(data) % chunk_size != 0:
             num_chunks += 1
@@ -2026,7 +2029,7 @@ home directory, or optionally overridden using environment variables.</p>
 
             body[&#39;data&#39;] = base64.b64encode(data[start:end]).decode(&#39;ascii&#39;)
             response = self._api_call(&#39;POST&#39;, url, headers, body=body)
-            if &#39;amberTransaction&#39; in response.headers:
+            if &#39;ambertransaction&#39; in response.headers:
                 amber_transaction = response.headers[&#39;ambertransaction&#39;]
 
         if not block:
@@ -3573,7 +3576,7 @@ status can be checked using get_pretrain_state endpoint.</dd>
 </details>
 </dd>
 <dt id="boonamber.AmberClient.pretrain_sensor_xl"><code class="name flex">
-<span>def <span class="ident">pretrain_sensor_xl</span></span>(<span>self, sensor_id, data, autotune_config=True, block=True)</span>
+<span>def <span class="ident">pretrain_sensor_xl</span></span>(<span>self, sensor_id, data, autotune_config=True, block=True, chunk_size=4000000)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Pretrain a sensor with extra large sets of historical data.</p>
@@ -3613,7 +3616,7 @@ status can be checked using get_pretrain_state endpoint.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pretrain_sensor_xl(self, sensor_id, data, autotune_config=True, block=True):
+<pre><code class="python">def pretrain_sensor_xl(self, sensor_id, data, autotune_config=True, block=True, chunk_size=4000000):
     &#34;&#34;&#34;Pretrain a sensor with extra large sets of historical data.
 
     Args:
@@ -3662,9 +3665,10 @@ status can be checked using get_pretrain_state endpoint.</dd>
     }
 
     # chunk size is set at 4MB (1 million floats * 4 bytes)
-    chunk_size = 4 * 1000 * 1000
+    if chunk_size &gt; 4000000:
+        raise AmberCloudError(400, &#34;chunk_size must be &lt;= 4000000&#34;)
 
-    # compute number of 4MB chunks to send
+    # compute number of chunks to send
     num_chunks = int(len(data) / chunk_size)
     if len(data) % chunk_size != 0:
         num_chunks += 1
@@ -3685,7 +3689,7 @@ status can be checked using get_pretrain_state endpoint.</dd>
 
         body[&#39;data&#39;] = base64.b64encode(data[start:end]).decode(&#39;ascii&#39;)
         response = self._api_call(&#39;POST&#39;, url, headers, body=body)
-        if &#39;amberTransaction&#39; in response.headers:
+        if &#39;ambertransaction&#39; in response.headers:
             amber_transaction = response.headers[&#39;ambertransaction&#39;]
 
     if not block:
