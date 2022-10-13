@@ -49,8 +49,7 @@ class Test_01_AmberInstance:
         'AMBER_SERVER': None,
         'AMBER_OAUTH_SERVER': None,
         'AMBER_LICENSE_ID': None,
-        'AMBER_SSL_CERT': None,
-        'AMBER_SSL_VERIFY': None
+        'AMBER_SSL_CERT': None
     }
 
     @staticmethod
