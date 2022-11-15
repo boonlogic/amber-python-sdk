@@ -359,7 +359,8 @@ class Test_03_SensorOps:
                 'state': "Buffering",
                 'streamingWindowSize': 1,
                 'totalInferences': 0,
-                'AD': [0], 'AH': [0], 'AM': [0], 'AW': [0], 'ID': [0], 'RI': [0], 'SI': [0]
+                'AD': [0], 'AH': [0], 'AM': [0], 'AW': [0], 'ID': [0], 'RI': [0], 'SI': [0],
+                'NI': [0], 'NS': [0], 'NW': [0], 'OM': [0]
             }
         }
         resp = Test_03_SensorOps.amber.stream_fusion(Test_03_SensorOps.sensor_id, vector=v)
@@ -395,6 +396,10 @@ class Test_03_SensorOps:
         assert_true('AH' in results)
         assert_true('AM' in results)
         assert_true('AW' in results)
+        assert_true('NI' in results)
+        assert_true('NS' in results)
+        assert_true('NW' in results)
+        assert_true('OM' in results)
 
         # scalar data should return SI of length 1
         assert_true(len(results['SI']) == 1)
