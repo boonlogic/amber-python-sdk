@@ -762,7 +762,11 @@ class AmberClient:
                     'AD': [int],
                     'AH': [int],
                     'AM': [float],
-                    'AW': [int]
+                    'AW': [int],
+                    'NI': [int],
+                    'NS': [int],
+                    'NW': [float],
+                    'OM': [float]
                 }
             }
 
@@ -815,7 +819,11 @@ class AmberClient:
                     'AD': [int],
                     'AH': [int],
                     'AM': [float],
-                    'AW': [int]
+                    'AW': [int],
+                    'NI': [int],
+                    'NS': [int],
+                    'NW': [float],
+                    'OM': [float]
                 }
 
                 'state': current state of the sensor. One of:
@@ -861,6 +869,16 @@ class AmberClient:
                     history. 0 = normal, 1 = asset changing, 2 = asset critical. The default
                     thresholds for the two warning levels are the standard statistical values
                     of 0.95 (outlier, asset changing) and 0.997 (extreme outlier, asset critical).
+                'NI': list of "Novelty Index" values. These are values that show how different a new
+                    cluster actually is from the model. If the cluster is already in the model, it
+                    returns a 0. New clusters return an RI type value ranging from 0 to 1000 based on
+                    the L2 distance it is from the model's clusters.
+                'NS': list of "Smoothed Novelty Index" values. This is just a weighted average of the
+                    new NI and the previous NI. These values range from 0 to 1000..
+                'NW': list of "Novelty Warning Level" values. This is just a scaled version of the NS
+                    values that now range from 0 to 2 to give a warning level for the asset.
+                'OM': list of operational mode values that are a sliding average of the cluster IDs
+                    to give a basic representation of the different states
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid data

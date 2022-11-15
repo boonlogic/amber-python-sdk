@@ -218,8 +218,6 @@ class AmberClient:
         if impersonate != &#39;&#39;:
             headers[&#39;impersonate&#39;] = impersonate
 
-        self.license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, self.license_file)
-
         body = json.dumps(body)
 
         if method == &#39;POST&#39; and len(body) &gt; 10000:
@@ -792,7 +790,11 @@ class AmberClient:
                     &#39;AD&#39;: [int],
                     &#39;AH&#39;: [int],
                     &#39;AM&#39;: [float],
-                    &#39;AW&#39;: [int]
+                    &#39;AW&#39;: [int],
+                    &#39;NI&#39;: [int],
+                    &#39;NS&#39;: [int],
+                    &#39;NW&#39;: [float],
+                    &#39;OM&#39;: [float]
                 }
             }
 
@@ -845,7 +847,11 @@ class AmberClient:
                     &#39;AD&#39;: [int],
                     &#39;AH&#39;: [int],
                     &#39;AM&#39;: [float],
-                    &#39;AW&#39;: [int]
+                    &#39;AW&#39;: [int],
+                    &#39;NI&#39;: [int],
+                    &#39;NS&#39;: [int],
+                    &#39;NW&#39;: [float],
+                    &#39;OM&#39;: [float]
                 }
 
                 &#39;state&#39;: current state of the sensor. One of:
@@ -891,6 +897,16 @@ class AmberClient:
                     history. 0 = normal, 1 = asset changing, 2 = asset critical. The default
                     thresholds for the two warning levels are the standard statistical values
                     of 0.95 (outlier, asset changing) and 0.997 (extreme outlier, asset critical).
+                &#39;NI&#39;: list of &#34;Novelty Index&#34; values. These are values that show how different a new
+                    cluster actually is from the model. If the cluster is already in the model, it
+                    returns a 0. New clusters return an RI type value ranging from 0 to 1000 based on
+                    the L2 distance it is from the model&#39;s clusters.
+                &#39;NS&#39;: list of &#34;Smoothed Novelty Index&#34; values. This is just a weighted average of the
+                    new NI and the previous NI. These values range from 0 to 1000..
+                &#39;NW&#39;: list of &#34;Novelty Warning Level&#34; values. This is just a scaled version of the NS
+                    values that now range from 0 to 2 to give a warning level for the asset.
+                &#39;OM&#39;: list of operational mode values that are a sliding average of the cluster IDs 
+                    to give a basic representation of the different states
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid data
@@ -1538,8 +1554,6 @@ home directory, or optionally overridden using environment variables.</p>
         if impersonate != &#39;&#39;:
             headers[&#39;impersonate&#39;] = impersonate
 
-        self.license_file = os.environ.get(&#39;AMBER_LICENSE_FILE&#39;, self.license_file)
-
         body = json.dumps(body)
 
         if method == &#39;POST&#39; and len(body) &gt; 10000:
@@ -2112,7 +2126,11 @@ home directory, or optionally overridden using environment variables.</p>
                     &#39;AD&#39;: [int],
                     &#39;AH&#39;: [int],
                     &#39;AM&#39;: [float],
-                    &#39;AW&#39;: [int]
+                    &#39;AW&#39;: [int],
+                    &#39;NI&#39;: [int],
+                    &#39;NS&#39;: [int],
+                    &#39;NW&#39;: [float],
+                    &#39;OM&#39;: [float]
                 }
             }
 
@@ -2165,7 +2183,11 @@ home directory, or optionally overridden using environment variables.</p>
                     &#39;AD&#39;: [int],
                     &#39;AH&#39;: [int],
                     &#39;AM&#39;: [float],
-                    &#39;AW&#39;: [int]
+                    &#39;AW&#39;: [int],
+                    &#39;NI&#39;: [int],
+                    &#39;NS&#39;: [int],
+                    &#39;NW&#39;: [float],
+                    &#39;OM&#39;: [float]
                 }
 
                 &#39;state&#39;: current state of the sensor. One of:
@@ -2211,6 +2233,16 @@ home directory, or optionally overridden using environment variables.</p>
                     history. 0 = normal, 1 = asset changing, 2 = asset critical. The default
                     thresholds for the two warning levels are the standard statistical values
                     of 0.95 (outlier, asset changing) and 0.997 (extreme outlier, asset critical).
+                &#39;NI&#39;: list of &#34;Novelty Index&#34; values. These are values that show how different a new
+                    cluster actually is from the model. If the cluster is already in the model, it
+                    returns a 0. New clusters return an RI type value ranging from 0 to 1000 based on
+                    the L2 distance it is from the model&#39;s clusters.
+                &#39;NS&#39;: list of &#34;Smoothed Novelty Index&#34; values. This is just a weighted average of the
+                    new NI and the previous NI. These values range from 0 to 1000..
+                &#39;NW&#39;: list of &#34;Novelty Warning Level&#34; values. This is just a scaled version of the NS
+                    values that now range from 0 to 2 to give a warning level for the asset.
+                &#39;OM&#39;: list of operational mode values that are a sliding average of the cluster IDs 
+                    to give a basic representation of the different states
 
         Raises:
             AmberUserError: if client is not authenticated or supplies invalid data
@@ -3752,7 +3784,11 @@ If None, whether to submit will be determined by the per-feature submit rules.</
 'AD': [int],
 'AH': [int],
 'AM': [float],
-'AW': [int]
+'AW': [int],
+'NI': [int],
+'NS': [int],
+'NW': [float],
+'OM': [float]
 }
 }</p>
 </li>
@@ -3807,7 +3843,11 @@ If None, whether to submit will be determined by the per-feature submit rules.</
                 &#39;AD&#39;: [int],
                 &#39;AH&#39;: [int],
                 &#39;AM&#39;: [float],
-                &#39;AW&#39;: [int]
+                &#39;AW&#39;: [int],
+                &#39;NI&#39;: [int],
+                &#39;NS&#39;: [int],
+                &#39;NW&#39;: [float],
+                &#39;OM&#39;: [float]
             }
         }
 
@@ -3866,7 +3906,11 @@ equal length.</dd>
     'AD': [int],
     'AH': [int],
     'AM': [float],
-    'AW': [int]
+    'AW': [int],
+    'NI': [int],
+    'NS': [int],
+    'NW': [float],
+    'OM': [float]
 }
 
 'state': current state of the sensor. One of:
@@ -3912,6 +3956,16 @@ equal length.</dd>
     history. 0 = normal, 1 = asset changing, 2 = asset critical. The default
     thresholds for the two warning levels are the standard statistical values
     of 0.95 (outlier, asset changing) and 0.997 (extreme outlier, asset critical).
+'NI': list of "Novelty Index" values. These are values that show how different a new
+    cluster actually is from the model. If the cluster is already in the model, it
+    returns a 0. New clusters return an RI type value ranging from 0 to 1000 based on
+    the L2 distance it is from the model's clusters.
+'NS': list of "Smoothed Novelty Index" values. This is just a weighted average of the
+    new NI and the previous NI. These values range from 0 to 1000..
+'NW': list of "Novelty Warning Level" values. This is just a scaled version of the NS
+    values that now range from 0 to 2 to give a warning level for the asset.
+'OM': list of operational mode values that are a sliding average of the cluster IDs 
+    to give a basic representation of the different states
 </code></pre>
 <h2 id="raises">Raises</h2>
 <dl>
@@ -3951,7 +4005,11 @@ equal length.</dd>
                 &#39;AD&#39;: [int],
                 &#39;AH&#39;: [int],
                 &#39;AM&#39;: [float],
-                &#39;AW&#39;: [int]
+                &#39;AW&#39;: [int],
+                &#39;NI&#39;: [int],
+                &#39;NS&#39;: [int],
+                &#39;NW&#39;: [float],
+                &#39;OM&#39;: [float]
             }
 
             &#39;state&#39;: current state of the sensor. One of:
@@ -3997,6 +4055,16 @@ equal length.</dd>
                 history. 0 = normal, 1 = asset changing, 2 = asset critical. The default
                 thresholds for the two warning levels are the standard statistical values
                 of 0.95 (outlier, asset changing) and 0.997 (extreme outlier, asset critical).
+            &#39;NI&#39;: list of &#34;Novelty Index&#34; values. These are values that show how different a new
+                cluster actually is from the model. If the cluster is already in the model, it
+                returns a 0. New clusters return an RI type value ranging from 0 to 1000 based on
+                the L2 distance it is from the model&#39;s clusters.
+            &#39;NS&#39;: list of &#34;Smoothed Novelty Index&#34; values. This is just a weighted average of the
+                new NI and the previous NI. These values range from 0 to 1000..
+            &#39;NW&#39;: list of &#34;Novelty Warning Level&#34; values. This is just a scaled version of the NS
+                values that now range from 0 to 2 to give a warning level for the asset.
+            &#39;OM&#39;: list of operational mode values that are a sliding average of the cluster IDs 
+                to give a basic representation of the different states
 
     Raises:
         AmberUserError: if client is not authenticated or supplies invalid data
