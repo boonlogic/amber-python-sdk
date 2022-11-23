@@ -19,14 +19,14 @@ format-check:
 test-%:
 	@. local-env/bin/activate && \
 	cd test && \
-	AMBER_TEST_LICENSE_ID=$* coverage run --source=boonamber -m nose -x test_client.py && \
+	AMBER_TEST_LICENSE_ID=$* coverage run --source=boonamber -m pytest -x test_client.py && \
 	coverage html
 
 # run custom test profile from local file, must have AMBER_TEST_LICENSE_FILE and AMBER_TEST_LICENSE_ID set in env
 test-local: test-env-check
 	@. local-env/bin/activate && \
 	cd test && \
-	coverage run --source=boonamber -m nose -x -verbosity=2 test_client.py && \
+	coverage run --source=boonamber -m pytest -x test_client.py && \
 	coverage html
 
 # default test target will be against qa
