@@ -757,6 +757,8 @@ class AmberClient:
                     'retryCount': int,
                     'streamingWindowSize': int,
                     'totalInferences': int,
+                    'lastModified': 'int',
+                    'lastModifiedDelta': 'int',
                     'ID': [int],
                     'SI': [int],
                     'AD': [int],
@@ -814,6 +816,8 @@ class AmberClient:
                     'retryCount': int,
                     'streamingWindowSize': int,
                     'totalInferences': int,
+                    'lastModified': 'int',
+                    'lastModifiedDelta': 'int',
                     'ID': [int],
                     'SI': [int],
                     'AD': [int],
@@ -839,6 +843,8 @@ class AmberClient:
                 'streamingWindowSize': streaming window size of sensor (may differ from value
                     given at configuration if window size was adjusted during autotune)
                 'totalInferences': number of inferences since configuration
+                'lastModified': current Unix timestamp when the call was made
+                'lastModifiedDelta': number of seconds since the last stream call
                 'ID': list of cluster IDs. The values in this list correspond one-to-one
                     with input samples, indicating the cluster to which each input pattern
                     was assigned.
