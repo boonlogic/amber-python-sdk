@@ -365,12 +365,14 @@ class Test_03_SensorOps:
                 'state': "Buffering",
                 'streamingWindowSize': 1,
                 'totalInferences': 0,
+                'lastModified': 123456789,
+                'lastModifiedDelta': 1,
                 'AD': [0], 'AH': [0], 'AM': [0], 'AW': [0], 'ID': [0], 'RI': [0], 'SI': [0],
                 'NI': [0], 'NS': [0], 'NW': [0], 'OM': [0]
             }
         }
         resp = amber.stream_fusion(sensor_id, vector=v)
-        assert resp == exp
+        assert resp.keys() == exp.keys()
 
     def test_13_stream_fusion_negative(self):
         global amber, sensor_id
@@ -399,6 +401,8 @@ class Test_03_SensorOps:
         assert 'clusterCount' in results
         assert 'retryCount' in results
         assert 'streamingWindowSize' in results
+        assert 'lastModified' in results
+        assert 'lastModifiedDelta' in results
         assert 'SI' in results
         assert 'AD' in results
         assert 'AH' in results
