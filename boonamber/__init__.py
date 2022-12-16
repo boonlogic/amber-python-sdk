@@ -1196,7 +1196,7 @@ def float_list_to_csv_string(float_list):
         raise ValueError("float_list is not in known format")
 
     for d in data_flat:
-        if not isinstance(d, Number):
+        if not isinstance(d, Number) or np.isnan(d):
             raise ValueError("contained {} which is not numeric".format(d.__repr__()))
     return ','.join([str(float(d)) for d in data_flat])
 
