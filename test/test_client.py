@@ -712,5 +712,9 @@ class Test_05_Version:
     def test_01_version(self):
         amber = create_amber_client()
         version = amber.get_version()
+        assert 'builder' in version.keys()
+        assert 'expert-api' in version.keys()
+        assert 'expert-common' in version.keys()
+        assert 'nano-secure' in version.keys()
         assert 'api-version' in version.keys()
         assert 'release' in version.keys()
