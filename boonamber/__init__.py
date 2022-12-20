@@ -204,6 +204,8 @@ class AmberClient:
         except requests.exceptions.Timeout:
             # request timed out
             raise AmberCloudError(500, "request timed out")
+        except requests.exceptions.ConnectionError:
+            raise AmberCloudError(500, "server does not exist")
 
         if response.status_code > 299:
             try:
