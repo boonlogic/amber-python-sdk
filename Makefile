@@ -34,8 +34,9 @@ test: test-qa
 
 pypi:
 	@. local-env/bin/activate && \
-	python3 setup.py sdist && \
-	twine upload --skip-existing dist/*
+	export TWINE_PASSWORD=`python3 bin/get-access-token.py` && \
+	python3 -m build && \
+	twine upload --skip-existing -u __token__ dist/*
 
 local-env-check:
 	@if [ ! -d ./local-env ]; then \
