@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>boonamber API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -232,6 +232,8 @@ class AmberClient:
         except requests.exceptions.Timeout:
             # request timed out
             raise AmberCloudError(500, &#34;request timed out&#34;)
+        except requests.exceptions.ConnectionError:
+            raise AmberCloudError(500, &#34;server does not exist&#34;)
 
         if response.status_code &gt; 299:
             try:
@@ -785,6 +787,8 @@ class AmberClient:
                     &#39;retryCount&#39;: int,
                     &#39;streamingWindowSize&#39;: int,
                     &#39;totalInferences&#39;: int,
+                    &#39;lastModified&#39;: &#39;int&#39;,
+                    &#39;lastModifiedDelta&#39;: &#39;int&#39;,
                     &#39;ID&#39;: [int],
                     &#39;SI&#39;: [int],
                     &#39;AD&#39;: [int],
@@ -842,6 +846,8 @@ class AmberClient:
                     &#39;retryCount&#39;: int,
                     &#39;streamingWindowSize&#39;: int,
                     &#39;totalInferences&#39;: int,
+                    &#39;lastModified&#39;: &#39;int&#39;,
+                    &#39;lastModifiedDelta&#39;: &#39;int&#39;,
                     &#39;ID&#39;: [int],
                     &#39;SI&#39;: [int],
                     &#39;AD&#39;: [int],
@@ -867,6 +873,8 @@ class AmberClient:
                 &#39;streamingWindowSize&#39;: streaming window size of sensor (may differ from value
                     given at configuration if window size was adjusted during autotune)
                 &#39;totalInferences&#39;: number of inferences since configuration
+                &#39;lastModified&#39;: current Unix timestamp when the call was made
+                &#39;lastModifiedDelta&#39;: number of seconds since the last stream call
                 &#39;ID&#39;: list of cluster IDs. The values in this list correspond one-to-one
                     with input samples, indicating the cluster to which each input pattern
                     was assigned.
@@ -905,7 +913,7 @@ class AmberClient:
                     new NI and the previous NI. These values range from 0 to 1000..
                 &#39;NW&#39;: list of &#34;Novelty Warning Level&#34; values. This is just a scaled version of the NS
                     values that now range from 0 to 2 to give a warning level for the asset.
-                &#39;OM&#39;: list of operational mode values that are a sliding average of the cluster IDs 
+                &#39;OM&#39;: list of operational mode values that are a sliding average of the cluster IDs
                     to give a basic representation of the different states
 
         Raises:
@@ -1218,7 +1226,7 @@ def float_list_to_csv_string(float_list):
         raise ValueError(&#34;float_list is not in known format&#34;)
 
     for d in data_flat:
-        if not isinstance(d, Number):
+        if not isinstance(d, Number) or np.isnan(d):
             raise ValueError(&#34;contained {} which is not numeric&#34;.format(d.__repr__()))
     return &#39;,&#39;.join([str(float(d)) for d in data_flat])
 
@@ -1282,7 +1290,7 @@ def packed_floats(data):
         raise ValueError(&#34;float_list is not in known format&#34;)
 
     for d in data_flat:
-        if not isinstance(d, Number):
+        if not isinstance(d, Number) or np.isnan(d):
             raise ValueError(&#34;contained {} which is not numeric&#34;.format(d.__repr__()))
     return &#39;,&#39;.join([str(float(d)) for d in data_flat])</code></pre>
 </details>
@@ -1568,6 +1576,8 @@ home directory, or optionally overridden using environment variables.</p>
         except requests.exceptions.Timeout:
             # request timed out
             raise AmberCloudError(500, &#34;request timed out&#34;)
+        except requests.exceptions.ConnectionError:
+            raise AmberCloudError(500, &#34;server does not exist&#34;)
 
         if response.status_code &gt; 299:
             try:
@@ -2121,6 +2131,8 @@ home directory, or optionally overridden using environment variables.</p>
                     &#39;retryCount&#39;: int,
                     &#39;streamingWindowSize&#39;: int,
                     &#39;totalInferences&#39;: int,
+                    &#39;lastModified&#39;: &#39;int&#39;,
+                    &#39;lastModifiedDelta&#39;: &#39;int&#39;,
                     &#39;ID&#39;: [int],
                     &#39;SI&#39;: [int],
                     &#39;AD&#39;: [int],
@@ -2178,6 +2190,8 @@ home directory, or optionally overridden using environment variables.</p>
                     &#39;retryCount&#39;: int,
                     &#39;streamingWindowSize&#39;: int,
                     &#39;totalInferences&#39;: int,
+                    &#39;lastModified&#39;: &#39;int&#39;,
+                    &#39;lastModifiedDelta&#39;: &#39;int&#39;,
                     &#39;ID&#39;: [int],
                     &#39;SI&#39;: [int],
                     &#39;AD&#39;: [int],
@@ -2203,6 +2217,8 @@ home directory, or optionally overridden using environment variables.</p>
                 &#39;streamingWindowSize&#39;: streaming window size of sensor (may differ from value
                     given at configuration if window size was adjusted during autotune)
                 &#39;totalInferences&#39;: number of inferences since configuration
+                &#39;lastModified&#39;: current Unix timestamp when the call was made
+                &#39;lastModifiedDelta&#39;: number of seconds since the last stream call
                 &#39;ID&#39;: list of cluster IDs. The values in this list correspond one-to-one
                     with input samples, indicating the cluster to which each input pattern
                     was assigned.
@@ -2241,7 +2257,7 @@ home directory, or optionally overridden using environment variables.</p>
                     new NI and the previous NI. These values range from 0 to 1000..
                 &#39;NW&#39;: list of &#34;Novelty Warning Level&#34; values. This is just a scaled version of the NS
                     values that now range from 0 to 2 to give a warning level for the asset.
-                &#39;OM&#39;: list of operational mode values that are a sliding average of the cluster IDs 
+                &#39;OM&#39;: list of operational mode values that are a sliding average of the cluster IDs
                     to give a basic representation of the different states
 
         Raises:
@@ -3779,6 +3795,8 @@ If None, whether to submit will be determined by the per-feature submit rules.</
 'retryCount': int,
 'streamingWindowSize': int,
 'totalInferences': int,
+'lastModified': 'int',
+'lastModifiedDelta': 'int',
 'ID': [int],
 'SI': [int],
 'AD': [int],
@@ -3838,6 +3856,8 @@ If None, whether to submit will be determined by the per-feature submit rules.</
                 &#39;retryCount&#39;: int,
                 &#39;streamingWindowSize&#39;: int,
                 &#39;totalInferences&#39;: int,
+                &#39;lastModified&#39;: &#39;int&#39;,
+                &#39;lastModifiedDelta&#39;: &#39;int&#39;,
                 &#39;ID&#39;: [int],
                 &#39;SI&#39;: [int],
                 &#39;AD&#39;: [int],
@@ -3901,6 +3921,8 @@ equal length.</dd>
     'retryCount': int,
     'streamingWindowSize': int,
     'totalInferences': int,
+    'lastModified': 'int',
+    'lastModifiedDelta': 'int',
     'ID': [int],
     'SI': [int],
     'AD': [int],
@@ -3926,6 +3948,8 @@ equal length.</dd>
 'streamingWindowSize': streaming window size of sensor (may differ from value
     given at configuration if window size was adjusted during autotune)
 'totalInferences': number of inferences since configuration
+'lastModified': current Unix timestamp when the call was made
+'lastModifiedDelta': number of seconds since the last stream call
 'ID': list of cluster IDs. The values in this list correspond one-to-one
     with input samples, indicating the cluster to which each input pattern
     was assigned.
@@ -3964,7 +3988,7 @@ equal length.</dd>
     new NI and the previous NI. These values range from 0 to 1000..
 'NW': list of "Novelty Warning Level" values. This is just a scaled version of the NS
     values that now range from 0 to 2 to give a warning level for the asset.
-'OM': list of operational mode values that are a sliding average of the cluster IDs 
+'OM': list of operational mode values that are a sliding average of the cluster IDs
     to give a basic representation of the different states
 </code></pre>
 <h2 id="raises">Raises</h2>
@@ -4000,6 +4024,8 @@ equal length.</dd>
                 &#39;retryCount&#39;: int,
                 &#39;streamingWindowSize&#39;: int,
                 &#39;totalInferences&#39;: int,
+                &#39;lastModified&#39;: &#39;int&#39;,
+                &#39;lastModifiedDelta&#39;: &#39;int&#39;,
                 &#39;ID&#39;: [int],
                 &#39;SI&#39;: [int],
                 &#39;AD&#39;: [int],
@@ -4025,6 +4051,8 @@ equal length.</dd>
             &#39;streamingWindowSize&#39;: streaming window size of sensor (may differ from value
                 given at configuration if window size was adjusted during autotune)
             &#39;totalInferences&#39;: number of inferences since configuration
+            &#39;lastModified&#39;: current Unix timestamp when the call was made
+            &#39;lastModifiedDelta&#39;: number of seconds since the last stream call
             &#39;ID&#39;: list of cluster IDs. The values in this list correspond one-to-one
                 with input samples, indicating the cluster to which each input pattern
                 was assigned.
@@ -4063,7 +4091,7 @@ equal length.</dd>
                 new NI and the previous NI. These values range from 0 to 1000..
             &#39;NW&#39;: list of &#34;Novelty Warning Level&#34; values. This is just a scaled version of the NS
                 values that now range from 0 to 2 to give a warning level for the asset.
-            &#39;OM&#39;: list of operational mode values that are a sliding average of the cluster IDs 
+            &#39;OM&#39;: list of operational mode values that are a sliding average of the cluster IDs
                 to give a basic representation of the different states
 
     Raises:
@@ -4246,7 +4274,7 @@ equal length.</dd>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>
