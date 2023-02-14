@@ -88,10 +88,10 @@ test-v2:
     BOON_MAX_INSTANCES: 1
     MONGO_URI: $V2_MONGO_URI
   script:
-    - echo "nothing for now"
-    # - ci-root/pipelines/expert-api/create-test-config > ${CI_PROJECT_DIR}/ci-root/.Amber.license
-    # - export AMBER_TEST_LICENSE_FILE=${CI_PROJECT_DIR}/ci-root/.Amber.license
-    # - make test-v2sdk
+    - ci-root/pipelines/expert-api/create-amberv2-test-config > ${CI_PROJECT_DIR}/ci-root/.Amber.license
+    - export AMBER_TEST_LICENSE_FILE=${CI_PROJECT_DIR}/ci-root/.Amber.license
+    - cd ${CI_PROJECT_DIR}/ci-root/packages/amber-python-sdk/amber-python-sdk
+    - echo "make test-v2sdk"
   artifacts:
     paths:
     - ci-root/packages/amber-python-sdk/amber-python-sdk
