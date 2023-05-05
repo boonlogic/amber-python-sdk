@@ -23,6 +23,12 @@ dependencies = [
 ]
 readme = "README.md"
 
+[tool.black]
+extend-exclude = '''
+(v2/rest.py|v2/models|v2/api_client.py|v2/api/default_api.py|v2/configuration.py|v2/__init__.py)
+'''
+line-length=180
+
 # This is currently in beta so don't include it for now
 # [tool.setuptools]
 # packages = ["boonamber"]

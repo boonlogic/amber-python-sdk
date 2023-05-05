@@ -1,0 +1,7 @@
+{
+	"packageName": "boonamber.v2",
+	"httpUserAgent": "BoonLogic / Amber Python SDK / requests",
+	"packageVersion": "2.0.0",
+	"generateModelDocumentation": false,
+	"generateModelTests": false
+}

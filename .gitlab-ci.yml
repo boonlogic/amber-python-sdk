@@ -81,17 +81,28 @@ test-v2:
   needs: [build]
   services:
     - name: 715859896688.dkr.ecr.us-east-1.amazonaws.com/expert-server:${AMBER_TAG}
-      alias: amber-test-fixture
+      alias: amber-test-fixture-v2
+      variables:
+        BOON_PRODUCT_ID: amber-cloud-v2
+        BOON_MAX_INSTANCES: 1
+        MONGO_URI: $V2_MONGO_URI
+    - name: 715859896688.dkr.ecr.us-east-1.amazonaws.com/expert-server:${AMBER_TAG}
+      alias: amber-test-fixture-v1
+      variables:
+        BOON_PRODUCT_ID: amber-cloud
+        BOON_MAX_INSTANCES: 1
+        MONGO_URI: $V1_MONGO_URI
   variables:
-    BOON_PRODUCT_ID: amber-cloud-v2
-    BOON_AMBER_PORT: 5007
-    BOON_MAX_INSTANCES: 1
-    MONGO_URI: $V2_MONGO_URI
+    V1_MONGO_URI: $V1_MONGO_URI
+    V2_MONGO_URI: $V2_MONGO_URI
   script:
-    - ci-root/pipelines/expert-api/create-amberv2-test-config > ${CI_PROJECT_DIR}/ci-root/.Amber.license
+    - ci-root/pipelines/expert-api/create-amberv1-test-config | sed 's/amber-test-fixture/amber-test-fixture-v1/' > ${CI_PROJECT_DIR}/ci-root/.v1.license
+    - ci-root/pipelines/expert-api/create-amberv2-test-config | sed 's/amber-test-fixture/amber-test-fixture-v2/'> ${CI_PROJECT_DIR}/ci-root/.v2.license
+    - jq -s '.[0] * .[1]' ${CI_PROJECT_DIR}/ci-root/.v1.license ${CI_PROJECT_DIR}/ci-root/.v2.license > ${CI_PROJECT_DIR}/ci-root/.Amber.license
     - export AMBER_TEST_LICENSE_FILE=${CI_PROJECT_DIR}/ci-root/.Amber.license
+    - export AMBER_V1_LICENSE_ID=v1sdk
     - cd ${CI_PROJECT_DIR}/ci-root/packages/amber-python-sdk/amber-python-sdk
-    - echo "make test-v2sdk"
+    - make testv2-v2sdk
   artifacts:
     paths:
     - ci-root/packages/amber-python-sdk/amber-python-sdk
