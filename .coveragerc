@@ -1,0 +1,5 @@
+[run]
+include = 
+	../boonamber/v2/amber_client.py
+omit = 
+	../boonamber/v2/models/*

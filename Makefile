@@ -10,27 +10,24 @@ init:
 	echo "" && \
 	echo "virtual environment configured, use 'source local-env/bin/activate' to enable it"
 
-format-check:
-	@. local-env/bin/activate && \
-	pycodestyle --first boonamber/__init__.py
+test-env-check:
+	@if [[ "${AMBER_TEST_LICENSE_FILE}" == "" || "${AMBER_TEST_LICENSE_ID}" == "" ]]; then \
+		echo "AMBER_TEST_LICENSE_FILE and AMBER_TEST_LICENSE_ID are required in environment"; \
+		exit 1; \
+	fi
 
-# test-v1, test-v1next, test-dev, test-qa
-# run stock profiles from secrets manager
-test-%:
-	@. local-env/bin/activate && \
-	cd test && \
-	AMBER_TEST_LICENSE_ID=$* coverage run --source=boonamber -m pytest -x test_client.py && \
-	coverage html
+format-check: format
+	git diff --exit-code; if [ $$? -ne 0 ]; then echo "format-check failed"; exit 1; fi; \
+	echo "*** format-check passed"
 
-# run custom test profile from local file, must have AMBER_TEST_LICENSE_FILE and AMBER_TEST_LICENSE_ID set in env
-test-local: test-env-check
+format:
 	@. local-env/bin/activate && \
-	cd test && \
-	coverage run --source=boonamber -m pytest -x test_client.py && \
-	coverage html
+	pip install black && \
+	black boonamber
 
-# default test target will be against qa
-test: test-qa
+docs:
+	@. local-env/bin/activate && \
+	pdoc3 --force -o docs --template-dir docs --html boonamber
 
 pypi:
 	@. local-env/bin/activate && \
@@ -38,20 +35,43 @@ pypi:
 	python3 -m build && \
 	twine upload --skip-existing -u __token__ dist/*
 
-local-env-check:
-	@if [ ! -d ./local-env ]; then \
-		echo "must run 'make init' first"; \
-		exit 1; \
-	fi
+############################
+# ========== V1 ========== #
+############################
 
-docs:
+# test-v1, test-v1next, test-dev, test-qa
+# run stock profiles from secrets manager
+test-% testv1-%:
 	@. local-env/bin/activate && \
-	pdoc3 --force -o docs --html boonamber
+        cd test && \
+	AMBER_TEST_LICENSE_ID=$* coverage run --source=boonamber.v1 -m pytest -x v1/test_client.py && \
+	coverage html
 
-test-env-check:
-	@if [[ "${AMBER_TEST_LICENSE_FILE}" == "" || "${AMBER_TEST_LICENSE_ID}" == "" ]]; then \
-		echo "AMBER_TEST_LICENSE_FILE and AMBER_TEST_LICENSE_ID are required in environment"; \
+# run custom test profile from local file, must have AMBER_TEST_LICENSE_FILE and AMBER_TEST_LICENSE_ID set in env
+testv1-local: test-env-check
+	@. local-env/bin/activate && \
+        cd test && \
+	coverage run --source=boonamber.v1 -m pytest -x v1/test_client.py && \
+	coverage html
+
+############################
+# ========== V2 ========== #
+############################
+
+test-local-environment-v2:
+	@if [[ "${AMBER_TEST_LICENSE_FILE}" == "" || "${AMBER_V1_LICENSE_ID}" == "" ]]; then \
+		echo "AMBER_TEST_LICENSE_FILE and AMBER_V1_LICENSE_ID is required in environment"; \
 		exit 1; \
 	fi
 
-.PHONY: docs format-check init test pypi local-env-check test-env-check
+generate-v2:
+	swagger-codegen generate -DmodelTests=false -i amber-api.yml -l python -c swagger-config.json && \
+	./bin/clean_comments.sh
+
+testv2-%: test-local-environment-v2
+	@. local-env/bin/activate && \
+	cd test && \
+	AMBER_TEST_LICENSE_ID=$* coverage run --rcfile="../.coveragerc" -m pytest -x v2/test_*.py && \
+	coverage html
+
+.PHONY: docs format init test pypi local-env-check test-env-check generate-v2

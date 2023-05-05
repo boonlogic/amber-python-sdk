@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>boonamber.v1 API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>v1</code></h1>
+</header>
+<section id="section-intro">
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="boonamber.v1.float_list_to_csv_string"><code class="name flex">
+<span>def <span class="ident">float_list_to_csv_string</span></span>(<span>float_list)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="boonamber.v1.packed_floats"><code class="name flex">
+<span>def <span class="ident">packed_floats</span></span>(<span>data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Validate data and convert to a packed float buffer</p></div>
+</dd>
+<dt id="boonamber.v1.validate_dims"><code class="name flex">
+<span>def <span class="ident">validate_dims</span></span>(<span>data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Validate that data is non-empty and one of the following:
+scalar value, list-like or list-of-lists-like where all
+sublists have equal length. Return 0, 1 or 2 as inferred
+number of array dimensions</p></div>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="boonamber.v1.AmberClient"><code class="flex name class">
+<span>class <span class="ident">AmberClient</span></span>
+<span>(</span><span>license_id='default', license_file='~/.Amber.license', verify=True, cert=None, timeout=300)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Main client which interfaces with the Amber cloud. Amber account
+credentials are discovered within a .Amber.license file located in the
+home directory, or optionally overridden using environment variables.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>license_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>license identifier label found within .Amber.license file</dd>
+<dt><strong><code>license_file</code></strong> :&ensp;<code>str</code></dt>
+<dd>path to .Amber.license file</dd>
+<dt><strong><code>verify</code></strong></dt>
+<dd>Boolean, controls whether we verify the server’s TLS certificate</dd>
+<dt><strong><code>cert</code></strong> :&ensp;<code>bool</code></dt>
+<dd>if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.</dd>
+</dl>
+<h2 id="environment">Environment</h2>
+<p><code>AMBER_LICENSE_FILE</code>: sets license_file path</p>
+<p><code>AMBER_LICENSE_ID</code>: sets license_id</p>
+<p><code>AMBER_USERNAME</code>: overrides the username as found in .Amber.license file</p>
+<p><code>AMBER_PASSWORD</code>: overrides the password as found in .Amber.license file</p>
+<p><code>AMBER_SERVER</code>: overrides the server as found in .Amber.license file</p>
+<p><code>AMBER_OAUTH_SERVER</code>: overrides the oauth server as found in .Amber.license file</p>
+<p><code>AMBER_SSL_CERT</code>: path to ssl client cert file (.pem)</p>
+<p><code>AMBER_SSL_VERIFY</code>: Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if error supplying authentication credentials</dd>
+</dl></div>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li>boonamber.AmberClient</li>
+<li><a title="boonamber.AmberV1Client" href="../index.html#boonamber.AmberV1Client">AmberV1Client</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="boonamber.v1.AmberClient.configure_fusion"><code class="name flex">
+<span>def <span class="ident">configure_fusion</span></span>(<span>self, sensor_id, feature_count=5, features=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Configure an Amber instance for sensor fusion</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>feature_count</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of features or data streams to fuse together</dd>
+<dt><strong><code>features</code></strong> :&ensp;<code>list</code></dt>
+<dd>optional list of per feature settings overriding feature_count.
+Allows direct setting of feature labels and rules for submitting the fusion vector:
+[
+{
+'label': string,
+'submitRule': string (one of: 'submit', 'nosubmit')
+},
+&hellip;
+]</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A list of features as configured</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response.</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.configure_sensor"><code class="name flex">
+<span>def <span class="ident">configure_sensor</span></span>(<span>self, sensor_id, feature_count=1, streaming_window_size=25, samples_to_buffer=10000, anomaly_history_window=10000, learning_rate_numerator=10, learning_rate_denominator=10000, learning_max_clusters=1000, learning_max_samples=1000000, features=None, override_pv=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Configure an amber sensor instance</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>feature_count</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of features (dimensionality of each data sample)</dd>
+<dt><strong><code>streaming_window_size</code></strong> :&ensp;<code>int</code></dt>
+<dd>streaming window size (number of samples)</dd>
+<dt><strong><code>samples_to_buffer</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of samples to load before autotuning</dd>
+<dt><strong><code>anomaly_history_window</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of samples to use for AH calculation</dd>
+<dt><strong><code>learning_rate_numerator</code></strong> :&ensp;<code>int</code></dt>
+<dd>sensor "graduates" (i.e. transitions from
+learning to monitoring mode) if fewer than learning_rate_numerator
+new clusters are opened in the last learning_rate_denominator samples</dd>
+<dt><strong><code>learning_rate_denominator</code></strong> :&ensp;<code>int</code></dt>
+<dd>see learning_rate_numerator</dd>
+<dt><strong><code>learning_max_clusters</code></strong> :&ensp;<code>int</code></dt>
+<dd>sensor graduates if this many clusters are created</dd>
+<dt><strong><code>learning_max_samples</code></strong> :&ensp;<code>int</code></dt>
+<dd>sensor graduates if this many samples are processed</dd>
+<dt><strong><code>features</code></strong> :&ensp;<code>list</code></dt>
+<dd>optional list of per feature settings (minVal, maxVal, and label)</dd>
+<dt><strong><code>override_pv</code></strong> :&ensp;<code>float</code></dt>
+<dd>force percent variation to specific value</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A dictionary containing:</p>
+<pre><code>{
+    'feature_count': int,
+    'streaming_window_size': int,
+    'samples_to_buffer': int
+    'anomaly_history_window': int,
+    'learning_rate_numerator': int,
+    'learning_rate_denominator': int,
+    'learning_max_clusters': int,
+    'learning_max_samples': int,
+    'features': [
+        {
+            'minVal': float,
+            'maxVal': float,
+            'label': string,
+            'weight': float,
+            'submitRule': string
+        },
+        ...
+    ]
+}
+</code></pre>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated or supplies invalid options</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.create_sensor"><code class="name flex">
+<span>def <span class="ident">create_sensor</span></span>(<span>self, label='')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a new sensor instance</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>label</code></strong> :&ensp;<code>str</code></dt>
+<dd>label to assign to created sensor</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A string containing the <code>sensor_id</code> that was created</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.delete_sensor"><code class="name flex">
+<span>def <span class="ident">delete_sensor</span></span>(<span>self, sensor_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete an amber sensor instance</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.enable_learning"><code class="name flex">
+<span>def <span class="ident">enable_learning</span></span>(<span>self, sensor_id, learning_rate_numerator=None, learning_rate_denominator=None, learning_max_clusters=None, learning_max_samples=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Enable learning for a sensor thats in monitoring state</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>learning_rate_numerator</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of new clusters created as a max before turning off learning</dd>
+<dt><strong><code>learning_rate_denominator</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of recent inferences to count the number of new clusters over</dd>
+<dt><strong><code>learning_max_clusters</code></strong> :&ensp;<code>int</code></dt>
+<dd>maximum number of clusters allowed to be created</dd>
+<dt><strong><code>learning_max_samples</code></strong> :&ensp;<code>int</code></dt>
+<dd>maximum number of samples to process in learning</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>{
+'learning_rate_numerator': int,
+'learning_rate_denominator': int,
+'learning_max_clusters': int,
+'learning_max_samples': int
+}</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.get_config"><code class="name flex">
+<span>def <span class="ident">get_config</span></span>(<span>self, sensor_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get current sensor configuration</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A dictionary containing the current sensor configuration:</p>
+<pre><code>{
+    'featureCount': int,
+    'streamingWindowSize': int,
+    'samplesToBuffer': int,
+    'anomalyHistoryWindow': int,
+    'learningRateNumerator': int,
+    'learningRateDenominator': int,
+    'learningMaxClusters': int,
+    'learningMaxSamples': int,
+    'percentVariation': float,
+    'features':
+    [
+        {
+            'min': float,
+            'max': float
+        }
+    ]
+}
+
+'featureCount': number of features (dimensionality of each data sample)
+'streamingWindowSize': streaming window size (number of samples)
+'samplesToBuffer': number of samples to load before autotuning
+'anomalyHistoryWindow': number of samples to calculate normal anomaly variation
+'learningRateNumerator': sensor "graduates" (i.e. transitions from
+    learning to monitoring mode) if fewer than learning_rate_numerator
+    new clusters are opened in the last learning_rate_denominator samples
+'learningRateDenominator': see learning_rate_numerator
+'learningMaxClusters': sensor graduates if this many clusters are created
+'learningMaxSamples': sensor graduates if this many samples are processed
+'percentVariation': percent variation parameter discovered by autotuning
+'features': min/max values per feature discovered by autotuning
+</code></pre>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.get_pretrain_state"><code class="name flex">
+<span>def <span class="ident">get_pretrain_state</span></span>(<span>self, sensor_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets the state of sensor that is being pretrained</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>{
+'state': str
+}</p>
+<p>'state': current state of the sensor. One of:
+"Pretraining": pretraining is in progress
+"Pretrained": pretraining has completed
+"Error": error has occurred</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.get_root_cause"><code class="name flex">
+<span>def <span class="ident">get_root_cause</span></span>(<span>self, sensor_id, id_list=None, pattern_list=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get root cause</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>id_list</code></strong> :&ensp;<code>list</code></dt>
+<dd>list of IDs to return the root cause for</dd>
+<dt><strong><code>pattern_list</code></strong> :&ensp;<code>list</code></dt>
+<dd>list of pattern vectors to calculate the root cause against the model</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A list containing the root cause for each pattern/id provided for a sensor:</p>
+<pre><code>[float]
+</code></pre>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.get_sensor"><code class="name flex">
+<span>def <span class="ident">get_sensor</span></span>(<span>self, sensor_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get info about a sensor</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A dictionary containing sensor information:</p>
+<pre><code>{
+    'label': str,
+    'sensorId': str,
+    'tenantId': str,
+    'usageInfo': {
+        putSensor {
+            'callsTotal': int
+            'callsThisPeriod': int
+            'lastCalled': str
+        },
+        getSensor {
+            'callsTotal': int
+            'callsThisPeriod': int
+            'lastCalled': str
+        },
+        getConfig {
+            'callsTotal': int
+            'callsThisPeriod': int
+            'lastCalled': str
+        },
+        postStream {
+            'callsTotal': int
+            'callsThisPeriod': int
+            'lastCalled': int
+            'samplesTotal': int
+            'samplesThisPeriod': int
+        }
+        getStatus {
+            'callsTotal': int
+            'callsThisPeriod': int
+            'lastCalled': str
+        }
+    }
+}
+
+'label' (str): sensor label
+'sensorId' (str): sensor identifier
+'tenantId' (str): username of associated Amber account
+'callsTotal': total number of calls to this endpoint
+'callsThisPeriod': calls this billing period to this endpoint
+'lastCalled': ISO formatted time of last call to this endpoint
+'samplesTotal': total number of samples processed
+'samplesThisPeriod': number of samples processed this billing period
+</code></pre>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.get_status"><code class="name flex">
+<span>def <span class="ident">get_status</span></span>(<span>self, sensor_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get sensor status</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A dictionary containing the clustering status for a sensor:</p>
+<pre><code>{
+    'pca' [(int,int,int)],
+    'clusterGrowth' [int],
+    'clusterSizes' [int],
+    'anomalyIndexes' [int],
+    'frequencyIndexes' [int],
+    'distanceIndexes' [int],
+    'totalInferences' [int],
+    'numClusters' [int],
+}
+
+'pca': list of length-3 vectors representing cluster centroids
+    with dimensionality reduced to 3 principal components. List length
+    is one plus the maximum cluster ID, with element 0 corresponding
+    to the "zero" cluster, element 1 corresponding to cluster ID 1, etc.
+'clusterGrowth': sample index at which each new cluster was created.
+    Elements for this and other list results are ordered as in 'pca'.
+'clusterSizes': number of samples in each cluster
+'anomalyIndexes': anomaly index associated with each cluster
+'frequencyIndexes': frequency index associated with each cluster
+'distanceIndexes': distance index associated with each cluster
+'totalInferences': total number of inferences performed so far
+'numClusters': number of clusters created so far (includes zero cluster)
+</code></pre>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.get_summary"><code class="name flex">
+<span>def <span class="ident">get_summary</span></span>(<span>self, sensor_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get summary information for a sensor</p>
+<h2 id="returns">Returns</h2>
+<p>json summary information</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.get_version"><code class="name flex">
+<span>def <span class="ident">get_version</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get version information for Amber</p>
+<h2 id="returns">Returns</h2>
+<p>json version information</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.list_sensors"><code class="name flex">
+<span>def <span class="ident">list_sensors</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>List all sensor instances currently associated with Amber account</p>
+<h2 id="returns">Returns</h2>
+<p>A dictionary mapping sensor IDs to corresponding labels</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.post_outage"><code class="name flex">
+<span>def <span class="ident">post_outage</span></span>(<span>self, sensor_id)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.pretrain_sensor"><code class="name flex">
+<span>def <span class="ident">pretrain_sensor</span></span>(<span>self, sensor_id, data, autotune_config=True, block=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Pretrain a sensor with historical data</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>data</code></strong> :&ensp;<code>array-like</code></dt>
+<dd>data to be inferenced. Must be non-empty,
+entirely numeric and one of the following: scalar value,
+list-like or list-of-lists-like where all sublists have
+equal length.</dd>
+<dt><strong><code>autotune_config</code></strong> :&ensp;<code>bool</code></dt>
+<dd>if True, the sensor will be reconfigured based
+on the training data provided so that the sensor will be in monitoring
+once the data is through. If False, the sensor uses the already
+configured values to train the sensor.</dd>
+<dt><strong><code>block</code></strong> :&ensp;<code>bool</code></dt>
+<dd>if True, will block until pretraining is complete.
+Otherwise, will return immediately; in this case pretraining
+status can be checked using get_pretrain_state endpoint.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>{
+'state': str
+}</p>
+<p>'state': current state of the sensor.
+"Pretraining": pretraining is in progress</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.pretrain_sensor_xl"><code class="name flex">
+<span>def <span class="ident">pretrain_sensor_xl</span></span>(<span>self, sensor_id, data, autotune_config=True, block=True, chunk_size=4000000)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Pretrain a sensor with extra large sets of historical data.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>data</code></strong> :&ensp;<code>array-like</code></dt>
+<dd>data to be inferenced. Must be non-empty,
+entirely numeric and one of the following: scalar value,
+list-like or list-of-lists-like where all sublists have
+equal length.</dd>
+<dt><strong><code>autotune_config</code></strong> :&ensp;<code>bool</code></dt>
+<dd>if True, the sensor will be reconfigured based
+on the training data provided so that the sensor will be in monitoring
+once the data is through. If False, the sensor uses the already
+configured values to train the sensor.</dd>
+<dt><strong><code>block</code></strong> :&ensp;<code>bool</code></dt>
+<dd>if True, will block until pretraining is complete.
+Otherwise, will return immediately; in this case pretraining
+status can be checked using get_pretrain_state endpoint.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>{
+'state': str
+}</p>
+<p>'state': current state of the sensor.
+"Pretraining": pretraining is in progress</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.stream_fusion"><code class="name flex">
+<span>def <span class="ident">stream_fusion</span></span>(<span>self, sensor_id, vector, submit=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Stream data to a fusion-configured sensor</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>vector</code></strong> :&ensp;<code>list</code> of <code>dict</code></dt>
+<dd>list of one or more dictionaries, each
+giving an updated value for one of the sensor fusion features:
+[
+{
+"label": str,
+"value": float,
+},
+&hellip;
+]</dd>
+<dt><strong><code>submit</code></strong> :&ensp;<code>bool</code> or <code>None</code></dt>
+<dd>whether to submit the fusion vector after this update.
+If None, whether to submit will be determined by the per-feature submit rules.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<ul>
+<li>
+<p>When no analytics were generated: A Dict containing current sample vector
+{
+"vector": "sample, sample, sample, &hellip;",
+}</p>
+</li>
+<li>
+<p>When analytics were generated: A Dict containing both the current sample vector and results
+{
+"vector": "sample, sample, sample, &hellip;",
+"results": {
+'state': str,
+'message': str,
+'progress': int,
+'clusterCount': int,
+'retryCount': int,
+'streamingWindowSize': int,
+'totalInferences': int,
+'lastModified': 'int',
+'lastModifiedDelta': 'int',
+'ID': [int],
+'SI': [int],
+'AD': [int],
+'AH': [int],
+'AM': [float],
+'AW': [int],
+'NI': [int],
+'NS': [int],
+'NW': [float],
+'OM': [float]
+}
+}</p>
+</li>
+</ul>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response.</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.stream_sensor"><code class="name flex">
+<span>def <span class="ident">stream_sensor</span></span>(<span>self, sensor_id, data, save_image=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Stream data to an amber sensor and return the inference result</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>data</code></strong> :&ensp;<code>array-like</code></dt>
+<dd>data to be inferenced. Must be non-empty,
+entirely numeric and one of the following: scalar value,
+list-like or list-of-lists-like where all sublists have
+equal length.</dd>
+<dt><strong><code>save_image</code></strong> :&ensp;<code>bool</code></dt>
+<dd>whether to save the image after calculation</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A dictionary containing inferencing results:</p>
+<pre><code>{
+    'state': str,
+    'message': str,
+    'progress': int,
+    'clusterCount': int,
+    'retryCount': int,
+    'streamingWindowSize': int,
+    'totalInferences': int,
+    'lastModified': 'int',
+    'lastModifiedDelta': 'int',
+    'ID': [int],
+    'SI': [int],
+    'AD': [int],
+    'AH': [int],
+    'AM': [float],
+    'AW': [int],
+    'NI': [int],
+    'NS': [int],
+    'NW': [float],
+    'OM': [float]
+}
+
+'state': current state of the sensor. One of:
+    "Buffering": gathering initial sensor data
+    "Autotuning": autotuning configuration in progress
+    "Learning": sensor is active and learning
+    "Monitoring": sensor is active but monitoring only (learning disabled)
+    "Error": fatal error has occurred
+'message': accompanying message for current sensor state
+'progress' progress as a percentage value (applicable for "Buffering" and "Autotuning" states)
+'clusterCount' number of clusters created so far
+'retryCount' number of times autotuning was re-attempted to tune streamingWindowSize
+'streamingWindowSize': streaming window size of sensor (may differ from value
+    given at configuration if window size was adjusted during autotune)
+'totalInferences': number of inferences since configuration
+'lastModified': current Unix timestamp when the call was made
+'lastModifiedDelta': number of seconds since the last stream call
+'ID': list of cluster IDs. The values in this list correspond one-to-one
+    with input samples, indicating the cluster to which each input pattern
+    was assigned.
+'SI': smoothed anomaly index. The values in this list correspond
+    one-for-one with input samples and range between 0 and 1000. Values
+    closer to 0 represent input patterns which are ordinary given the data
+    seen so far on this sensor. Values closer to 1000 represent novel patterns
+    which are anomalous with respect to data seen before.
+'RI': raw anomaly index. These values are the SI values without any smoothing.
+'AD': list of binary anomaly detection values. These correspond one-to-one
+    with input samples and are produced by thresholding the smoothed anomaly
+    index (SI). The threshold is determined automatically from the SI values.
+    A value of 0 indicates that the SI has not exceeded the anomaly detection
+    threshold. A value of 1 indicates it has, signaling an anomaly at the
+    corresponding input sample.
+'AH': list of anomaly history values. These values are a moving-window sum of
+    the AD value, giving the number of anomaly detections (1's) present in the
+    AD signal over a "recent history" window whose length is the buffer size.
+'AM': list of "Amber Metric" values. These are floating point values between
+    0.0 and 1.0 indicating the extent to which each corresponding AH value
+    shows an unusually high number of anomalies in recent history. The values
+    are derived statistically from a Poisson model, with values close to 0.0
+    signaling a lower, and values close to 1.0 signaling a higher, frequency
+    of anomalies than usual.
+'AW': list of "Amber Warning Level" values. This index is produced by thresholding
+    the Amber Metric (AM) and takes on the values 0, 1 or 2 representing a discrete
+    "warning level" for an asset based on the frequency of anomalies within recent
+    history. 0 = normal, 1 = asset changing, 2 = asset critical. The default
+    thresholds for the two warning levels are the standard statistical values
+    of 0.95 (outlier, asset changing) and 0.997 (extreme outlier, asset critical).
+'NI': list of "Novelty Index" values. These are values that show how different a new
+    cluster actually is from the model. If the cluster is already in the model, it
+    returns a 0. New clusters return an RI type value ranging from 0 to 1000 based on
+    the L2 distance it is from the model's clusters.
+'NS': list of "Smoothed Novelty Index" values. This is just a weighted average of the
+    new NI and the previous NI. These values range from 0 to 1000..
+'NW': list of "Novelty Warning Level" values. This is just a scaled version of the NS
+    values that now range from 0 to 2 to give a warning level for the asset.
+'OM': list of operational mode values that are a sliding average of the cluster IDs
+    to give a basic representation of the different states
+</code></pre>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated or supplies invalid data</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+<dt id="boonamber.v1.AmberClient.update_label"><code class="name flex">
+<span>def <span class="ident">update_label</span></span>(<span>self, sensor_id, label)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Update the label of a sensor instance</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sensor_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>sensor identifier</dd>
+<dt><strong><code>label</code></strong> :&ensp;<code>str</code></dt>
+<dd>new label to assign to sensor</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A string containing the new label assigned to sensor</p>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>AmberUserError</code></dt>
+<dd>if client is not authenticated</dd>
+<dt><code>AmberCloudError</code></dt>
+<dd>if Amber cloud gives non-200 response</dd>
+</dl></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="boonamber" href="../index.html">boonamber</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="boonamber.v1.float_list_to_csv_string" href="#boonamber.v1.float_list_to_csv_string">float_list_to_csv_string</a></code></li>
+<li><code><a title="boonamber.v1.packed_floats" href="#boonamber.v1.packed_floats">packed_floats</a></code></li>
+<li><code><a title="boonamber.v1.validate_dims" href="#boonamber.v1.validate_dims">validate_dims</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="boonamber.v1.AmberClient" href="#boonamber.v1.AmberClient">AmberClient</a></code></h4>
+<ul class="two-column">
+<li><code><a title="boonamber.v1.AmberClient.configure_fusion" href="#boonamber.v1.AmberClient.configure_fusion">configure_fusion</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.configure_sensor" href="#boonamber.v1.AmberClient.configure_sensor">configure_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.create_sensor" href="#boonamber.v1.AmberClient.create_sensor">create_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.delete_sensor" href="#boonamber.v1.AmberClient.delete_sensor">delete_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.enable_learning" href="#boonamber.v1.AmberClient.enable_learning">enable_learning</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.get_config" href="#boonamber.v1.AmberClient.get_config">get_config</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.get_pretrain_state" href="#boonamber.v1.AmberClient.get_pretrain_state">get_pretrain_state</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.get_root_cause" href="#boonamber.v1.AmberClient.get_root_cause">get_root_cause</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.get_sensor" href="#boonamber.v1.AmberClient.get_sensor">get_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.get_status" href="#boonamber.v1.AmberClient.get_status">get_status</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.get_summary" href="#boonamber.v1.AmberClient.get_summary">get_summary</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.get_version" href="#boonamber.v1.AmberClient.get_version">get_version</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.list_sensors" href="#boonamber.v1.AmberClient.list_sensors">list_sensors</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.post_outage" href="#boonamber.v1.AmberClient.post_outage">post_outage</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.pretrain_sensor" href="#boonamber.v1.AmberClient.pretrain_sensor">pretrain_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.pretrain_sensor_xl" href="#boonamber.v1.AmberClient.pretrain_sensor_xl">pretrain_sensor_xl</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.stream_fusion" href="#boonamber.v1.AmberClient.stream_fusion">stream_fusion</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.stream_sensor" href="#boonamber.v1.AmberClient.stream_sensor">stream_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberClient.update_label" href="#boonamber.v1.AmberClient.update_label">update_label</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

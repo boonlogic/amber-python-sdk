@@ -1,10 +1,4 @@
 {
-    "default": {
-        "username": "admin",
-        "password": "admin",
-        "server": "https://localhost:5007/v1",
-        "oauth-server": "https://localhost:5007/v1"
-    },
     "missing-username": {
         "password": "filler-password",
         "server": "https://amber-local.boonlogic.com/dev"
@@ -21,5 +15,9 @@
         "username": "garbage-username",
         "password": "garbage-password",
         "server": "https://amber-local.boonlogic.com/dev"
+    },
+    "invalid-credentials": {
+        "license": "bad-license",
+        "secret": "bad-secret"
     }
 }
