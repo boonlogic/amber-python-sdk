@@ -5,5 +5,5 @@
 Version 2 of Amber Python is Deploying in the spring of 2023.  This SDK will support both v1 and v2 releases.
 v1 users will not see any interface difference when updating to the latest pypi package.
 
-- __Version 1__: [Boon Amber Version 1](boonamber/v1/README.md)
-- __Version 2__: [Boon Amber Version 2](boonamber/v2/README.md)
+- __Version 1__: [Boon Amber Version 1](https://boonlogic.github.io/amber-python-sdk/boonamber/v1/README.md)
+- __Version 2__: [Boon Amber Version 2](https://boonlogic.github.io/amber-python-sdk/boonamber/v2/README.md)
