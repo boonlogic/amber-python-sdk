@@ -1,4 +1,4 @@
-![Logo](https://github.com/boonlogic/amber-python-sdk/blob/master/docs/BoonLogic.png?raw=true)
+![Logo](docs/BoonLogic.png?raw=true)
 
 # Boon Amber Python SDK
 

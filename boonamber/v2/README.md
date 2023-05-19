@@ -1,8 +1,4 @@
----
-title: Boon Amber Python SDK v2
----
-
-![Logo](docs/BoonLogic.png?raw=true)
+![Logo](/docs/BoonLogic.png?raw=true)
 
 # Boon Amber Python SDK v2
 
