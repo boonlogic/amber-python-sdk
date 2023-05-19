@@ -2,7 +2,7 @@
 title: Boon Amber Python SDK v2
 ---
 
-![Logo](https://github.com/boonlogic/amber-python-sdk/blob/master/docs/BoonLogic.png?raw=true)
+![Logo](docs/BoonLogic.png?raw=true)
 
 # Boon Amber Python SDK v2
 
@@ -10,7 +10,7 @@ An SDK for Boon Amber sensor analytics
 
 - __Website__: [boonlogic.com](https://boonlogic.com)
 - __Documentation__: [Boon Docs Main Page](https://docs.boonlogic.com)
-- __SDK Functional Breakdown__: [amber-python-sdk classes and methods](https://boonlogic.github.io/amber-python-sdk/docs/boonamber/index.html)
+- __SDK Functional Breakdown__: [amber-python-sdk classes and methods](docs/boonamber/index.html)
 
 ## Installation
 
