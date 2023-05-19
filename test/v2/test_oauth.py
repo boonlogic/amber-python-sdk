@@ -68,8 +68,18 @@ class TestOauth(unittest.TestCase):
         license_file = os.getenv('AMBER_TEST_LICENSE_FILE')
         api = AmberV2Client(license_id=license_id, license_file=license_file)
         os.environ["AMBER_V2_SERVER"] = api.server
+        os.environ["AMBER_V2_LICENSE_KEY"] = api.license
+        os.environ["AMBER_V2_SECRET_KEY"] = api.secret
         api = AmberV2Client(license_file="test.Amber.license", license_id="invalid-credentials")
+
+        # should work anyway with valid credentials given in env
+        version = api.get_version()
+        assert "expert_common" in version.to_dict()
+
         # test invalid credentials
+        del os.environ["AMBER_V2_LICENSE_KEY"]
+        del os.environ["AMBER_V2_SECRET_KEY"]
+        api = AmberV2Client(license_file="test.Amber.license", license_id="invalid-credentials")
         with self.assertRaises(ApiException):
             api.get_version()
 

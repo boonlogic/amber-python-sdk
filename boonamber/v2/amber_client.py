@@ -31,13 +31,17 @@ class AmberClient:
 
         Environment:
 
-            `AMBER_LICENSE_FILE`: sets license_file path
+            `AMBER_V2_LICENSE_FILE`: sets license_file path
 
-            `AMBER_LICENSE_ID`: sets license_id
+            `AMBER_V2_LICENSE_ID`: sets license_id
 
-            `AMBER_SERVER`: overrides the server as found in .Amber.license file
+            `AMBER_V2_SERVER`: overrides the server as found in .Amber.license file
 
-            `AMBER_OAUTH_SERVER`: overrides the oauth server as found in .Amber.license file
+            `AMBER_V2_OAUTH_SERVER`: overrides the oauth server as found in .Amber.license file
+
+            `AMBER_V2_LICENSE_KEY`: overrides the license key as found in .Amber.license file
+
+            `AMBER_V2_SECRET_KEY`: overrides the secret key as found in .Amber.license file
 
         Raises:
             ApiException: if error supplying authentication credentials
@@ -87,12 +91,18 @@ class AmberClient:
             self.oauth_server = self.server
 
         try:
-            key = "license"
             self.license = file_data[self.profile_id]["license"]
-            key = "secret"
             self.secret = file_data[self.profile_id]["secret"]
         except KeyError as e:
-            raise ApiException('profile "{user}" missing "{key}" key'.format(user=self.profile_id, key=key))
+            # do nothing here
+            self.license = ""
+            self.secret = ""
+
+        self.license = os.environ.get("AMBER_V2_LICENSE_KEY", self.license)
+        self.secret = os.environ.get("AMBER_V2_SECRET_KEY", self.secret)
+
+        if self.license == "" or self.secret == "":
+            raise ApiException("need license and secret keys set in either the environment or the .Amber.license file")
 
         self.api = DefaultApi(ApiClient(self.configuration))
 
