@@ -1,1 +1,5 @@
 theme: jekyll-theme-slate
+
+website: boonlogic.github.io
+basewebsite: /amber-python-sdk
+permalink: date
