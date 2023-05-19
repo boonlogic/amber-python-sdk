@@ -1,6 +1,6 @@
-from .v1 import AmberClient as acv1
+from .v1 import AmberV1Client as acv1
 from .v1 import float_list_to_csv_string
-from .v2.amber_client import AmberClient as acv2
+from .v2.amber_client import AmberV2Client as acv2
 from boonamber.v2.models import *
 from .util.ambererror import AmberCloudError, AmberUserError
 from .v2.rest import ApiException
@@ -37,6 +37,18 @@ for model in in_files:
     __pdoc__["{}.{}.attribute_map".format(os.path.splitext(model)[0].replace("/", "."), tmp_func)] = False
     __pdoc__["{}.{}.swagger_types".format(os.path.splitext(model)[0].replace("/", "."), tmp_func)] = False
 
+# put model (so not to confuse with update_model)
+__pdoc__["boonamber.v2.models.put_model_request"] = False
+
+# post model copy (so as not to confuse with copy_model)
+__pdoc__["boonamber.v2.models.post_model_copy_request"] = False
+
+# oauth
+__pdoc__["boonamber.v2.models.post_oauth2_access_request"] = False
+__pdoc__["boonamber.v2.models.post_oauth2_refresh_request"] = False
+__pdoc__["boonamber.v2.models.post_oauth2_access_response"] = False
+__pdoc__["boonamber.v2.models.post_oauth2_refresh_response"] = False
+
 # summary
 __pdoc__["boonamber.v2.models.get_summary_response"] = False
 __pdoc__["boonamber.v2.models.magic_number"] = False
@@ -54,6 +66,8 @@ __pdoc__["boonamber.v2.models.m_pattern_memory"] = False
 __pdoc__["boonamber.v2.models.m_recent_ams"] = False
 __pdoc__["boonamber.v2.models.m_recent_analytics"] = False
 
+__pdoc__["boonamber.v2.models.mncp"] = False
+__pdoc__["boonamber.v2.models.map"] = False
 __pdoc__["boonamber.v2.models.m_nano"] = False
 __pdoc__["boonamber.v2.models.m_streaming_parameters"] = False
 __pdoc__["boonamber.v2.models.m_nano_backend"] = False

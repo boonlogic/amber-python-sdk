@@ -30,9 +30,11 @@ class TestConfig(unittest.TestCase):
 
     def testPostConfig(self):
         """Test Post Config"""
-        config = self.api.post_config(model_id=self.model_id, feature_count=10)
+        config = self.api.post_config(model_id=self.model_id, 
+                                      body=boonamber.PostConfigRequest(streaming_window=25, 
+                                                                       features=[boonamber.FeatureConfig()]))
         assert round(config.percent_variation, 2) == 0.05
-        assert len(config.features) == 10
+        assert len(config.features) == 1
 
     def testGetConfig(self):
         """Test Get Config"""

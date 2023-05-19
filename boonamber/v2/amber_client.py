@@ -11,7 +11,7 @@ from .api.default_api import DefaultApi
 from .models import *
 
 
-class AmberClient:
+class AmberV2Client:
     def __init__(
         self,
         license_id: str = None,
@@ -311,7 +311,7 @@ class AmberClient:
             raise ApiException(e)
 
     @__authenticate
-    def get_model_status(self, model_id: str) -> GetStatusResponse:
+    def get_status(self, model_id: str) -> GetStatusResponse:
         """
 
         Get the current state and learning progress of the specified model.
@@ -348,9 +348,8 @@ class AmberClient:
         except Exception as e:
             raise ApiException(e)
 
-    # TODO
     @__authenticate
-    def get_model_diagnostic(self, model_id: str, dir: str) -> str:
+    def get_diagnostic(self, model_id: str, dir: str) -> str:
         """
 
         Get the current summation of the specified model
@@ -380,36 +379,19 @@ class AmberClient:
             raise ApiException(e)
 
     @__authenticate
-    def post_config(self, model_id: str, feature_count: int = None, body: PostConfigRequest = None) -> PostConfigResponse:
+    def post_config(self, model_id: str, body: PostConfigRequest) -> PostConfigResponse:
         """
 
         Configure the specified model. Wipes all progress and puts the model in the `Buffering` state.
 
         Args:
             model_id: (type: str) (required)
-            feature_count: (type: int) number of features to populate
             body: (type: `boonamber.v2.models.post_config_request.PostConfigRequest`) configuration to apply
 
         Returns:
             `boonamber.v2.models.post_config_response.PostConfigResponse`
 
         """
-
-        # check if feature_count and post config request are both given
-        if feature_count and body:
-            raise ApiException("cannot specify both a config object and the feature count")
-        # check if neither are given
-        elif not feature_count and not body:
-            raise ApiException("must specify either the feature count or the config object")
-        # feature count is given
-        if body is None:
-            # create a default PostConfigRequest using given feature count
-            features = [FeatureConfig(name=f"feature-{i}") for i in range(feature_count)]
-            autotune = Autotuning(percent_variation=True, range=True)
-            training = TrainingConfig(
-                buffering_samples=10000, learning_max_samples=1000000, learning_max_clusters=1000, learning_rate_numerator=10, learning_rate_denominator=10000
-            )
-            body = PostConfigRequest(streaming_window=1, percent_variation=0.05, features=features, training=training, autotuning=autotune)
 
         try:
             # post config
@@ -466,26 +448,26 @@ class AmberClient:
             raise ApiException(e)
 
     @__authenticate
-    def copy_model(self, model_id: str, metadata: PostModelCopyRequest = None) -> PostModelResponse:
+    def copy_model(self, model_id: str, label: str = None) -> PostModelResponse:
         """
 
         Copy a model and return the new model information.
 
         Args:
             model_id: (type: str) (required)
-            metadata: (type: `boonamber.v2.models.post_model_copy_request.PostModelCopyRequest`) metadata for new model (uses previous label if unspecified)
+            label: (type: str) label for new model (uses previous label if unspecified)
 
         Returns:
             `boonamber.v2.models.post_model_response.PostModelResponse`
 
         """
+        kwargs = {}
+        if label:
+            kwargs["body"] = PostModelCopyRequest(label=label)
 
         try:
             # copy a model
-            if metadata is not None:
-                return self.api.post_model_copy(model_id, body=metadata)
-            else:
-                return self.api.post_model_copy(model_id)
+            return self.api.post_model_copy(model_id, **kwargs)
         except Exception as e:
             raise ApiException(e)
 
@@ -601,12 +583,15 @@ class AmberClient:
 
         Args:
             model_id: (type: str) (required)
-            body: (type: `boonamber.v2.models.post_learning_request.PostLearningRequest`) updates to apply
+            training: (type: `boonamber.v2.models.training_config.TrainingConfig`) updates to apply
 
         Returns:
             `boonamber.v2.models.post_learning_response.PostLearningResponse`
 
         """
+        if "training" in kwargs:
+            kwargs["body"] = PostLearningRequest(training=kwargs["training"])
+            del kwargs["training"]
         try:
             # start learning again
             return self.api.post_model_learning(model_id=model_id, **kwargs)
@@ -632,14 +617,14 @@ class AmberClient:
             raise ApiException(e)
 
     @__authenticate
-    def put_model(self, model_id: str, metadata: PutModelRequest) -> PostModelResponse:
+    def update_label(self, model_id: str, label: str) -> PostModelResponse:
         """
 
         Update metadata for the specified model.
 
         Args:
             model_id: (type: str) (required)
-            metadata: (type: `boonamber.v2.models.put_model_request.PutModelRequest`) (required) updates to apply
+            label: (type: str) (required) updates to apply
 
         Returns:
             `boonamber.v2.models.post_model_response.PostModelResponse`
@@ -647,6 +632,7 @@ class AmberClient:
         """
         try:
             # update model metadata
+            metadata = PutModelRequest(label=label)
             return self.api.put_model(model_id=model_id, body=metadata)
         except Exception as e:
             raise ApiException(e)

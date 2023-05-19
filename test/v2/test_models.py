@@ -48,8 +48,7 @@ class TestModels(unittest.TestCase):
         # clean up
         self.api.delete_model(response.id)
 
-        request = boonamber.PostModelCopyRequest("{}-copy".format(self.label))
-        response = self.api.copy_model(self.model_id, request)
+        response = self.api.copy_model(self.model_id, "{}-copy".format(self.label))
         assert response.label == "{}-copy".format(self.label)
 
         # clean up
@@ -66,10 +65,9 @@ class TestModels(unittest.TestCase):
         assert self.model_id == model.id
         assert self.label == model.label
 
-    def testPutModel(self):
+    def testUpdateLabel(self):
         """Test Put Model"""
-        metadata = boonamber.PutModelRequest(label="{}-update".format(self.label))
-        model = self.api.put_model(self.model_id, metadata)
+        model = self.api.update_label(self.model_id, "{}-update".format(self.label))
         assert self.model_id == model.id
         assert "{}-update".format(self.label) == model.label
 
@@ -104,6 +102,7 @@ class TestModels(unittest.TestCase):
         assert v1_sensor["label"] == mid.label
 
         self.api.delete_model(mid.id)
+        self.v1.delete_sensor(v1_sensor["sensorId"])
 
 
 if __name__ == '__main__':
