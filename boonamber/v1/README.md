@@ -42,7 +42,7 @@ The _~/.Amber.license_ file will be consulted by the Amber SDK to find and authe
 
 The following Python script provides a basic proof-of-connectivity:
 
-[connect-example.py](examples/connect-example.py)
+[connect-example.py](../../examples/v1/connect-example.py)
 
 ```python
 import sys
@@ -95,26 +95,26 @@ where the dictionary `{}` lists all sensors that currently exist under the given
 
 Example to demonstrate each API call
 
-[full-example.py](examples/v1/full-example.py)
+[full-example.py](../../examples/v1/full-example.py)
 
 ## Fusion Example
 
 Example to demonstrate submitting data via the label for individual features of a fusion vector.
 
-[fusion-example.py](examples/v1/fusion-example.py)
+[fusion-example.py](../../examples/v1/fusion-example.py)
 
 ## Advanced CSV file processor
 
 Example of streaming a .csv file.  Full Amber analytic results will be displayed after each streaming request.  
 
-[stream-advanced.py](examples/v1/stream-advanced-v1.py)<br>
-[output_current.csv](examples/v1/output_current.csv)
+[stream-advanced.py](../../examples/v1/stream-advanced.py)<br>
+[output_current.csv](../../examples/v1/output_current.csv)
 
 
 ## Pretrain example
 
 Example of pretraining a .csv file
 
-[pretrain-example.py](examples/v1/pretrain-example.py)<br>
-[output_current.csv](examples/v1/output_current.csv)
+[pretrain-example.py](../../examples/v1/pretrain-example.py)<br>
+[output_current.csv](../../examples/v1/output_current.csv)
 
