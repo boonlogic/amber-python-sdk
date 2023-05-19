@@ -32,8 +32,8 @@
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="boonamber.v2.amber_client.AmberClient"><code class="flex name class">
-<span>class <span class="ident">AmberClient</span></span>
+<dt id="boonamber.v2.amber_client.AmberV2Client"><code class="flex name class">
+<span>class <span class="ident">AmberV2Client</span></span>
 <span>(</span><span>license_id: str = None, license_file: str = '~/.Amber.license', verify: bool = False, timeout: int = 300)</span>
 </code></dt>
 <dd>
@@ -52,10 +52,12 @@ home directory, or optionally overridden using environment variables.</p>
 <dd>(type: int) number of seconds to allow API call to wait</dd>
 </dl>
 <h2 id="environment">Environment</h2>
-<p><code>AMBER_LICENSE_FILE</code>: sets license_file path</p>
-<p><code>AMBER_LICENSE_ID</code>: sets license_id</p>
-<p><code>AMBER_SERVER</code>: overrides the server as found in .Amber.license file</p>
-<p><code>AMBER_OAUTH_SERVER</code>: overrides the oauth server as found in .Amber.license file</p>
+<p><code>AMBER_V2_LICENSE_FILE</code>: sets license_file path</p>
+<p><code>AMBER_V2_LICENSE_ID</code>: sets license_id</p>
+<p><code>AMBER_V2_SERVER</code>: overrides the server as found in .Amber.license file</p>
+<p><code>AMBER_V2_OAUTH_SERVER</code>: overrides the oauth server as found in .Amber.license file</p>
+<p><code>AMBER_V2_LICENSE_KEY</code>: overrides the license key as found in .Amber.license file</p>
+<p><code>AMBER_V2_SECRET_KEY</code>: overrides the secret key as found in .Amber.license file</p>
 <h2 id="raises">Raises</h2>
 <dl>
 <dt><code>ApiException</code></dt>
@@ -67,7 +69,22 @@ home directory, or optionally overridden using environment variables.</p>
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="boonamber.v2.amber_client.AmberClient.delete_model"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.copy_model"><code class="name flex">
+<span>def <span class="ident">copy_model</span></span>(<span>self, model_id: str, label: str = None) ‑> <a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Copy a model and return the new model information.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>model_id</code></strong></dt>
+<dd>(type: str) (required)</dd>
+<dt><strong><code>label</code></strong></dt>
+<dd>(type: str) label for new model (uses previous label if unspecified)</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p><code><a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></code></p></div>
+</dd>
+<dt id="boonamber.v2.amber_client.AmberV2Client.delete_model"><code class="name flex">
 <span>def <span class="ident">delete_model</span></span>(<span>self, model_id: str)</span>
 </code></dt>
 <dd>
@@ -78,7 +95,7 @@ home directory, or optionally overridden using environment variables.</p>
 <dd>(type: str) (required)</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.enable_learning"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.enable_learning"><code class="name flex">
 <span>def <span class="ident">enable_learning</span></span>(<span>self, model_id: str, **kwargs) ‑> <a title="boonamber.v2.models.post_learning_response.PostLearningResponse" href="models/post_learning_response.html#boonamber.v2.models.post_learning_response.PostLearningResponse">PostLearningResponse</a></span>
 </code></dt>
 <dd>
@@ -87,13 +104,13 @@ home directory, or optionally overridden using environment variables.</p>
 <dl>
 <dt><strong><code>model_id</code></strong></dt>
 <dd>(type: str) (required)</dd>
-<dt><strong><code>body</code></strong></dt>
-<dd>(type: <code><a title="boonamber.v2.models.post_learning_request.PostLearningRequest" href="models/post_learning_request.html#boonamber.v2.models.post_learning_request.PostLearningRequest">PostLearningRequest</a></code>) updates to apply</dd>
+<dt><strong><code>training</code></strong></dt>
+<dd>(type: <code><a title="boonamber.v2.models.training_config.TrainingConfig" href="models/training_config.html#boonamber.v2.models.training_config.TrainingConfig">TrainingConfig</a></code>) updates to apply</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.post_learning_response.PostLearningResponse" href="models/post_learning_response.html#boonamber.v2.models.post_learning_response.PostLearningResponse">PostLearningResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.get_config"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.get_config"><code class="name flex">
 <span>def <span class="ident">get_config</span></span>(<span>self, model_id: str) ‑> <a title="boonamber.v2.models.post_config_response.PostConfigResponse" href="models/post_config_response.html#boonamber.v2.models.post_config_response.PostConfigResponse">PostConfigResponse</a></span>
 </code></dt>
 <dd>
@@ -106,21 +123,8 @@ home directory, or optionally overridden using environment variables.</p>
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.post_config_response.PostConfigResponse" href="models/post_config_response.html#boonamber.v2.models.post_config_response.PostConfigResponse">PostConfigResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.get_model"><code class="name flex">
-<span>def <span class="ident">get_model</span></span>(<span>self, model_id: str) ‑> <a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></span>
-</code></dt>
-<dd>
-<div class="desc"><p>Return metadata for the specified model.</p>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>model_id</code></strong></dt>
-<dd>(type: str) (required)</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<p><code><a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></code></p></div>
-</dd>
-<dt id="boonamber.v2.amber_client.AmberClient.get_model_diagnostic"><code class="name flex">
-<span>def <span class="ident">get_model_diagnostic</span></span>(<span>self, model_id: str, dir: str) ‑> str</span>
+<dt id="boonamber.v2.amber_client.AmberV2Client.get_diagnostic"><code class="name flex">
+<span>def <span class="ident">get_diagnostic</span></span>(<span>self, model_id: str, dir: str) ‑> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the current summation of the specified model</p>
@@ -134,20 +138,20 @@ home directory, or optionally overridden using environment variables.</p>
 <h2 id="returns">Returns</h2>
 <p>str</p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.get_model_status"><code class="name flex">
-<span>def <span class="ident">get_model_status</span></span>(<span>self, model_id: str) ‑> <a title="boonamber.v2.models.get_status_response.GetStatusResponse" href="models/get_status_response.html#boonamber.v2.models.get_status_response.GetStatusResponse">GetStatusResponse</a></span>
+<dt id="boonamber.v2.amber_client.AmberV2Client.get_model"><code class="name flex">
+<span>def <span class="ident">get_model</span></span>(<span>self, model_id: str) ‑> <a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></span>
 </code></dt>
 <dd>
-<div class="desc"><p>Get the current state and learning progress of the specified model.</p>
+<div class="desc"><p>Return metadata for the specified model.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>model_id</code></strong></dt>
 <dd>(type: str) (required)</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p><code><a title="boonamber.v2.models.get_status_response.GetStatusResponse" href="models/get_status_response.html#boonamber.v2.models.get_status_response.GetStatusResponse">GetStatusResponse</a></code></p></div>
+<p><code><a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.get_models"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.get_models"><code class="name flex">
 <span>def <span class="ident">get_models</span></span>(<span>self) ‑> <a title="boonamber.v2.models.get_models_response.GetModelsResponse" href="models/get_models_response.html#boonamber.v2.models.get_models_response.GetModelsResponse">GetModelsResponse</a></span>
 </code></dt>
 <dd>
@@ -155,7 +159,7 @@ home directory, or optionally overridden using environment variables.</p>
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.get_models_response.GetModelsResponse" href="models/get_models_response.html#boonamber.v2.models.get_models_response.GetModelsResponse">GetModelsResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.get_nano_status"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.get_nano_status"><code class="name flex">
 <span>def <span class="ident">get_nano_status</span></span>(<span>self, model_id: str) ‑> <a title="boonamber.v2.models.get_nano_status_response.GetNanoStatusResponse" href="models/get_nano_status_response.html#boonamber.v2.models.get_nano_status_response.GetNanoStatusResponse">GetNanoStatusResponse</a></span>
 </code></dt>
 <dd>
@@ -168,7 +172,7 @@ home directory, or optionally overridden using environment variables.</p>
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.get_nano_status_response.GetNanoStatusResponse" href="models/get_nano_status_response.html#boonamber.v2.models.get_nano_status_response.GetNanoStatusResponse">GetNanoStatusResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.get_pretrain"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.get_pretrain"><code class="name flex">
 <span>def <span class="ident">get_pretrain</span></span>(<span>self, model_id: str) ‑> <a title="boonamber.v2.models.get_pretrain_response.GetPretrainResponse" href="models/get_pretrain_response.html#boonamber.v2.models.get_pretrain_response.GetPretrainResponse">GetPretrainResponse</a></span>
 </code></dt>
 <dd>
@@ -181,7 +185,7 @@ home directory, or optionally overridden using environment variables.</p>
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.get_pretrain_response.GetPretrainResponse" href="models/get_pretrain_response.html#boonamber.v2.models.get_pretrain_response.GetPretrainResponse">GetPretrainResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.get_root_cause"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.get_root_cause"><code class="name flex">
 <span>def <span class="ident">get_root_cause</span></span>(<span>self, model_id: str, **kwargs) ‑> <a title="boonamber.v2.models.get_root_cause_response.GetRootCauseResponse" href="models/get_root_cause_response.html#boonamber.v2.models.get_root_cause_response.GetRootCauseResponse">GetRootCauseResponse</a></span>
 </code></dt>
 <dd>
@@ -198,7 +202,20 @@ home directory, or optionally overridden using environment variables.</p>
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.get_root_cause_response.GetRootCauseResponse" href="models/get_root_cause_response.html#boonamber.v2.models.get_root_cause_response.GetRootCauseResponse">GetRootCauseResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.get_version"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.get_status"><code class="name flex">
+<span>def <span class="ident">get_status</span></span>(<span>self, model_id: str) ‑> <a title="boonamber.v2.models.get_status_response.GetStatusResponse" href="models/get_status_response.html#boonamber.v2.models.get_status_response.GetStatusResponse">GetStatusResponse</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the current state and learning progress of the specified model.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>model_id</code></strong></dt>
+<dd>(type: str) (required)</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p><code><a title="boonamber.v2.models.get_status_response.GetStatusResponse" href="models/get_status_response.html#boonamber.v2.models.get_status_response.GetStatusResponse">GetStatusResponse</a></code></p></div>
+</dd>
+<dt id="boonamber.v2.amber_client.AmberV2Client.get_version"><code class="name flex">
 <span>def <span class="ident">get_version</span></span>(<span>self) ‑> <a title="boonamber.v2.models.get_version_response.GetVersionResponse" href="models/get_version_response.html#boonamber.v2.models.get_version_response.GetVersionResponse">GetVersionResponse</a></span>
 </code></dt>
 <dd>
@@ -211,7 +228,7 @@ version = amber.get_version()
 print(version.to_dict())
 </code></pre></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.migrate_model"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.migrate_model"><code class="name flex">
 <span>def <span class="ident">migrate_model</span></span>(<span>self, v1_model_id: str)</span>
 </code></dt>
 <dd>
@@ -224,8 +241,8 @@ print(version.to_dict())
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.post_config"><code class="name flex">
-<span>def <span class="ident">post_config</span></span>(<span>self, model_id: str, feature_count: int = None, body: <a title="boonamber.v2.models.post_config_request.PostConfigRequest" href="models/post_config_request.html#boonamber.v2.models.post_config_request.PostConfigRequest">PostConfigRequest</a> = None) ‑> <a title="boonamber.v2.models.post_config_response.PostConfigResponse" href="models/post_config_response.html#boonamber.v2.models.post_config_response.PostConfigResponse">PostConfigResponse</a></span>
+<dt id="boonamber.v2.amber_client.AmberV2Client.post_config"><code class="name flex">
+<span>def <span class="ident">post_config</span></span>(<span>self, model_id: str, body: <a title="boonamber.v2.models.post_config_request.PostConfigRequest" href="models/post_config_request.html#boonamber.v2.models.post_config_request.PostConfigRequest">PostConfigRequest</a>) ‑> <a title="boonamber.v2.models.post_config_response.PostConfigResponse" href="models/post_config_response.html#boonamber.v2.models.post_config_response.PostConfigResponse">PostConfigResponse</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Configure the specified model. Wipes all progress and puts the model in the <code>Buffering</code> state.</p>
@@ -233,16 +250,13 @@ print(version.to_dict())
 <dl>
 <dt><strong><code>model_id</code></strong></dt>
 <dd>(type: str) (required)</dd>
-<dt><strong><code>feature_count</code></strong></dt>
-<dd>(type: int) number of features to populate
-</dd>
 <dt><strong><code>body</code></strong></dt>
 <dd>(type: <code><a title="boonamber.v2.models.post_config_request.PostConfigRequest" href="models/post_config_request.html#boonamber.v2.models.post_config_request.PostConfigRequest">PostConfigRequest</a></code>) configuration to apply</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.post_config_response.PostConfigResponse" href="models/post_config_response.html#boonamber.v2.models.post_config_response.PostConfigResponse">PostConfigResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.post_data"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.post_data"><code class="name flex">
 <span>def <span class="ident">post_data</span></span>(<span>self, model_id: str, data, save_image: bool = True) ‑> <a title="boonamber.v2.models.post_data_response.PostDataResponse" href="models/post_data_response.html#boonamber.v2.models.post_data_response.PostDataResponse">PostDataResponse</a></span>
 </code></dt>
 <dd>
@@ -259,7 +273,7 @@ print(version.to_dict())
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.post_data_response.PostDataResponse" href="models/post_data_response.html#boonamber.v2.models.post_data_response.PostDataResponse">PostDataResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.post_model"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.post_model"><code class="name flex">
 <span>def <span class="ident">post_model</span></span>(<span>self, metadata: <a title="boonamber.v2.models.post_model_request.PostModelRequest" href="models/post_model_request.html#boonamber.v2.models.post_model_request.PostModelRequest">PostModelRequest</a>) ‑> <a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></span>
 </code></dt>
 <dd>
@@ -272,7 +286,7 @@ print(version.to_dict())
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.post_outage"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.post_outage"><code class="name flex">
 <span>def <span class="ident">post_outage</span></span>(<span>self, model_id: str)</span>
 </code></dt>
 <dd>
@@ -283,7 +297,7 @@ print(version.to_dict())
 <dd>(type: str) (required)</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.post_pretrain"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.post_pretrain"><code class="name flex">
 <span>def <span class="ident">post_pretrain</span></span>(<span>self, model_id: str, data, chunk_size: int = 400000, block: bool = True, **kwargs) ‑> <a title="boonamber.v2.models.post_pretrain_response.PostPretrainResponse" href="models/post_pretrain_response.html#boonamber.v2.models.post_pretrain_response.PostPretrainResponse">PostPretrainResponse</a></span>
 </code></dt>
 <dd>
@@ -302,7 +316,7 @@ print(version.to_dict())
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.post_pretrain_response.PostPretrainResponse" href="models/post_pretrain_response.html#boonamber.v2.models.post_pretrain_response.PostPretrainResponse">PostPretrainResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.put_data"><code class="name flex">
+<dt id="boonamber.v2.amber_client.AmberV2Client.put_data"><code class="name flex">
 <span>def <span class="ident">put_data</span></span>(<span>self, model_id: str, body: <a title="boonamber.v2.models.put_data_request.PutDataRequest" href="models/put_data_request.html#boonamber.v2.models.put_data_request.PutDataRequest">PutDataRequest</a>) ‑> <a title="boonamber.v2.models.put_data_response.PutDataResponse" href="models/put_data_response.html#boonamber.v2.models.put_data_response.PutDataResponse">PutDataResponse</a></span>
 </code></dt>
 <dd>
@@ -317,8 +331,8 @@ print(version.to_dict())
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.put_data_response.PutDataResponse" href="models/put_data_response.html#boonamber.v2.models.put_data_response.PutDataResponse">PutDataResponse</a></code></p></div>
 </dd>
-<dt id="boonamber.v2.amber_client.AmberClient.put_model"><code class="name flex">
-<span>def <span class="ident">put_model</span></span>(<span>self, model_id: str, metadata: <a title="boonamber.v2.models.put_model_request.PutModelRequest" href="models/put_model_request.html#boonamber.v2.models.put_model_request.PutModelRequest">PutModelRequest</a>) ‑> <a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></span>
+<dt id="boonamber.v2.amber_client.AmberV2Client.update_label"><code class="name flex">
+<span>def <span class="ident">update_label</span></span>(<span>self, model_id: str, label: str) ‑> <a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Update metadata for the specified model.</p>
@@ -326,8 +340,8 @@ print(version.to_dict())
 <dl>
 <dt><strong><code>model_id</code></strong></dt>
 <dd>(type: str) (required)</dd>
-<dt><strong><code>metadata</code></strong></dt>
-<dd>(type: <code><a title="boonamber.v2.models.put_model_request.PutModelRequest" href="models/put_model_request.html#boonamber.v2.models.put_model_request.PutModelRequest">PutModelRequest</a></code>) (required) updates to apply</dd>
+<dt><strong><code>label</code></strong></dt>
+<dd>(type: str) (required) updates to apply</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p><code><a title="boonamber.v2.models.post_model_response.PostModelResponse" href="models/post_model_response.html#boonamber.v2.models.post_model_response.PostModelResponse">PostModelResponse</a></code></p></div>
@@ -351,27 +365,28 @@ print(version.to_dict())
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="boonamber.v2.amber_client.AmberClient" href="#boonamber.v2.amber_client.AmberClient">AmberClient</a></code></h4>
+<h4><code><a title="boonamber.v2.amber_client.AmberV2Client" href="#boonamber.v2.amber_client.AmberV2Client">AmberV2Client</a></code></h4>
 <ul class="two-column">
-<li><code><a title="boonamber.v2.amber_client.AmberClient.delete_model" href="#boonamber.v2.amber_client.AmberClient.delete_model">delete_model</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.enable_learning" href="#boonamber.v2.amber_client.AmberClient.enable_learning">enable_learning</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.get_config" href="#boonamber.v2.amber_client.AmberClient.get_config">get_config</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.get_model" href="#boonamber.v2.amber_client.AmberClient.get_model">get_model</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.get_model_diagnostic" href="#boonamber.v2.amber_client.AmberClient.get_model_diagnostic">get_model_diagnostic</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.get_model_status" href="#boonamber.v2.amber_client.AmberClient.get_model_status">get_model_status</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.get_models" href="#boonamber.v2.amber_client.AmberClient.get_models">get_models</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.get_nano_status" href="#boonamber.v2.amber_client.AmberClient.get_nano_status">get_nano_status</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.get_pretrain" href="#boonamber.v2.amber_client.AmberClient.get_pretrain">get_pretrain</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.get_root_cause" href="#boonamber.v2.amber_client.AmberClient.get_root_cause">get_root_cause</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.get_version" href="#boonamber.v2.amber_client.AmberClient.get_version">get_version</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.migrate_model" href="#boonamber.v2.amber_client.AmberClient.migrate_model">migrate_model</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.post_config" href="#boonamber.v2.amber_client.AmberClient.post_config">post_config</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.post_data" href="#boonamber.v2.amber_client.AmberClient.post_data">post_data</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.post_model" href="#boonamber.v2.amber_client.AmberClient.post_model">post_model</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.post_outage" href="#boonamber.v2.amber_client.AmberClient.post_outage">post_outage</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.post_pretrain" href="#boonamber.v2.amber_client.AmberClient.post_pretrain">post_pretrain</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.put_data" href="#boonamber.v2.amber_client.AmberClient.put_data">put_data</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberClient.put_model" href="#boonamber.v2.amber_client.AmberClient.put_model">put_model</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.copy_model" href="#boonamber.v2.amber_client.AmberV2Client.copy_model">copy_model</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.delete_model" href="#boonamber.v2.amber_client.AmberV2Client.delete_model">delete_model</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.enable_learning" href="#boonamber.v2.amber_client.AmberV2Client.enable_learning">enable_learning</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_config" href="#boonamber.v2.amber_client.AmberV2Client.get_config">get_config</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_diagnostic" href="#boonamber.v2.amber_client.AmberV2Client.get_diagnostic">get_diagnostic</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_model" href="#boonamber.v2.amber_client.AmberV2Client.get_model">get_model</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_models" href="#boonamber.v2.amber_client.AmberV2Client.get_models">get_models</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_nano_status" href="#boonamber.v2.amber_client.AmberV2Client.get_nano_status">get_nano_status</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_pretrain" href="#boonamber.v2.amber_client.AmberV2Client.get_pretrain">get_pretrain</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_root_cause" href="#boonamber.v2.amber_client.AmberV2Client.get_root_cause">get_root_cause</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_status" href="#boonamber.v2.amber_client.AmberV2Client.get_status">get_status</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_version" href="#boonamber.v2.amber_client.AmberV2Client.get_version">get_version</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.migrate_model" href="#boonamber.v2.amber_client.AmberV2Client.migrate_model">migrate_model</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.post_config" href="#boonamber.v2.amber_client.AmberV2Client.post_config">post_config</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.post_data" href="#boonamber.v2.amber_client.AmberV2Client.post_data">post_data</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.post_model" href="#boonamber.v2.amber_client.AmberV2Client.post_model">post_model</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.post_outage" href="#boonamber.v2.amber_client.AmberV2Client.post_outage">post_outage</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.post_pretrain" href="#boonamber.v2.amber_client.AmberV2Client.post_pretrain">post_pretrain</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.put_data" href="#boonamber.v2.amber_client.AmberV2Client.put_data">put_data</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.update_label" href="#boonamber.v2.amber_client.AmberV2Client.update_label">update_label</a></code></li>
 </ul>
 </li>
 </ul>

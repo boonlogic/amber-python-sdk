@@ -35,12 +35,12 @@ class TestResults(unittest.TestCase):
     def testGetStatusNegative(self):
         """Test Get Status fail"""
         with self.assertRaises(ApiException):
-            self.api.get_model_status(model_id=self.model_id)
+            self.api.get_status(model_id=self.model_id)
 
     def testGetDiagnosticNegative(self):
         """Test Get Diagnostic fail"""
         with self.assertRaises(ApiException) as exp:
-            self.api.get_model_diagnostic(model_id=self.model_id, dir="bogus/path")
+            self.api.get_diagnostic(model_id=self.model_id, dir="bogus/path")
         assert 'target directory does not exist' in str(exp.exception)
 
     def testGetRootCauseNegative(self):

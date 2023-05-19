@@ -39,11 +39,10 @@ class TestModels(unittest.TestCase):
         with self.assertRaises(ApiException):
             self.api.get_model(self.model_id)
 
-    def testPutModelNegative(self):
+    def testUpdateLabelNegative(self):
         """Test Put Model fail"""
-        metadata = boonamber.PutModelRequest(label="{}-update".format(self.label))
         with self.assertRaises(ApiException):
-            self.api.put_model(self.model_id, metadata)
+            self.api.update_label(self.model_id, "{}-update".format(self.label))
 
     def testDeleteModelNegative(self):
         """Test Delete Model fail"""

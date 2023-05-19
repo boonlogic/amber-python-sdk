@@ -51,7 +51,8 @@ class TestResults(unittest.TestCase):
 
     def testPostLearning(self):
         """Test Post Learning"""
-        response = self.api.enable_learning(model_id=self.model_id)
+        training = boonamber.TrainingConfig(buffering_samples=400, learning_max_samples=500)
+        response = self.api.enable_learning(model_id=self.model_id, training=training)
         assert "Learning" == response.status.state
 
     def testGetNanoStatus(self):
@@ -63,14 +64,14 @@ class TestResults(unittest.TestCase):
 
     def testGetStatus(self):
         """Test Get Status"""
-        response = self.api.get_model_status(model_id=self.model_id)
+        response = self.api.get_status(model_id=self.model_id)
         assert response.state == "Monitoring"
         assert response.cluster_count == 59
         assert response.sample_count == 476
 
     def testGetDiagnostic(self):
         """Test Get Diagnostic"""
-        path = self.api.get_model_diagnostic(model_id=self.model_id, dir=os.getcwd())
+        path = self.api.get_diagnostic(model_id=self.model_id, dir=os.getcwd())
         assert os.path.exists(path)
 
         os.remove(path)
@@ -108,7 +109,7 @@ class TestResults(unittest.TestCase):
         self.api.post_outage(model_id=self.model_id)
 
         # test state
-        response = self.api.get_model_status(model_id=self.model_id)
+        response = self.api.get_status(model_id=self.model_id)
         assert response.state == "Monitoring"
         assert response.cluster_count == 59
         assert response.sample_count == 476

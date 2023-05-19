@@ -56,8 +56,8 @@ number of array dimensions</p></div>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="boonamber.v1.AmberClient"><code class="flex name class">
-<span>class <span class="ident">AmberClient</span></span>
+<dt id="boonamber.v1.AmberV1Client"><code class="flex name class">
+<span>class <span class="ident">AmberV1Client</span></span>
 <span>(</span><span>license_id='default', license_file='~/.Amber.license', verify=True, cert=None, timeout=300)</span>
 </code></dt>
 <dd>
@@ -96,7 +96,7 @@ home directory, or optionally overridden using environment variables.</p>
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="boonamber.v1.AmberClient.configure_fusion"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.configure_fusion"><code class="name flex">
 <span>def <span class="ident">configure_fusion</span></span>(<span>self, sensor_id, feature_count=5, features=None)</span>
 </code></dt>
 <dd>
@@ -128,7 +128,7 @@ Allows direct setting of feature labels and rules for submitting the fusion vect
 <dd>if Amber cloud gives non-200 response.</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.configure_sensor"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.configure_sensor"><code class="name flex">
 <span>def <span class="ident">configure_sensor</span></span>(<span>self, sensor_id, feature_count=1, streaming_window_size=25, samples_to_buffer=10000, anomaly_history_window=10000, learning_rate_numerator=10, learning_rate_denominator=10000, learning_max_clusters=1000, learning_max_samples=1000000, features=None, override_pv=None)</span>
 </code></dt>
 <dd>
@@ -191,7 +191,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.create_sensor"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.create_sensor"><code class="name flex">
 <span>def <span class="ident">create_sensor</span></span>(<span>self, label='')</span>
 </code></dt>
 <dd>
@@ -211,7 +211,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.delete_sensor"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.delete_sensor"><code class="name flex">
 <span>def <span class="ident">delete_sensor</span></span>(<span>self, sensor_id)</span>
 </code></dt>
 <dd>
@@ -229,7 +229,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.enable_learning"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.enable_learning"><code class="name flex">
 <span>def <span class="ident">enable_learning</span></span>(<span>self, sensor_id, learning_rate_numerator=None, learning_rate_denominator=None, learning_max_clusters=None, learning_max_samples=None)</span>
 </code></dt>
 <dd>
@@ -262,7 +262,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.get_config"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.get_config"><code class="name flex">
 <span>def <span class="ident">get_config</span></span>(<span>self, sensor_id)</span>
 </code></dt>
 <dd>
@@ -314,7 +314,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.get_pretrain_state"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.get_pretrain_state"><code class="name flex">
 <span>def <span class="ident">get_pretrain_state</span></span>(<span>self, sensor_id)</span>
 </code></dt>
 <dd>
@@ -340,7 +340,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.get_root_cause"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.get_root_cause"><code class="name flex">
 <span>def <span class="ident">get_root_cause</span></span>(<span>self, sensor_id, id_list=None, pattern_list=None)</span>
 </code></dt>
 <dd>
@@ -366,7 +366,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.get_sensor"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.get_sensor"><code class="name flex">
 <span>def <span class="ident">get_sensor</span></span>(<span>self, sensor_id)</span>
 </code></dt>
 <dd>
@@ -430,7 +430,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.get_status"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.get_status"><code class="name flex">
 <span>def <span class="ident">get_status</span></span>(<span>self, sensor_id)</span>
 </code></dt>
 <dd>
@@ -474,7 +474,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.get_summary"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.get_summary"><code class="name flex">
 <span>def <span class="ident">get_summary</span></span>(<span>self, sensor_id)</span>
 </code></dt>
 <dd>
@@ -487,7 +487,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.get_version"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.get_version"><code class="name flex">
 <span>def <span class="ident">get_version</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -500,7 +500,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.list_sensors"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.list_sensors"><code class="name flex">
 <span>def <span class="ident">list_sensors</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -515,13 +515,13 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.post_outage"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.post_outage"><code class="name flex">
 <span>def <span class="ident">post_outage</span></span>(<span>self, sensor_id)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.pretrain_sensor"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.pretrain_sensor"><code class="name flex">
 <span>def <span class="ident">pretrain_sensor</span></span>(<span>self, sensor_id, data, autotune_config=True, block=True)</span>
 </code></dt>
 <dd>
@@ -559,7 +559,7 @@ status can be checked using get_pretrain_state endpoint.</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.pretrain_sensor_xl"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.pretrain_sensor_xl"><code class="name flex">
 <span>def <span class="ident">pretrain_sensor_xl</span></span>(<span>self, sensor_id, data, autotune_config=True, block=True, chunk_size=4000000)</span>
 </code></dt>
 <dd>
@@ -597,7 +597,7 @@ status can be checked using get_pretrain_state endpoint.</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.stream_fusion"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.stream_fusion"><code class="name flex">
 <span>def <span class="ident">stream_fusion</span></span>(<span>self, sensor_id, vector, submit=None)</span>
 </code></dt>
 <dd>
@@ -664,7 +664,7 @@ If None, whether to submit will be determined by the per-feature submit rules.</
 <dd>if Amber cloud gives non-200 response.</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.stream_sensor"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.stream_sensor"><code class="name flex">
 <span>def <span class="ident">stream_sensor</span></span>(<span>self, sensor_id, data, save_image=True)</span>
 </code></dt>
 <dd>
@@ -769,7 +769,7 @@ equal length.</dd>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
-<dt id="boonamber.v1.AmberClient.update_label"><code class="name flex">
+<dt id="boonamber.v1.AmberV1Client.update_label"><code class="name flex">
 <span>def <span class="ident">update_label</span></span>(<span>self, sensor_id, label)</span>
 </code></dt>
 <dd>
@@ -817,27 +817,27 @@ equal length.</dd>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="boonamber.v1.AmberClient" href="#boonamber.v1.AmberClient">AmberClient</a></code></h4>
+<h4><code><a title="boonamber.v1.AmberV1Client" href="#boonamber.v1.AmberV1Client">AmberV1Client</a></code></h4>
 <ul class="two-column">
-<li><code><a title="boonamber.v1.AmberClient.configure_fusion" href="#boonamber.v1.AmberClient.configure_fusion">configure_fusion</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.configure_sensor" href="#boonamber.v1.AmberClient.configure_sensor">configure_sensor</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.create_sensor" href="#boonamber.v1.AmberClient.create_sensor">create_sensor</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.delete_sensor" href="#boonamber.v1.AmberClient.delete_sensor">delete_sensor</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.enable_learning" href="#boonamber.v1.AmberClient.enable_learning">enable_learning</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.get_config" href="#boonamber.v1.AmberClient.get_config">get_config</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.get_pretrain_state" href="#boonamber.v1.AmberClient.get_pretrain_state">get_pretrain_state</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.get_root_cause" href="#boonamber.v1.AmberClient.get_root_cause">get_root_cause</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.get_sensor" href="#boonamber.v1.AmberClient.get_sensor">get_sensor</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.get_status" href="#boonamber.v1.AmberClient.get_status">get_status</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.get_summary" href="#boonamber.v1.AmberClient.get_summary">get_summary</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.get_version" href="#boonamber.v1.AmberClient.get_version">get_version</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.list_sensors" href="#boonamber.v1.AmberClient.list_sensors">list_sensors</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.post_outage" href="#boonamber.v1.AmberClient.post_outage">post_outage</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.pretrain_sensor" href="#boonamber.v1.AmberClient.pretrain_sensor">pretrain_sensor</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.pretrain_sensor_xl" href="#boonamber.v1.AmberClient.pretrain_sensor_xl">pretrain_sensor_xl</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.stream_fusion" href="#boonamber.v1.AmberClient.stream_fusion">stream_fusion</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.stream_sensor" href="#boonamber.v1.AmberClient.stream_sensor">stream_sensor</a></code></li>
-<li><code><a title="boonamber.v1.AmberClient.update_label" href="#boonamber.v1.AmberClient.update_label">update_label</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.configure_fusion" href="#boonamber.v1.AmberV1Client.configure_fusion">configure_fusion</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.configure_sensor" href="#boonamber.v1.AmberV1Client.configure_sensor">configure_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.create_sensor" href="#boonamber.v1.AmberV1Client.create_sensor">create_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.delete_sensor" href="#boonamber.v1.AmberV1Client.delete_sensor">delete_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.enable_learning" href="#boonamber.v1.AmberV1Client.enable_learning">enable_learning</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.get_config" href="#boonamber.v1.AmberV1Client.get_config">get_config</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.get_pretrain_state" href="#boonamber.v1.AmberV1Client.get_pretrain_state">get_pretrain_state</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.get_root_cause" href="#boonamber.v1.AmberV1Client.get_root_cause">get_root_cause</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.get_sensor" href="#boonamber.v1.AmberV1Client.get_sensor">get_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.get_status" href="#boonamber.v1.AmberV1Client.get_status">get_status</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.get_summary" href="#boonamber.v1.AmberV1Client.get_summary">get_summary</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.get_version" href="#boonamber.v1.AmberV1Client.get_version">get_version</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.list_sensors" href="#boonamber.v1.AmberV1Client.list_sensors">list_sensors</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.post_outage" href="#boonamber.v1.AmberV1Client.post_outage">post_outage</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.pretrain_sensor" href="#boonamber.v1.AmberV1Client.pretrain_sensor">pretrain_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.pretrain_sensor_xl" href="#boonamber.v1.AmberV1Client.pretrain_sensor_xl">pretrain_sensor_xl</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.stream_fusion" href="#boonamber.v1.AmberV1Client.stream_fusion">stream_fusion</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.stream_sensor" href="#boonamber.v1.AmberV1Client.stream_sensor">stream_sensor</a></code></li>
+<li><code><a title="boonamber.v1.AmberV1Client.update_label" href="#boonamber.v1.AmberV1Client.update_label">update_label</a></code></li>
 </ul>
 </li>
 </ul>

@@ -19,7 +19,7 @@ from urllib3.exceptions import InsecureRequestWarning
 ############################
 
 
-class AmberClient:
+class AmberV1Client:
     def __init__(
         self,
         license_id="default",
