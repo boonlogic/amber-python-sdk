@@ -35,6 +35,13 @@ pypi:
 	python3 -m build && \
 	twine upload --skip-existing -u __token__ dist/*
 
+release:
+	. ./bin/increment_release.sh && \
+	git add pyproject.toml && git commit -m "increment version to $$VERSION" && git push && \
+	git tag -a "v$$VERSION" && \
+	git push origin --tags
+
+
 ############################
 # ========== V1 ========== #
 ############################
