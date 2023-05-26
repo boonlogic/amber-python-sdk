@@ -72,6 +72,12 @@ class AmberV2Client:
                     # raise ApiException('profile_id "{} server" not found in license file'.format(self.profile_id))
                     # server not found but continue incase the env variable is set instead
                     self.server = ""
+                try:
+                    self.oauth_server = file_data[self.profile_id]["oauth-server"]
+                except KeyError:
+                    # raise ApiException('profile_id "{} oauth-server" not found in license file'.format(self.profile_id))
+                    # server not found but continue incase the env variable is set instead
+                    self.oauth_server = ""
             else:
                 raise ApiException('Amber license file "{}" not found'.format(self.profile))
 
@@ -84,10 +90,9 @@ class AmberV2Client:
         self.configuration.host = self.server
 
         # oauth server
-        if "oauth-server" in file_data[self.profile_id].keys():
-            self.oauth_server = file_data[self.profile_id]["oauth-server"]
         self.oauth_server = os.environ.get("AMBER_V2_OAUTH_SERVER", self.oauth_server)
         if self.oauth_server == "":
+            # oauth_server gets assigned to server when not directly configured
             self.oauth_server = self.server
 
         try:
