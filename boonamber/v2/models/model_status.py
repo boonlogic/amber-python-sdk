@@ -34,6 +34,7 @@ class ModelStatus(object):
         'cluster_count': 'int',
         'progress': 'int',
         'message': 'str',
+        'graduation': 'str',
         'last_modified': 'int',
         'last_modified_delta': 'int'
     }
@@ -45,11 +46,12 @@ class ModelStatus(object):
         'cluster_count': 'clusterCount',
         'progress': 'progress',
         'message': 'message',
+        'graduation': 'graduation',
         'last_modified': 'lastModified',
         'last_modified_delta': 'lastModifiedDelta'
     }
 
-    def __init__(self, state=None, warning_level=None, sample_count=None, cluster_count=None, progress=None, message=None, last_modified=None, last_modified_delta=None):
+    def __init__(self, state=None, warning_level=None, sample_count=None, cluster_count=None, progress=None, message=None, graduation=None, last_modified=None, last_modified_delta=None):
         """ModelStatus - a model defined in Swagger"""
         self._state = None
         self._warning_level = None
@@ -57,6 +59,7 @@ class ModelStatus(object):
         self._cluster_count = None
         self._progress = None
         self._message = None
+        self._graduation = None
         self._last_modified = None
         self._last_modified_delta = None
         self.discriminator = None
@@ -72,6 +75,8 @@ class ModelStatus(object):
             self.progress = progress
         if message is not None:
             self.message = message
+        if graduation is not None:
+            self.graduation = graduation
         if last_modified is not None:
             self.last_modified = last_modified
         if last_modified_delta is not None:
@@ -212,6 +217,29 @@ class ModelStatus(object):
         """
 
         self._message = message
+
+    @property
+    def graduation(self):
+        """Gets the graduation of this ModelStatus.
+
+        Reason for learning being turned off.
+
+        :return: The graduation of this ModelStatus.
+        :rtype: str
+        """
+        return self._graduation
+
+    @graduation.setter
+    def graduation(self, graduation):
+        """Sets the graduation of this ModelStatus.
+
+        Reason for learning being turned off.
+
+        :param graduation: The graduation of this ModelStatus.
+        :type: str
+        """
+
+        self._graduation = graduation
 
     @property
     def last_modified(self):

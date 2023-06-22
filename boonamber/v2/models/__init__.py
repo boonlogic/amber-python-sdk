@@ -16,7 +16,7 @@ from __future__ import absolute_import
 # import models into model package
 from boonamber.v2.models.amber_state import AmberState
 from boonamber.v2.models.analytic_results import AnalyticResults
-from boonamber.v2.models.autotuning import Autotuning
+from boonamber.v2.models.autotune_config import AutotuneConfig
 from boonamber.v2.models.config_response import ConfigResponse
 from boonamber.v2.models.delete_model_response import DeleteModelResponse
 from boonamber.v2.models.error import Error

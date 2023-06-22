@@ -32,7 +32,7 @@ class ConfigResponse(object):
         'percent_variation': 'PercentVariation',
         'features': 'list[FeatureConfigResponse]',
         'training': 'TrainingConfig',
-        'autotuning': 'Autotuning'
+        'autotuning': 'AutotuneConfig'
     }
 
     attribute_map = {
@@ -152,7 +152,7 @@ class ConfigResponse(object):
 
 
         :return: The autotuning of this ConfigResponse.
-        :rtype: Autotuning
+        :rtype: AutotuneConfig
         """
         return self._autotuning
 
@@ -162,7 +162,7 @@ class ConfigResponse(object):
 
 
         :param autotuning: The autotuning of this ConfigResponse.
-        :type: Autotuning
+        :type: AutotuneConfig
         """
 
         self._autotuning = autotuning
