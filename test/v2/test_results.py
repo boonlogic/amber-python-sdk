@@ -28,7 +28,7 @@ class TestResults(unittest.TestCase):
 
         # configure model
         features = boonamber.FeatureConfig(name="feature-0")
-        autotune = boonamber.Autotuning(percent_variation=False)
+        autotune = boonamber.AutotuneConfig(percent_variation=False)
         training = boonamber.TrainingConfig(buffering_samples=400, learning_max_samples=500)
         configRequest = boonamber.PostConfigRequest(streaming_window=25, features=[features], training=training, autotuning=autotune)
         self.config = self.api.post_config(model_id=self.model_id, body=configRequest)

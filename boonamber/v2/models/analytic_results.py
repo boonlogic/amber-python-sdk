@@ -37,7 +37,8 @@ class AnalyticResults(object):
         'nw': 'list[float]',
         'om': 'list[float]',
         'ri': 'list[int]',
-        'si': 'list[int]'
+        'si': 'list[int]',
+        'pi': 'list[int]'
     }
 
     attribute_map = {
@@ -50,10 +51,11 @@ class AnalyticResults(object):
         'nw': 'NW',
         'om': 'OM',
         'ri': 'RI',
-        'si': 'SI'
+        'si': 'SI',
+        'pi': 'PI'
     }
 
-    def __init__(self, ad=None, ah=None, aw=None, id=None, ni=None, ns=None, nw=None, om=None, ri=None, si=None):
+    def __init__(self, ad=None, ah=None, aw=None, id=None, ni=None, ns=None, nw=None, om=None, ri=None, si=None, pi=None):
         """AnalyticResults - a model defined in Swagger"""
         self._ad = None
         self._ah = None
@@ -65,6 +67,7 @@ class AnalyticResults(object):
         self._om = None
         self._ri = None
         self._si = None
+        self._pi = None
         self.discriminator = None
         if ad is not None:
             self.ad = ad
@@ -86,6 +89,8 @@ class AnalyticResults(object):
             self.ri = ri
         if si is not None:
             self.si = si
+        if pi is not None:
+            self.pi = pi
 
     @property
     def ad(self):
@@ -316,6 +321,29 @@ class AnalyticResults(object):
         """
 
         self._si = si
+
+    @property
+    def pi(self):
+        """Gets the pi of this AnalyticResults.
+
+        An anomaly index that represents the probability within the model of getting that cluster. PI is scaled so that 0 is the most probable cluster (least anomalous) and values close to 1000 represent very improbable clusters, that is, that very rarely occurred during training.
+
+        :return: The pi of this AnalyticResults.
+        :rtype: list[int]
+        """
+        return self._pi
+
+    @pi.setter
+    def pi(self, pi):
+        """Sets the pi of this AnalyticResults.
+
+        An anomaly index that represents the probability within the model of getting that cluster. PI is scaled so that 0 is the most probable cluster (least anomalous) and values close to 1000 represent very improbable clusters, that is, that very rarely occurred during training.
+
+        :param pi: The pi of this AnalyticResults.
+        :type: list[int]
+        """
+
+        self._pi = pi
 
     def to_dict(self):
         """Returns the model properties as a dict"""

@@ -32,7 +32,7 @@ class PostConfigRequest(object):
         'percent_variation': 'PercentVariation',
         'features': 'list[FeatureConfig]',
         'training': 'TrainingConfig',
-        'autotuning': 'Autotuning'
+        'autotuning': 'AutotuneConfig'
     }
 
     attribute_map = {
@@ -154,7 +154,7 @@ class PostConfigRequest(object):
 
 
         :return: The autotuning of this PostConfigRequest.
-        :rtype: Autotuning
+        :rtype: AutotuneConfig
         """
         return self._autotuning
 
@@ -164,7 +164,7 @@ class PostConfigRequest(object):
 
 
         :param autotuning: The autotuning of this PostConfigRequest.
-        :type: Autotuning
+        :type: AutotuneConfig
         """
 
         self._autotuning = autotuning
