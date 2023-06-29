@@ -43,6 +43,9 @@ __pdoc__["boonamber.v2.models.put_model_request"] = False
 # post model copy (so as not to confuse with copy_model)
 __pdoc__["boonamber.v2.models.post_model_copy_request"] = False
 
+# post data (no longer needed)
+__pdoc__["boonamber.v2.models.post_data_request"] = False
+
 # oauth
 __pdoc__["boonamber.v2.models.post_oauth2_access_request"] = False
 __pdoc__["boonamber.v2.models.post_oauth2_refresh_request"] = False

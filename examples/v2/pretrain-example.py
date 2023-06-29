@@ -2,7 +2,8 @@ import csv
 import sys
 import json
 import time
-from boonamber import AmberV2Client, ApiException, v2models
+from boonamber import AmberV2Client, ApiException
+import boonamber
 
 """Demonstrates pretraining of data in a CSV file."""
 
@@ -20,15 +21,15 @@ class AmberStream:
         try:
             self.amber = AmberV2Client()
             if self.model_id is None:
-                param = v2models.PostModelRequest(label='amber.sdk.example.v2:pretrain')
+                param = boonamber.PostModelRequest(label='amber.sdk.example.v2:pretrain')
                 model_result = self.amber.post_model(param)
                 self.model_id = model_result.id
                 print("created model {}".format(self.model_id))
             else:
                 print("using model {}".format(self.model_id))
 
-            body = v2models.PostConfigRequest(streaming_window=25, features=[v2models.FeatureConfig("feature-1")])
-            config_result = self.amber.post_model_config(model_id=self.model_id, body=body)
+            body = boonamber.PostConfigRequest(streaming_window=25, features=[boonamber.FeatureConfig("feature-1")])
+            config_result = self.amber.post_config(model_id=self.model_id, body=body)
             print("{} config: {}".format(self.model_id, config_result))
         except ApiException as e:
             print(e)
@@ -50,7 +51,7 @@ class AmberStream:
                 for d in row:
                     self.data.append(float(d))
             try:
-                results = self.amber.post_model_pretrain(model_id=self.model_id, data=self.data, chunk_size=chunk_size, block=False)
+                results = self.amber.post_pretrain(model_id=self.model_id, data=self.data, chunk_size=chunk_size, block=False)
                 if results.status == "Pretrained":
                     return results
             except ApiException as e:
@@ -61,7 +62,7 @@ class AmberStream:
         try:
             while True:
                 time.sleep(5)
-                results = self.amber.get_model_pretrain(self.model_id)
+                results = self.amber.get_pretrain(self.model_id)
                 if results.status == "Pretraining":
                     print(results)
                 elif results.status == "Pretrained":
