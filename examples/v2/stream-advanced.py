@@ -1,7 +1,8 @@
 import csv
 import sys
 from datetime import datetime
-from boonamber import AmberV2Client, ApiException, v2models, float_list_to_csv_string
+from boonamber import AmberV2Client, ApiException, float_list_to_csv_string
+import boonamber
 
 """Demonstrates a streaming use case in which we read continuously
    from a CSV file, inference the data line by line, and print results.
@@ -24,14 +25,14 @@ class AmberStream:
         try:
             self.amber = AmberV2Client()
             if model_id is None:
-                param = v2models.PostModelRequest(label=self.label)
+                param = boonamber.PostModelRequest(label=self.label)
                 model_result = self.amber.post_model(param)
                 self.model_id = model_result.id
                 print("created model {}".format(self.model_id))
             else:
                 print("using model {}".format(self.model_id))
 
-            config_result = self.amber.post_model_config(model_id=self.model_id, body=model_config)
+            config_result = self.amber.post_config(model_id=self.model_id, body=model_config)
             print("{} config: {}".format(self.model_id, config_result))
         except ApiException as e:
             print(e)
@@ -46,8 +47,7 @@ class AmberStream:
         d1 = datetime.now()
         # TODO: convert float array to csv string as we don't yet have float array handling built into v2
         data_csv = float_list_to_csv_string(self.data)
-        param = v2models.PostDataRequest(data=data_csv, save_image=True)
-        results = self.amber.post_model_data(self.model_id, param)
+        results = self.amber.post_data(self.model_id, data=data_csv, save_image=True)
         d2 = datetime.now()
         delta = (d2 - d1).microseconds / 1000
         status = results.status
@@ -69,7 +69,7 @@ class AmberStream:
         neg_ids = [num for num in getattr(analytics, 'id') if num < 0]
         if len(neg_ids) > 0:
             print("Root Cause:")
-            rc = self.amber.get_model_root_cause(self.model_id, id_list=neg_ids)
+            rc = self.amber.get_root_cause(self.model_id, id_list=neg_ids)
             root_cause_pretty = ['\t' + str(id) + ': ' + ','.join("{:.6f}".format(a) for a in root) for (root, id) in
                                  zip(rc, neg_ids)]
             for root in root_cause_pretty:
@@ -108,11 +108,11 @@ class AmberStream:
 # construct a configuration
 streaming_window = 25
 percent_variation = None
-feature = v2models.FeatureConfig()
+feature = boonamber.FeatureConfig()
 features = [feature]
-training = None     # v2models.TrainingConfig
-autotuning = None   # v2models.Autotuning
-config = v2models.PostConfigRequest(streaming_window=streaming_window, percent_variation=percent_variation,
+training = None     # boonamber.TrainingConfig
+autotuning = None   # boonamber.AutotuneConfig
+config = boonamber.PostConfigRequest(streaming_window=streaming_window, percent_variation=percent_variation,
                                     features=features, training=training, autotuning=autotuning)
 
 # init the streamer

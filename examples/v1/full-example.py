@@ -1,6 +1,6 @@
 import sys
 import json
-from boonamber import AmberClient
+from boonamber import AmberClient, AmberCloudError
 
 """Demonstrates usage of all Amber SDK endpoints."""
 
@@ -140,30 +140,28 @@ print("post_outage : {}".format(post_outage))
 print()
 
 # Get clustering status from a sensor
-print("getting root cause")
+print("getting root cause (will fail; no clusters yet)")
 try:
     root_cause = amber.get_root_cause(sensor_id, id_list=[1, 2])
+    print("root cause: {}".format(root_cause))
+    print()
 except AmberCloudError as e:
     print("Amber Cloud error: {}".format(e))
-    sys.exit(1)
 except AmberUserError as e:
     print("Amber user error: {}".format(e))
     sys.exit(1)
-print("root cause: {}".format(root_cause))
-print()
 
 # Enable learning
-print("enabling learning")
+print("enabling learning (will fail; not in learning or monitoring state)")
 try:
     enable_learning = amber.enable_learning(sensor_id)
+    print("enable_learning: {}".format(enable_learning))
+    print()
 except AmberCloudError as e:
     print("Amber Cloud error: {}".format(e))
-    sys.exit(1)
 except AmberUserError as e:
     print("Amber user error: {}".format(e))
     sys.exit(1)
-print("enable_learning: {}".format(enable_learning))
-print()
 
 # Delete a sensor instance
 print("deleting sensor")
