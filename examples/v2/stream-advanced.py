@@ -23,7 +23,7 @@ class AmberStream:
         self.config = model_config
 
         try:
-            self.amber = AmberV2Client()
+            self.amber = AmberV2Client.from_license_file()
             if model_id is None:
                 param = boonamber.PostModelRequest(label=self.label)
                 model_result = self.amber.post_model(param)

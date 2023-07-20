@@ -11,23 +11,61 @@ from .api.default_api import DefaultApi
 from .models import *
 
 
-class AmberV2Client:
-    def __init__(
-        self,
-        license_id: str = None,
-        license_file: str = "~/.Amber.license",
-        verify: bool = False,
-        timeout: int = 300,
-    ):
-        """Main client which interfaces with the Amber cloud. Amber account
-        credentials are discovered within a .Amber.license file located in the
-        home directory, or optionally overridden using environment variables.
+class LicenseProfile:
+    def __init__(self, license_key: str = None, secret_key: str = None, server: str = None, oauth_server: str = None):
+        self.license_key = license_key
+        self.server = server
+        self.secret_key = secret_key
+        self.oauth_server = oauth_server
 
+
+class AmberV2Client:
+    """Main client which interfaces with the Amber cloud. Amber account
+    credentials are discovered within a .Amber.license file located in the
+    home directory, or optionally overridden using environment variables.
+
+    Environment:
+    AMBER_V2_VERIFY: specifies the ssl verification required or not
+
+    """
+
+    # TODO add request timeout env option. it is pretty involved
+
+    def __init__(self, profile: LicenseProfile = None):
+        self.server = profile.server
+        self.license = profile.license_key
+        self.secret = profile.secret_key
+        self.oauth_server = profile.oauth_server
+
+        self.access_token = ""
+        self.refresh_token = ""
+        self.reauth_time = 0
+
+        self.configuration = Configuration()
+        self.configuration.verify_ssl = os.environ.get("AMBER_V2_VERIFY", False)
+
+        if self.server is None:
+            raise ApiException("server not set")
+        # server is set if it reaches this point
+        self.configuration.host = self.server
+        if self.license is None:
+            raise ApiException("license key not set")
+        if self.secret is None:
+            raise ApiException("secret key not set")
+
+        # oauth server
+        if self.oauth_server is None:
+            # oauth_server gets assigned to server when not directly configured
+            self.oauth_server = self.server
+
+        self.api = DefaultApi(ApiClient(self.configuration))
+
+    @classmethod
+    def from_license_file(cls, license_id: str = "default", license_file: str = "~/.Amber.license"):
+        """
         Args:
             license_id: (type: str) license identifier label found within .Amber.license file
             license_file: (type: str) path to .Amber.license file
-            verify: (type: boolean) Boolean, controls whether we verify the server’s TLS certificate
-            timeout: (type: int) number of seconds to allow API call to wait
 
         Environment:
 
@@ -35,81 +73,45 @@ class AmberV2Client:
 
             `AMBER_V2_LICENSE_ID`: sets license_id
 
-            `AMBER_V2_SERVER`: overrides the server as found in .Amber.license file
-
-            `AMBER_V2_OAUTH_SERVER`: overrides the oauth server as found in .Amber.license file
-
-            `AMBER_V2_LICENSE_KEY`: overrides the license key as found in .Amber.license file
-
-            `AMBER_V2_SECRET_KEY`: overrides the secret key as found in .Amber.license file
-
         Raises:
             ApiException: if error supplying authentication credentials
         """
-        self.access_token = ""
-        self.refresh_token = ""
-        self.reauth_time = 0
-        self.server = ""
-        self.oauth_server = ""
-        self.profile = os.environ.get("AMBER_V2_LICENSE_FILE", license_file)
-        self.profile_id = os.environ.get("AMBER_V2_LICENSE_ID", license_id)
-        self.api = None
-        self.license = ""
-        self.secret = ""
+        filepath = os.environ.get("AMBER_V2_LICENSE_FILE", license_file)
+        profile_id = os.environ.get("AMBER_V2_LICENSE_ID", license_id)
         file_data = ""
 
-        if self.profile is not None:
-            self.profile = os.path.expanduser(self.profile)
-            if os.path.exists(self.profile):
+        if filepath is not None:
+            filepath = os.path.expanduser(filepath)
+            if os.path.exists(filepath):
                 try:
-                    with open(self.profile, "r") as f:
+                    with open(filepath, "r") as f:
                         file_data = json.load(f)
                 except json.JSONDecodeError as e:
                     raise ApiException("JSON formatting error in license file: {}, line: {}, col: {}".format(e.msg, e.lineno, e.colno))
-                try:
-                    self.server = file_data[self.profile_id]["server"]
-                except KeyError:
-                    # raise ApiException('profile_id "{} server" not found in license file'.format(self.profile_id))
-                    # server not found but continue incase the env variable is set instead
-                    self.server = ""
-                try:
-                    self.oauth_server = file_data[self.profile_id]["oauth-server"]
-                except KeyError:
-                    # raise ApiException('profile_id "{} oauth-server" not found in license file'.format(self.profile_id))
-                    # server not found but continue incase the env variable is set instead
-                    self.oauth_server = ""
             else:
-                raise ApiException('Amber license file "{}" not found'.format(self.profile))
+                raise ApiException('Amber license file "{}" not found'.format(filepath))
+        if profile_id not in file_data:
+            raise ApiException('profile_id "{}" not found in license file'.format(profile_id))
+        else:
+            profile = file_data[profile_id]
 
-        self.configuration = Configuration()
+        server = profile.get("server", None)
+        oauth_server = profile.get("oauth-server", None)
+        license_key = profile.get("license", None)
+        secret_key = profile.get("secret", None)
 
-        self.server = os.environ.get("AMBER_V2_SERVER", self.server)
-        if self.server == "":
-            raise ApiException('server not set: add "server" key to license file or set AMBER_V2_SERVER environment variable')
-        # server is set if it reaches this point
-        self.configuration.host = self.server
+        return cls(profile=LicenseProfile(server=server, oauth_server=oauth_server, license_key=license_key, secret_key=secret_key))
 
-        # oauth server
-        self.oauth_server = os.environ.get("AMBER_V2_OAUTH_SERVER", self.oauth_server)
-        if self.oauth_server == "":
-            # oauth_server gets assigned to server when not directly configured
-            self.oauth_server = self.server
-
+    @classmethod
+    def from_dict(cls, profile_dict: dict = None):
         try:
-            self.license = file_data[self.profile_id]["license"]
-            self.secret = file_data[self.profile_id]["secret"]
-        except KeyError as e:
-            # do nothing here
-            self.license = ""
-            self.secret = ""
-
-        self.license = os.environ.get("AMBER_V2_LICENSE_KEY", self.license)
-        self.secret = os.environ.get("AMBER_V2_SECRET_KEY", self.secret)
-
-        if self.license == "" or self.secret == "":
-            raise ApiException("need license and secret keys set in either the environment or the .Amber.license file")
-
-        self.api = DefaultApi(ApiClient(self.configuration))
+            server = profile_dict.get("server", None)
+            oauth_server = profile_dict.get("oauth-server", None)
+            license_key = profile_dict.get("license", None)
+            secret_key = profile_dict.get("secret", None)
+        except JSONDecodeError as e:
+            raise ApiException("JSON formatting error, message: {}".format(e.msg))
+        return cls(profile=LicenseProfile(server=server, license_key=license_key, secret_key=secret_key, oauth_server=oauth_server))
 
     def __authenticate(f):
         @wraps(f)

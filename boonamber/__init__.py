@@ -4,6 +4,7 @@ from .v2.amber_client import AmberV2Client as acv2
 from boonamber.v2.models import *
 from .util.ambererror import AmberCloudError, AmberUserError
 from .v2.rest import ApiException
+from .v2.amber_client import LicenseProfile
 
 import glob
 import os
