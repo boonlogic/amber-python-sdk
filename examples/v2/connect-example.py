@@ -12,7 +12,7 @@ from boonamber import AmberV2Client, ApiException
 # At initialization the client discovers Amber account credentials
 # under the "default" entry in the ~/.Amber.license file.
 #amber = AmberClient(verify=False)
-amber = AmberV2Client()
+amber = AmberV2Client.from_license_file()
 
 try:
     # Get a list of all sensors belonging to the current user.

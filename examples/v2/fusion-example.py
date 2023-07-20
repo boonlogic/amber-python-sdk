@@ -7,7 +7,7 @@ import boonamber
 
 # connect with default license
 # use 'license_id=<name>' to specify something other than 'default'
-amber = AmberV2Client()
+amber = AmberV2Client.from_license_file()
 
 # Create a new model
 print("creating model")

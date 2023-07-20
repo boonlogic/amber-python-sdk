@@ -14,7 +14,7 @@ class TestConfig(unittest.TestCase):
     def setUp(self):
         license_id = os.getenv('AMBER_TEST_LICENSE_ID')
         license_file = os.getenv('AMBER_TEST_LICENSE_FILE')
-        self.api = AmberV2Client(license_id=license_id, license_file=license_file)
+        self.api = AmberV2Client.from_license_file(license_id=license_id, license_file=license_file)
 
         self.label = "python:v2:tests-config"
 

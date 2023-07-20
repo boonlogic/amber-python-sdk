@@ -75,4 +75,12 @@ testv2-%: test-local-environment-v2
 	AMBER_TEST_LICENSE_ID=$* coverage run --rcfile="../.coveragerc" -m pytest -x v2/test_*.py && \
 	coverage html
 
+testv2-examples:
+	@. local-env/bin/activate; \
+	cd examples/v2 && \
+	for f in *.py; do \
+		python $${f} \
+		|| exit 1; \
+	done
+
 .PHONY: docs format init test pypi local-env-check test-env-check generate-v2

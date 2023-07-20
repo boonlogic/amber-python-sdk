@@ -7,7 +7,7 @@ import boonamber
 
 # connect with default license
 # use 'license_id=<name>' to specify something other than 'default'
-amber = AmberV2Client()
+amber = AmberV2Client.from_license_file()
 
 # List all sensors belonging to current user
 print("getting version info")

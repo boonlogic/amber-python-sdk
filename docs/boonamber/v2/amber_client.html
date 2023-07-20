@@ -34,39 +34,47 @@
 <dl>
 <dt id="boonamber.v2.amber_client.AmberV2Client"><code class="flex name class">
 <span>class <span class="ident">AmberV2Client</span></span>
-<span>(</span><span>license_id: str = None, license_file: str = '~/.Amber.license', verify: bool = False, timeout: int = 300)</span>
+<span>(</span><span>profile: <a title="boonamber.v2.amber_client.LicenseProfile" href="#boonamber.v2.amber_client.LicenseProfile">LicenseProfile</a> = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Main client which interfaces with the Amber cloud. Amber account
 credentials are discovered within a .Amber.license file located in the
 home directory, or optionally overridden using environment variables.</p>
-<h2 id="args">Args</h2>
+<p>Environment:
+AMBER_V2_VERIFY: specifies the ssl verification required or not</p></div>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="boonamber.AmberV2Client" href="../index.html#boonamber.AmberV2Client">AmberV2Client</a></li>
+</ul>
+<h3>Static methods</h3>
+<dl>
+<dt id="boonamber.v2.amber_client.AmberV2Client.from_dict"><code class="name flex">
+<span>def <span class="ident">from_dict</span></span>(<span>profile_dict: dict = None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="boonamber.v2.amber_client.AmberV2Client.from_license_file"><code class="name flex">
+<span>def <span class="ident">from_license_file</span></span>(<span>license_id: str = 'default', license_file: str = '~/.Amber.license')</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>license_id</code></strong></dt>
 <dd>(type: str) license identifier label found within .Amber.license file</dd>
 <dt><strong><code>license_file</code></strong></dt>
 <dd>(type: str) path to .Amber.license file</dd>
-<dt><strong><code>verify</code></strong></dt>
-<dd>(type: boolean) Boolean, controls whether we verify the server’s TLS certificate</dd>
-<dt><strong><code>timeout</code></strong></dt>
-<dd>(type: int) number of seconds to allow API call to wait</dd>
 </dl>
 <h2 id="environment">Environment</h2>
 <p><code>AMBER_V2_LICENSE_FILE</code>: sets license_file path</p>
 <p><code>AMBER_V2_LICENSE_ID</code>: sets license_id</p>
-<p><code>AMBER_V2_SERVER</code>: overrides the server as found in .Amber.license file</p>
-<p><code>AMBER_V2_OAUTH_SERVER</code>: overrides the oauth server as found in .Amber.license file</p>
-<p><code>AMBER_V2_LICENSE_KEY</code>: overrides the license key as found in .Amber.license file</p>
-<p><code>AMBER_V2_SECRET_KEY</code>: overrides the secret key as found in .Amber.license file</p>
 <h2 id="raises">Raises</h2>
 <dl>
 <dt><code>ApiException</code></dt>
 <dd>if error supplying authentication credentials</dd>
 </dl></div>
-<h3>Subclasses</h3>
-<ul class="hlist">
-<li><a title="boonamber.AmberV2Client" href="../index.html#boonamber.AmberV2Client">AmberV2Client</a></li>
-</ul>
+</dd>
+</dl>
 <h3>Methods</h3>
 <dl>
 <dt id="boonamber.v2.amber_client.AmberV2Client.copy_model"><code class="name flex">
@@ -348,6 +356,13 @@ print(version.to_dict())
 </dd>
 </dl>
 </dd>
+<dt id="boonamber.v2.amber_client.LicenseProfile"><code class="flex name class">
+<span>class <span class="ident">LicenseProfile</span></span>
+<span>(</span><span>license_key: str = None, secret_key: str = None, server: str = None, oauth_server: str = None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 </dl>
 </section>
 </article>
@@ -370,6 +385,8 @@ print(version.to_dict())
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.copy_model" href="#boonamber.v2.amber_client.AmberV2Client.copy_model">copy_model</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.delete_model" href="#boonamber.v2.amber_client.AmberV2Client.delete_model">delete_model</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.enable_learning" href="#boonamber.v2.amber_client.AmberV2Client.enable_learning">enable_learning</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.from_dict" href="#boonamber.v2.amber_client.AmberV2Client.from_dict">from_dict</a></code></li>
+<li><code><a title="boonamber.v2.amber_client.AmberV2Client.from_license_file" href="#boonamber.v2.amber_client.AmberV2Client.from_license_file">from_license_file</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_config" href="#boonamber.v2.amber_client.AmberV2Client.get_config">get_config</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_diagnostic" href="#boonamber.v2.amber_client.AmberV2Client.get_diagnostic">get_diagnostic</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_model" href="#boonamber.v2.amber_client.AmberV2Client.get_model">get_model</a></code></li>
@@ -388,6 +405,9 @@ print(version.to_dict())
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.put_data" href="#boonamber.v2.amber_client.AmberV2Client.put_data">put_data</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.update_label" href="#boonamber.v2.amber_client.AmberV2Client.update_label">update_label</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="boonamber.v2.amber_client.LicenseProfile" href="#boonamber.v2.amber_client.LicenseProfile">LicenseProfile</a></code></h4>
 </li>
 </ul>
 </li>

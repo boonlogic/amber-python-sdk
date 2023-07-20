@@ -19,7 +19,7 @@ class AmberStream:
         self.model_id = model_id
 
         try:
-            self.amber = AmberV2Client()
+            self.amber = AmberV2Client.from_license_file()
             if self.model_id is None:
                 param = boonamber.PostModelRequest(label='amber.sdk.example.v2:pretrain')
                 model_result = self.amber.post_model(param)

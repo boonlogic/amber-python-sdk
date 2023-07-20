@@ -4,6 +4,7 @@ import unittest
 import os
 
 from boonamber import (
+    LicenseProfile,
     AmberV2Client,
     ApiException,
 )
@@ -21,7 +22,7 @@ class TestOauth(unittest.TestCase):
         """Test Refresh Oauth"""
         license_id = os.getenv('AMBER_TEST_LICENSE_ID')
         license_file = os.getenv('AMBER_TEST_LICENSE_FILE')
-        api = AmberV2Client(license_id=license_id, license_file=license_file)
+        api = AmberV2Client.from_license_file(license_id=license_id, license_file=license_file)
         api.get_version()
 
         # reset reauth_time to force a refresh oauth
@@ -39,11 +40,11 @@ class TestOauth(unittest.TestCase):
 
         # test not formatted correctly
         with self.assertRaises(ApiException):
-            AmberV2Client(license_file="bad.Amber.license")
+            AmberV2Client.from_license_file(license_file="bad.Amber.license")
 
         # test doesnt exist
         with self.assertRaises(ApiException):
-            AmberV2Client(license_file="bogus.Amber.license")
+            AmberV2Client.from_license_file(license_file="bogus.Amber.license")
 
         if env_file is not None:
             os.environ["AMBER_V2_LICENSE_FILE"] = env_file
@@ -60,28 +61,29 @@ class TestOauth(unittest.TestCase):
 
         # test non existant id
         with self.assertRaises(ApiException):
-            AmberV2Client(license_file="test.Amber.license", license_id="bogus")
+            AmberV2Client.from_license_file(license_file="test.Amber.license", license_id="bogus")
 
 
         # get a valid server to check credentials
         license_id = os.getenv('AMBER_TEST_LICENSE_ID')
         license_file = os.getenv('AMBER_TEST_LICENSE_FILE')
-        api = AmberV2Client(license_id=license_id, license_file=license_file)
-        os.environ["AMBER_V2_SERVER"] = api.server
-        os.environ["AMBER_V2_LICENSE_KEY"] = api.license
-        os.environ["AMBER_V2_SECRET_KEY"] = api.secret
-        api = AmberV2Client(license_file="test.Amber.license", license_id="invalid-credentials")
+        api = AmberV2Client.from_license_file(license_id=license_id, license_file=license_file)
+        profile = {"server": api.server, "license": api.license, "secret": api.secret}
+        api = AmberV2Client.from_dict(profile_dict=profile)
 
         # should work anyway with valid credentials given in env
         version = api.get_version()
         assert "expert_common" in version.to_dict()
 
-        # test invalid credentials
-        del os.environ["AMBER_V2_LICENSE_KEY"]
-        del os.environ["AMBER_V2_SECRET_KEY"]
-        api = AmberV2Client(license_file="test.Amber.license", license_id="invalid-credentials")
+        # test missing field
+        server = api.server
         with self.assertRaises(ApiException):
+            api = AmberV2Client.from_license_file(license_file="test.Amber.license", license_id="invalid-credentials")
+
+        api = AmberV2Client(profile=LicenseProfile(server=server, license_key=api.license, secret_key=api.secret))
+        with self.assertRaises(ApiException) as e:
             api.get_version()
+        assert "invalid credentials" in str(e.exception)
 
         if env_id is not None:
             os.environ["AMBER_V2_LICENSE_ID"] = env_id
