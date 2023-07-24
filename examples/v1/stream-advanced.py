@@ -65,15 +65,22 @@ class AmberStream:
         d2 = datetime.now()
         delta = (d2 - d1).microseconds / 1000
         print("State: {}({}%), inferences: {}, clusters: {}, samples: {}, duration: {}".format(
-            results['state'], results['progress'], results['totalInferences'], results['clusterCount'], self.sample_cnt,
+            results['state'], results['progress'], results['totalInferences'], results['clusterCount'], (int)(self.sample_cnt / self.feature_count),
             delta))
         print("Message: {}".format(results['message']))
-        for analytic in ['ID', 'SI', 'RI', 'AD', 'AH', 'AM', 'AW']:
-            if analytic == 'AM':
+        for analytic in ['ID', 'NI', 'NS', 'NW', 'OM', 'PI', 'SI', 'RI', 'AD', 'AH', 'AM', 'AW']:
+            if analytic in ['AM', 'OM']:
                 analytic_pretty = ','.join("{:.6f}".format(a) for a in results[analytic])
+            if analytic == 'NW':
+                analytic_pretty = ','.join("{}".format(int(100 - (a * 50))) for a in results[analytic])
             else:
                 analytic_pretty = ','.join("{}".format(a) for a in results[analytic])
-            print("{}: {} ".format(analytic, analytic_pretty))
+
+            if analytic == 'NW':
+                # rename to CS: compliance score
+                print("CS: {} ".format(analytic_pretty))
+            else:
+                print("{}: {} ".format(analytic, analytic_pretty))
 
         neg_ids = [num for num in results['ID'] if num < 0]
         if len(neg_ids) > 0:
@@ -127,8 +134,8 @@ class AmberStream:
 features=[]
 
 streamer = AmberStream(sensor_id=None, feature_count=1, streaming_window_size=25,
-                       samples_to_buffer=10000, anomaly_history_window=10000,
+                       samples_to_buffer=1000, anomaly_history_window=100,
                        learning_rate_numerator=10, learning_rate_denominator=10000,
-                       learning_max_clusters=1000, learning_max_samples=1000000,
+                       learning_max_clusters=1000, learning_max_samples=3000,
                        features=features)
 streamer.stream_csv('output_current.csv', samples_per_request=10)
