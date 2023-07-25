@@ -42,7 +42,7 @@ class AmberV2Client:
         self.reauth_time = 0
 
         self.configuration = Configuration()
-        self.configuration.verify_ssl = os.environ.get("AMBER_V2_VERIFY", False)
+        self.configuration.verify_ssl = os.environ.get("AMBER_V2_VERIFY", True)
 
         if self.server is None:
             raise ApiException("server not set")
