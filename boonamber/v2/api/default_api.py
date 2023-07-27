@@ -1482,7 +1482,7 @@ class DefaultApi(object):
     def post_model_learning(self, model_id, **kwargs):  # noqa: E501
         """update model configuration and re-enable learning  # noqa: E501
 
-        Update model configuration and re-enable learning  # noqa: E501
+        Turns on learning and processes new data into the model  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
         >>> thread = api.post_model_learning(model_id, async_req=True)
@@ -1505,7 +1505,7 @@ class DefaultApi(object):
     def post_model_learning_with_http_info(self, model_id, **kwargs):  # noqa: E501
         """update model configuration and re-enable learning  # noqa: E501
 
-        Update model configuration and re-enable learning  # noqa: E501
+        Turns on learning and processes new data into the model  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
         >>> thread = api.post_model_learning_with_http_info(model_id, async_req=True)

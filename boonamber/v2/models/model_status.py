@@ -30,6 +30,7 @@ class ModelStatus(object):
     swagger_types = {
         'state': 'AmberState',
         'warning_level': 'int',
+        'compliance_score': 'int',
         'sample_count': 'int',
         'cluster_count': 'int',
         'progress': 'int',
@@ -42,6 +43,7 @@ class ModelStatus(object):
     attribute_map = {
         'state': 'state',
         'warning_level': 'warningLevel',
+        'compliance_score': 'complianceScore',
         'sample_count': 'sampleCount',
         'cluster_count': 'clusterCount',
         'progress': 'progress',
@@ -51,10 +53,11 @@ class ModelStatus(object):
         'last_modified_delta': 'lastModifiedDelta'
     }
 
-    def __init__(self, state=None, warning_level=None, sample_count=None, cluster_count=None, progress=None, message=None, graduation=None, last_modified=None, last_modified_delta=None):
+    def __init__(self, state=None, warning_level=None, compliance_score=None, sample_count=None, cluster_count=None, progress=None, message=None, graduation=None, last_modified=None, last_modified_delta=None):
         """ModelStatus - a model defined in Swagger"""
         self._state = None
         self._warning_level = None
+        self._compliance_score = None
         self._sample_count = None
         self._cluster_count = None
         self._progress = None
@@ -67,6 +70,8 @@ class ModelStatus(object):
             self.state = state
         if warning_level is not None:
             self.warning_level = warning_level
+        if compliance_score is not None:
+            self.compliance_score = compliance_score
         if sample_count is not None:
             self.sample_count = sample_count
         if cluster_count is not None:
@@ -125,6 +130,29 @@ class ModelStatus(object):
         """
 
         self._warning_level = warning_level
+
+    @property
+    def compliance_score(self):
+        """Gets the compliance_score of this ModelStatus.
+
+        Current Amber compliance score: a ranged measure of the compliance of recent behavior compared to behavior observed in `Learning`. - `0`: asset critical - `100`: OK
+
+        :return: The compliance_score of this ModelStatus.
+        :rtype: int
+        """
+        return self._compliance_score
+
+    @compliance_score.setter
+    def compliance_score(self, compliance_score):
+        """Sets the compliance_score of this ModelStatus.
+
+        Current Amber compliance score: a ranged measure of the compliance of recent behavior compared to behavior observed in `Learning`. - `0`: asset critical - `100`: OK
+
+        :param compliance_score: The compliance_score of this ModelStatus.
+        :type: int
+        """
+
+        self._compliance_score = compliance_score
 
     @property
     def sample_count(self):
