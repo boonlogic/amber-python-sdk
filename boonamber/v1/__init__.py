@@ -9,7 +9,7 @@ import requests
 import urllib3
 from collections.abc import Iterable
 from numbers import Number, Integral
-from ..util.ambererror import AmberCloudError, AmberUserError
+from ..util.ambererror import AmberCloudError as ace, AmberUserError as aue
 
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -17,6 +17,14 @@ from urllib3.exceptions import InsecureRequestWarning
 ############################
 # Boon Amber Python SDK v1 #
 ############################
+
+
+class AmberCloudError(ace):
+    pass
+
+
+class AmberUserError(aue):
+    pass
 
 
 class AmberV1Client:

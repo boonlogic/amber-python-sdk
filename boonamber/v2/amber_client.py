@@ -6,9 +6,13 @@ import base64
 from functools import wraps
 from .api_client import ApiClient
 from .configuration import Configuration
-from .rest import ApiException
+from .rest import ApiException as e
 from .api.default_api import DefaultApi
 from .models import *
+
+
+class ApiException(e):
+    pass
 
 
 class LicenseProfile:
@@ -163,7 +167,7 @@ class AmberV2Client:
                     self.refresh_token = response.refresh_token
                     self.expires_in = int(response.expires_in)
 
-            except ApiException as e:
+            except Exception as e:
                 raise ApiException("Authentication failed: invalid credentials")
 
             self.configuration.api_key["Authorization"] = self.access_token

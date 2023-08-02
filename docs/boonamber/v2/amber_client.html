@@ -66,7 +66,7 @@ AMBER_V2_VERIFY: specifies the ssl verification required or not</p></div>
 <p><code>AMBER_V2_VERIFY</code>: boolean for ssl cert verify</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>ApiException</code></dt>
+<dt><code><a title="boonamber.v2.amber_client.ApiException" href="#boonamber.v2.amber_client.ApiException">ApiException</a></code></dt>
 <dd>if error supplying authentication credentials</dd>
 </dl></div>
 </dd>
@@ -86,7 +86,7 @@ AMBER_V2_VERIFY: specifies the ssl verification required or not</p></div>
 <p><code>AMBER_V2_LICENSE_ID</code>: sets license_id</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>ApiException</code></dt>
+<dt><code><a title="boonamber.v2.amber_client.ApiException" href="#boonamber.v2.amber_client.ApiException">ApiException</a></code></dt>
 <dd>if error supplying authentication credentials</dd>
 </dl></div>
 </dd>
@@ -372,6 +372,19 @@ print(version.to_dict())
 </dd>
 </dl>
 </dd>
+<dt id="boonamber.v2.amber_client.ApiException"><code class="flex name class">
+<span>class <span class="ident">ApiException</span></span>
+<span>(</span><span>status=None, reason=None, http_resp=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Common base class for all non-exit exceptions.</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>boonamber.v2.rest.ApiException</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
 <dt id="boonamber.v2.amber_client.LicenseProfile"><code class="flex name class">
 <span>class <span class="ident">LicenseProfile</span></span>
 <span>(</span><span>license_key: str = None, secret_key: str = None, server: str = None, oauth_server: str = None)</span>
@@ -422,6 +435,9 @@ print(version.to_dict())
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.put_data" href="#boonamber.v2.amber_client.AmberV2Client.put_data">put_data</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.update_label" href="#boonamber.v2.amber_client.AmberV2Client.update_label">update_label</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="boonamber.v2.amber_client.ApiException" href="#boonamber.v2.amber_client.ApiException">ApiException</a></code></h4>
 </li>
 <li>
 <h4><code><a title="boonamber.v2.amber_client.LicenseProfile" href="#boonamber.v2.amber_client.LicenseProfile">LicenseProfile</a></code></h4>

@@ -56,6 +56,32 @@ number of array dimensions</p></div>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
+<dt id="boonamber.v1.AmberCloudError"><code class="flex name class">
+<span>class <span class="ident">AmberCloudError</span></span>
+<span>(</span><span>code, message)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Raised upon any non-200 response from the Amber cloud</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>boonamber.util.ambererror.AmberCloudError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="boonamber.v1.AmberUserError"><code class="flex name class">
+<span>class <span class="ident">AmberUserError</span></span>
+<span>(</span><span>message)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Raised to indicate an error in SDK usage</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>boonamber.util.ambererror.AmberUserError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
 <dt id="boonamber.v1.AmberV1Client"><code class="flex name class">
 <span>class <span class="ident">AmberV1Client</span></span>
 <span>(</span><span>license_id='default', license_file='~/.Amber.license', verify=True, cert=None, timeout=300)</span>
@@ -86,7 +112,7 @@ home directory, or optionally overridden using environment variables.</p>
 <p><code>AMBER_SSL_VERIFY</code>: Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if error supplying authentication credentials</dd>
 </dl></div>
 <h3>Subclasses</h3>
@@ -122,9 +148,9 @@ Allows direct setting of feature labels and rules for submitting the fusion vect
 <p>A list of features as configured</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated or supplies invalid data</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response.</dd>
 </dl></div>
 </dd>
@@ -185,9 +211,9 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 </code></pre>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated or supplies invalid options</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -205,9 +231,9 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <p>A string containing the <code>sensor_id</code> that was created</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -223,9 +249,9 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 </dl>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -256,9 +282,9 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 }</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated or supplies invalid data</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -308,9 +334,9 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 </code></pre>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -334,9 +360,9 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 "Error": error has occurred</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated or supplies invalid data</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -360,9 +386,9 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 </code></pre>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -424,9 +450,9 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 </code></pre>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -468,9 +494,9 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 </code></pre>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -483,7 +509,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <p>json summary information</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -496,7 +522,7 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <p>json version information</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -509,9 +535,9 @@ new clusters are opened in the last learning_rate_denominator samples</dd>
 <p>A dictionary mapping sensor IDs to corresponding labels</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -553,9 +579,9 @@ status can be checked using get_pretrain_state endpoint.</dd>
 "Pretraining": pretraining is in progress</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated or supplies invalid data</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -591,9 +617,9 @@ status can be checked using get_pretrain_state endpoint.</dd>
 "Pretraining": pretraining is in progress</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated or supplies invalid data</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -658,9 +684,9 @@ If None, whether to submit will be determined by the per-feature submit rules.</
 </ul>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated or supplies invalid data</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response.</dd>
 </dl></div>
 </dd>
@@ -763,9 +789,9 @@ equal length.</dd>
 </code></pre>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated or supplies invalid data</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -785,9 +811,9 @@ equal length.</dd>
 <p>A string containing the new label assigned to sensor</p>
 <h2 id="raises">Raises</h2>
 <dl>
-<dt><code>AmberUserError</code></dt>
+<dt><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></dt>
 <dd>if client is not authenticated</dd>
-<dt><code>AmberCloudError</code></dt>
+<dt><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></dt>
 <dd>if Amber cloud gives non-200 response</dd>
 </dl></div>
 </dd>
@@ -816,6 +842,12 @@ equal length.</dd>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
+<li>
+<h4><code><a title="boonamber.v1.AmberCloudError" href="#boonamber.v1.AmberCloudError">AmberCloudError</a></code></h4>
+</li>
+<li>
+<h4><code><a title="boonamber.v1.AmberUserError" href="#boonamber.v1.AmberUserError">AmberUserError</a></code></h4>
+</li>
 <li>
 <h4><code><a title="boonamber.v1.AmberV1Client" href="#boonamber.v1.AmberV1Client">AmberV1Client</a></code></h4>
 <ul class="two-column">
