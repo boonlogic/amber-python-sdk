@@ -35,6 +35,7 @@ class AnalyticResults(object):
         'ni': 'list[int]',
         'ns': 'list[int]',
         'nw': 'list[float]',
+        'cs': 'list[int]',
         'om': 'list[float]',
         'ri': 'list[int]',
         'si': 'list[int]',
@@ -49,13 +50,14 @@ class AnalyticResults(object):
         'ni': 'NI',
         'ns': 'NS',
         'nw': 'NW',
+        'cs': 'CS',
         'om': 'OM',
         'ri': 'RI',
         'si': 'SI',
         'pi': 'PI'
     }
 
-    def __init__(self, ad=None, ah=None, aw=None, id=None, ni=None, ns=None, nw=None, om=None, ri=None, si=None, pi=None):
+    def __init__(self, ad=None, ah=None, aw=None, id=None, ni=None, ns=None, nw=None, cs=None, om=None, ri=None, si=None, pi=None):
         """AnalyticResults - a model defined in Swagger"""
         self._ad = None
         self._ah = None
@@ -64,6 +66,7 @@ class AnalyticResults(object):
         self._ni = None
         self._ns = None
         self._nw = None
+        self._cs = None
         self._om = None
         self._ri = None
         self._si = None
@@ -83,6 +86,8 @@ class AnalyticResults(object):
             self.ns = ns
         if nw is not None:
             self.nw = nw
+        if cs is not None:
+            self.cs = cs
         if om is not None:
             self.om = om
         if ri is not None:
@@ -252,6 +257,29 @@ class AnalyticResults(object):
         """
 
         self._nw = nw
+
+    @property
+    def cs(self):
+        """Gets the cs of this AnalyticResults.
+
+        See Boon Docs.
+
+        :return: The cs of this AnalyticResults.
+        :rtype: list[int]
+        """
+        return self._cs
+
+    @cs.setter
+    def cs(self, cs):
+        """Sets the cs of this AnalyticResults.
+
+        See Boon Docs.
+
+        :param cs: The cs of this AnalyticResults.
+        :type: list[int]
+        """
+
+        self._cs = cs
 
     @property
     def om(self):
