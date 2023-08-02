@@ -31,7 +31,7 @@ class AmberV2Client:
 
     # TODO add request timeout env option. it is pretty involved
 
-    def __init__(self, profile: LicenseProfile = None):
+    def __init__(self, profile: LicenseProfile = None, verify: bool = True):
         self.server = profile.server
         self.license = profile.license_key
         self.secret = profile.secret_key
@@ -42,7 +42,7 @@ class AmberV2Client:
         self.reauth_time = 0
 
         self.configuration = Configuration()
-        self.configuration.verify_ssl = os.environ.get("AMBER_V2_VERIFY", True)
+        self.configuration.verify_ssl = os.environ.get("AMBER_V2_VERIFY", "True").lower() in ["true", "1", "t"]
 
         if self.server is None:
             raise ApiException("server not set")
@@ -61,7 +61,7 @@ class AmberV2Client:
         self.api = DefaultApi(ApiClient(self.configuration))
 
     @classmethod
-    def from_license_file(cls, license_id: str = "default", license_file: str = "~/.Amber.license"):
+    def from_license_file(cls, license_id: str = "default", license_file: str = "~/.Amber.license", verify: bool = True):
         """
         Args:
             license_id: (type: str) license identifier label found within .Amber.license file
@@ -100,10 +100,10 @@ class AmberV2Client:
         license_key = profile.get("license", None)
         secret_key = profile.get("secret", None)
 
-        return cls(profile=LicenseProfile(server=server, oauth_server=oauth_server, license_key=license_key, secret_key=secret_key))
+        return cls(profile=LicenseProfile(server=server, oauth_server=oauth_server, license_key=license_key, secret_key=secret_key), verify=verify)
 
     @classmethod
-    def from_dict(cls, profile_dict: dict = None):
+    def from_dict(cls, profile_dict: dict = None, verify: bool = True):
         try:
             server = profile_dict.get("server", None)
             oauth_server = profile_dict.get("oauth-server", None)
@@ -111,7 +111,34 @@ class AmberV2Client:
             secret_key = profile_dict.get("secret", None)
         except JSONDecodeError as e:
             raise ApiException("JSON formatting error, message: {}".format(e.msg))
-        return cls(profile=LicenseProfile(server=server, license_key=license_key, secret_key=secret_key, oauth_server=oauth_server))
+        return cls(profile=LicenseProfile(server=server, license_key=license_key, secret_key=secret_key, oauth_server=oauth_server), verify=verify)
+
+    @classmethod
+    def from_environment(cls):
+        """
+
+        Environment:
+
+            `AMBER_V2_LICENSE_KEY`: sets license key
+
+            `AMBER_V2_SECRET_KEY`: sets secret key
+
+            `AMBER_V2_SERVER`: sets url
+
+            `AMBER_V2_OAUTH_SERVER`: sets url for oauth
+
+            `AMBER_V2_VERIFY`: boolean for ssl cert verify
+
+        Raises:
+            ApiException: if error supplying authentication credentials
+        """
+        server = os.environ.get("AMBER_V2_SERVER", None)
+        oauth_server = os.environ.get("AMBER_V2_OAUTH_SERVER", server)
+        license_key = os.environ.get("AMBER_V2_LICENSE_KEY", None)
+        secret_key = os.environ.get("AMBER_V2_SECRET_KEY", None)
+        verify = os.environ.get("AMBER_V2_VERIFY", True)
+
+        return cls(profile=LicenseProfile(server=server, oauth_server=oauth_server, license_key=license_key, secret_key=secret_key), verify=verify)
 
     def __authenticate(f):
         @wraps(f)

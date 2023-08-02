@@ -811,6 +811,7 @@ class DefaultApi(object):
 
         :param async_req bool
         :param str model_id: (required)
+        :param bool training_samples: Whether to return training samples
         :return: GetSummaryResponse
                  If the method is called asynchronously,
                  returns the request thread.
@@ -833,12 +834,13 @@ class DefaultApi(object):
 
         :param async_req bool
         :param str model_id: (required)
+        :param bool training_samples: Whether to return training samples
         :return: GetSummaryResponse
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['model_id']  # noqa: E501
+        all_params = ['model_id', 'training_samples']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -865,6 +867,8 @@ class DefaultApi(object):
             path_params['modelId'] = params['model_id']  # noqa: E501
 
         query_params = []
+        if 'training_samples' in params:
+            query_params.append(('trainingSamples', params['training_samples']))  # noqa: E501
 
         header_params = {}
 

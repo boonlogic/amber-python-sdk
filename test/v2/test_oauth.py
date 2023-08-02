@@ -68,12 +68,29 @@ class TestOauth(unittest.TestCase):
         license_id = os.getenv('AMBER_TEST_LICENSE_ID')
         license_file = os.getenv('AMBER_TEST_LICENSE_FILE')
         api = AmberV2Client.from_license_file(license_id=license_id, license_file=license_file)
+
+        # save the credentials for various tests
         profile = {"server": api.server, "license": api.license, "secret": api.secret}
+        os.environ["AMBER_V2_SERVER"] = api.server
+        os.environ["AMBER_V2_LICENSE_KEY"] = api.license
+        os.environ["AMBER_V2_SECRET_KEY"] = api.secret
+
+        # test dictionary
         api = AmberV2Client.from_dict(profile_dict=profile)
 
         # should work anyway with valid credentials given in env
         version = api.get_version()
         assert "expert_common" in version.to_dict()
+
+        # test from environment
+        api = AmberV2Client.from_environment()
+
+        version = api.get_version()
+        assert "expert_common" in version.to_dict()
+
+        del os.environ["AMBER_V2_SERVER"]
+        del os.environ["AMBER_V2_LICENSE_KEY"]
+        del os.environ["AMBER_V2_SECRET_KEY"]
 
         # test missing field
         server = api.server

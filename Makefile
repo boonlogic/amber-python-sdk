@@ -16,9 +16,15 @@ test-env-check:
 		exit 1; \
 	fi
 
+examples-env-check:
+	@if [[ "${AMBER_LICENSE_FILE}" == "" ]]; then \
+		echo "AMBER_LICENSE_FILE is required in environment"; \
+		exit 1; \
+	fi
+
 format-check: format
 	git diff --exit-code; if [ $$? -ne 0 ]; then echo "format-check failed"; exit 1; fi; \
-	echo "*** format-check passed"
+	echo "*** format-check passed ***"
 
 format: docs
 	@. local-env/bin/activate && \
@@ -34,6 +40,8 @@ release:
 	git add pyproject.toml && git commit -m "increment version to $$VERSION" && git push && \
 	git tag -a "v$$VERSION" && \
 	git push origin --tags
+
+examples-test: examples-env-check examplesv1-test examplesv2-test
 
 
 ############################
@@ -55,6 +63,20 @@ testv1-local: test-env-check
 	coverage run --source=boonamber.v1 -m pytest -x v1/test_client.py && \
 	coverage html
 
+examplesv1-env-check:
+	@if [[ "${AMBER_LICENSE_ID}" == "" ]]; then \
+		echo "AMBER_LICENSE_ID is required in environment"; \
+		exit 1; \
+	fi
+
+examplesv1-test: examplesv1-env-check
+	@. local-env/bin/activate; \
+	cd examples/v1 && \
+	for f in *.py; do \
+		python $${f} \
+		|| exit 1; \
+	done
+
 ############################
 # ========== V2 ========== #
 ############################
@@ -75,7 +97,13 @@ testv2-%: test-local-environment-v2
 	AMBER_TEST_LICENSE_ID=$* coverage run --rcfile="../.coveragerc" -m pytest -x v2/test_*.py && \
 	coverage html
 
-testv2-examples:
+examplesv2-env-check:
+	@if [[ "${AMBER_V2_LICENSE_ID}" == "" ]]; then \
+		echo "AMBER_V2_LICENSE_ID is required in environment"; \
+		exit 1; \
+	fi
+
+examplesv2-test: examplesv2-env-check
 	@. local-env/bin/activate; \
 	cd examples/v2 && \
 	for f in *.py; do \

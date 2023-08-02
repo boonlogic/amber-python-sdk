@@ -17,14 +17,14 @@ sensor_id = 'put-created-sensor-id-here'
 # again and the created sensor ID should be filled into the line above
 # so that the same sensor is accessed on subsequent runs.
 
-# try:
-#     sensor_id = amber.create_sensor(label='python.sdk.example:stream')
-# except AmberCloudError as e:
-#     print(e)
-#     sys.exit(1)
-# print("created sensor {}".format(sensor_id))
+try:
+    sensor_id = amber.create_sensor(label='python.sdk.example:stream')
+except AmberCloudError as e:
+    print(e)
+    sys.exit(1)
+print("created sensor {}".format(sensor_id))
 
-print("using sensor {}".format(sensor_id))
+# print("using sensor {}".format(sensor_id))
 
 # Configure the sensor: feature_count is 3 since our CSV data has three columns
 try:
