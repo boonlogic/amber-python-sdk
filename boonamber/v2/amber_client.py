@@ -48,6 +48,9 @@ class AmberV2Client:
         self.configuration = Configuration()
         self.configuration.verify_ssl = os.environ.get("AMBER_V2_VERIFY", "True").lower() in ["true", "1", "t"]
 
+        if not self.configuration.verify_ssl:
+            urllib3.disable_warnings()
+
         if self.server is None:
             raise ApiException("server not set")
         # server is set if it reaches this point
