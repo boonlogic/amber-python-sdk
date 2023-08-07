@@ -3,6 +3,7 @@ import time
 import json
 import numpy as np
 import base64
+import urllib3
 from functools import wraps
 from .api_client import ApiClient
 from .configuration import Configuration
