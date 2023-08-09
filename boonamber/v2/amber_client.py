@@ -546,7 +546,6 @@ class AmberV2Client:
 
         return response
 
-
     @__authenticate
     def enable_learning(self, model_id: str, **kwargs) -> PostLearningResponse:
         """
