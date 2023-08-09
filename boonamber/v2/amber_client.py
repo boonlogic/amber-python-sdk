@@ -199,11 +199,7 @@ class AmberV2Client:
             ```
 
         """
-        try:
-            # get version
-            return self.api.get_version()
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.get_version()
 
     @__authenticate
     def delete_model(self, model_id: str):
@@ -215,11 +211,7 @@ class AmberV2Client:
             model_id: (type: str) (required)
 
         """
-        try:
-            # delete model
-            self.api.delete_model(model_id=model_id)
-        except Exception as e:
-            raise ApiException(e)
+        self.api.delete_model(model_id=model_id)
 
     @__authenticate
     def get_root_cause(self, model_id: str, **kwargs) -> GetRootCauseResponse:
@@ -266,18 +258,14 @@ class AmberV2Client:
                 elif dimensions == 1:
                     kwargs["clusters"] = "[{}]".format(",".join([str(c) for c in kwargs["clusters"]]))
                 else:
-                    raise ApiException("401: invalid dimensions of clusters given: should be 0 or 1D but got {}D".format(len(np.asarray(kwargs["clusters"]).shape)))
+                    raise ApiException(status=406, reason="invalid dimensions of clusters given: should be 0 or 1D but got {}D".format(len(np.asarray(kwargs["clusters"]).shape)))
             else:
-                raise ApiException("401: invalid formatting of clusters. Expecting a array-type or numbers or string")
+                raise ApiException(status=406, reason="invalid formatting of clusters. Expecting a array-type or numbers or string")
 
-        try:
-            # get root cause
-            if "clusters" in kwargs.keys():
-                return self.api.get_model_root_cause(model_id=model_id, clusters=kwargs["clusters"])
-            if "vectors" in kwargs.keys():
-                return self.api.get_model_root_cause(model_id=model_id, vectors=kwargs["vectors"])
-        except Exception as e:
-            raise ApiException(e)
+        if "clusters" in kwargs.keys():
+            return self.api.get_model_root_cause(model_id=model_id, clusters=kwargs["clusters"])
+        if "vectors" in kwargs.keys():
+            return self.api.get_model_root_cause(model_id=model_id, vectors=kwargs["vectors"])
 
     @__authenticate
     def get_config(self, model_id: str) -> PostConfigResponse:
@@ -292,11 +280,7 @@ class AmberV2Client:
             `boonamber.v2.models.post_config_response.PostConfigResponse`
 
         """
-        try:
-            # get config
-            return self.api.get_model_config(model_id=model_id)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.get_model_config(model_id=model_id)
 
     @__authenticate
     def get_model(self, model_id: str) -> PostModelResponse:
@@ -311,11 +295,7 @@ class AmberV2Client:
             `boonamber.v2.models.post_model_response.PostModelResponse`
 
         """
-        try:
-            # get model
-            return self.api.get_model(model_id=model_id)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.get_model(model_id=model_id)
 
     @__authenticate
     def get_models(self) -> GetModelsResponse:
@@ -327,11 +307,7 @@ class AmberV2Client:
             `boonamber.v2.models.get_models_response.GetModelsResponse`
 
         """
-        try:
-            # get list of models
-            return self.api.get_models()
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.get_models()
 
     @__authenticate
     def get_pretrain(self, model_id: str) -> GetPretrainResponse:
@@ -346,11 +322,7 @@ class AmberV2Client:
             `boonamber.v2.models.get_pretrain_response.GetPretrainResponse`
 
         """
-        try:
-            # get pretrain state
-            return self.api.get_model_pretrain(model_id=model_id)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.get_model_pretrain(model_id=model_id)
 
     @__authenticate
     def get_status(self, model_id: str) -> GetStatusResponse:
@@ -365,11 +337,7 @@ class AmberV2Client:
             `boonamber.v2.models.get_status_response.GetStatusResponse`
 
         """
-        try:
-            # get status
-            return self.api.get_model_status(model_id=model_id)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.get_model_status(model_id=model_id)
 
     @__authenticate
     def get_nano_status(self, model_id: str) -> GetNanoStatusResponse:
@@ -384,11 +352,7 @@ class AmberV2Client:
             `boonamber.v2.models.get_nano_status_response.GetNanoStatusResponse`
 
         """
-        try:
-            # get status
-            return self.api.get_model_nano_status(model_id=model_id)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.get_model_nano_status(model_id=model_id)
 
     @__authenticate
     def get_diagnostic(self, model_id: str, dir: str) -> str:
@@ -408,15 +372,12 @@ class AmberV2Client:
             raise ApiException(status=406, reason="target directory does not exist")
         dir = os.path.expanduser(dir)
         path = f"{dir}/{model_id}-diagnostic.tar"
-        try:
-            # get diagnostic
-            results = self.api.get_model_diagnostic(model_id=model_id)
 
-            with open(path, "wb") as fp:
-                fp.write(results)
-            return path
-        except Exception as e:
-            raise ApiException(e)
+        results = self.api.get_model_diagnostic(model_id=model_id)
+
+        with open(path, "wb") as fp:
+            fp.write(results)
+        return path
 
     @__authenticate
     def post_config(self, model_id: str, body: PostConfigRequest) -> PostConfigResponse:
@@ -433,11 +394,7 @@ class AmberV2Client:
 
         """
 
-        try:
-            # post config
-            return self.api.post_model_config(model_id=model_id, body=body)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.post_model_config(model_id=model_id, body=body)
 
     @__authenticate
     def post_data(self, model_id: str, data, save_image: bool = True) -> PostDataResponse:
@@ -455,18 +412,15 @@ class AmberV2Client:
 
         """
 
-        try:
-            # accept data as a list
-            if isinstance(data, (list, np.ndarray)):
-                data = np.array(data, dtype=str).flatten()
-                data = ",".join(data)
-            elif not isinstance(data, str):
-                raise ApiException("invalid data: {}".format(type(data)))
-            # post data
-            body = PostDataRequest(data=data, save_image=save_image)
-            return self.api.post_model_data(model_id=model_id, body=body)
-        except Exception as e:
-            raise ApiException(e)
+        # accept data as a list
+        if isinstance(data, (list, np.ndarray)):
+            data = np.array(data, dtype=str).flatten()
+            data = ",".join(data)
+        elif not isinstance(data, str):
+            raise ApiException(status=406, reason="invalid data: {}".format(type(data)))
+        # post data
+        body = PostDataRequest(data=data, save_image=save_image)
+        return self.api.post_model_data(model_id=model_id, body=body)
 
     @__authenticate
     def post_model(self, metadata: PostModelRequest) -> PostModelResponse:
@@ -481,11 +435,7 @@ class AmberV2Client:
             `boonamber.v2.models.post_model_response.PostModelResponse`
 
         """
-        try:
-            # post new model
-            return self.api.post_model(body=metadata)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.post_model(body=metadata)
 
     @__authenticate
     def copy_model(self, model_id: str, label: str = None) -> PostModelResponse:
@@ -505,11 +455,7 @@ class AmberV2Client:
         if label:
             kwargs["body"] = PostModelCopyRequest(label=label)
 
-        try:
-            # copy a model
-            return self.api.post_model_copy(model_id, **kwargs)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.post_model_copy(model_id, **kwargs)
 
     @__authenticate
     def post_outage(self, model_id: str):
@@ -521,11 +467,7 @@ class AmberV2Client:
             model_id: (type: str) (required)
 
         """
-        try:
-            # post outage
-            self.api.post_model_outage(model_id=model_id)
-        except Exception as e:
-            raise ApiException(e)
+        self.api.post_model_outage(model_id=model_id)
 
     @__authenticate
     def migrate_model(self, v1_model_id: str):
@@ -540,11 +482,7 @@ class AmberV2Client:
 
         """
 
-        try:
-            # post migrate
-            return self.api.post_model_migrate(v1_model_id=v1_model_id)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.post_model_migrate(v1_model_id=v1_model_id)
 
     @__authenticate
     def post_pretrain(self, model_id: str, data, chunk_size: int = 400000, block: bool = True, **kwargs) -> PostPretrainResponse:
@@ -560,60 +498,54 @@ class AmberV2Client:
             `boonamber.v2.models.post_pretrain_response.PostPretrainResponse`
 
         """
+        # Server expects data as a plaintext string of comma-separated values.
         try:
-            # Server expects data as a plaintext string of comma-separated values.
-            try:
-                if isinstance(data, str):
-                    data = data.split(",")
+            if isinstance(data, str):
+                data = data.split(",")
 
-                data = np.array(data, dtype="float32")
-                data = data.flatten()
-                data = data.tobytes()
-            except ValueError as e:
-                raise ApiException("invalid data: {}".format(e))
+            data = np.array(data, dtype="float32")
+            data = data.flatten()
+            data = data.tobytes()
+        except ValueError as e:
+            raise ApiException(status=406, reason="invalid data: {}".format(e))
 
-            # headers = {"content-type": "application/octet-stream"
-            param = PostPretrainRequest(data="", format="packed-float")
+        # headers = {"content-type": "application/octet-stream"
+        param = PostPretrainRequest(data="", format="packed-float")
 
-            # compute number of chunks to send
-            num_chunks = int(len(data) / chunk_size)
-            if len(data) % chunk_size != 0:
-                num_chunks += 1
+        # compute number of chunks to send
+        num_chunks = int(len(data) / chunk_size)
+        if len(data) % chunk_size != 0:
+            num_chunks += 1
 
-            txn_id = ""
-            for chunk_num in range(0, num_chunks):
-                # create chunk specifier, .ie 1:3, 2:3, 3:3
-                chunkspec = "{}:{}".format(chunk_num + 1, num_chunks)
+        txn_id = ""
+        for chunk_num in range(0, num_chunks):
+            # create chunk specifier, .ie 1:3, 2:3, 3:3
+            chunkspec = "{}:{}".format(chunk_num + 1, num_chunks)
 
-                # construct next chunk
-                start = chunk_num * chunk_size
-                end = start + chunk_size
-                if end > len(data):
-                    end = len(data)
-                param.data = base64.b64encode(data[start:end]).decode("ascii")
+            # construct next chunk
+            start = chunk_num * chunk_size
+            end = start + chunk_size
+            if end > len(data):
+                end = len(data)
+            param.data = base64.b64encode(data[start:end]).decode("ascii")
 
-                try:
-                    response = self.api.post_model_pretrain(
-                        model_id=model_id,
-                        chunkspec=chunkspec,
-                        txn_id=txn_id,
-                        body=param,
-                    )
-                    txn_id = response.txn_id
-                except Exception as e:
-                    raise (ApiException(e))
+            response = self.api.post_model_pretrain(
+                model_id=model_id,
+                chunkspec=chunkspec,
+                txn_id=txn_id,
+                body=param,
+            )
+            txn_id = response.txn_id
 
-            if not block:
-                return response
-
-            while response.status == "Pretraining":
-                time.sleep(3)
-                response = self.get_pretrain(model_id=model_id)
-
+        if not block:
             return response
 
-        except Exception as e:
-            raise ApiException(e)
+        while response.status == "Pretraining":
+            time.sleep(3)
+            response = self.get_pretrain(model_id=model_id)
+
+        return response
+
 
     @__authenticate
     def enable_learning(self, model_id: str, **kwargs) -> PostLearningResponse:
@@ -632,11 +564,7 @@ class AmberV2Client:
         if "training" in kwargs:
             kwargs["body"] = PostLearningRequest(training=kwargs["training"])
             del kwargs["training"]
-        try:
-            # start learning again
-            return self.api.post_model_learning(model_id=model_id, **kwargs)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.post_model_learning(model_id=model_id, **kwargs)
 
     @__authenticate
     def put_data(self, model_id: str, body: PutDataRequest) -> PutDataResponse:
@@ -650,11 +578,7 @@ class AmberV2Client:
             `boonamber.v2.models.put_data_response.PutDataResponse`
 
         """
-        try:
-            # put data
-            return self.api.put_model_data(model_id=model_id, body=body)
-        except Exception as e:
-            raise ApiException(e)
+        return self.api.put_model_data(model_id=model_id, body=body)
 
     @__authenticate
     def update_label(self, model_id: str, label: str) -> PostModelResponse:
@@ -670,9 +594,5 @@ class AmberV2Client:
             `boonamber.v2.models.post_model_response.PostModelResponse`
 
         """
-        try:
-            # update model metadata
-            metadata = PutModelRequest(label=label)
-            return self.api.put_model(model_id=model_id, body=metadata)
-        except Exception as e:
-            raise ApiException(e)
+        metadata = PutModelRequest(label=label)
+        return self.api.put_model(model_id=model_id, body=metadata)
