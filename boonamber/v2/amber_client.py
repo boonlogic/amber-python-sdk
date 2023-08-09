@@ -172,7 +172,7 @@ class AmberV2Client:
                     self.expires_in = int(response.expires_in)
 
             except Exception as e:
-                raise ApiException(status=406, reason="Authentication failed: invalid credentials")
+                raise ApiException(status=401, reason="Authentication failed: invalid credentials")
 
             self.configuration.api_key["Authorization"] = self.access_token
             self.configuration.api_key_prefix["Authorization"] = "Bearer"
