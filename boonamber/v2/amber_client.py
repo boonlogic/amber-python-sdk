@@ -53,13 +53,13 @@ class AmberV2Client:
             urllib3.disable_warnings()
 
         if self.server is None:
-            raise ApiException("server not set")
+            raise ApiException(status=406, reason="server not set")
         # server is set if it reaches this point
         self.configuration.host = self.server
         if self.license is None:
-            raise ApiException("license key not set")
+            raise ApiException(status=406, reason="license key not set")
         if self.secret is None:
-            raise ApiException("secret key not set")
+            raise ApiException(status=406, reason="secret key not set")
 
         # oauth server
         if self.oauth_server is None:
@@ -95,11 +95,11 @@ class AmberV2Client:
                     with open(filepath, "r") as f:
                         file_data = json.load(f)
                 except json.JSONDecodeError as e:
-                    raise ApiException("JSON formatting error in license file: {}, line: {}, col: {}".format(e.msg, e.lineno, e.colno))
+                    raise ApiException(status=406, reason="JSON formatting error in license file: {}, line: {}, col: {}".format(e.msg, e.lineno, e.colno))
             else:
-                raise ApiException('Amber license file "{}" not found'.format(filepath))
+                raise ApiException(status=406, reason='Amber license file "{}" not found'.format(filepath))
         if profile_id not in file_data:
-            raise ApiException('profile_id "{}" not found in license file'.format(profile_id))
+            raise ApiException(status=406, reason='profile_id "{}" not found in license file'.format(profile_id))
         else:
             profile = file_data[profile_id]
 
@@ -118,7 +118,7 @@ class AmberV2Client:
             license_key = profile_dict.get("license", None)
             secret_key = profile_dict.get("secret", None)
         except JSONDecodeError as e:
-            raise ApiException("JSON formatting error, message: {}".format(e.msg))
+            raise ApiException(status=406, reason="JSON formatting error, message: {}".format(e.msg))
         return cls(profile=LicenseProfile(server=server, license_key=license_key, secret_key=secret_key, oauth_server=oauth_server), verify=verify)
 
     @classmethod
@@ -172,7 +172,7 @@ class AmberV2Client:
                     self.expires_in = int(response.expires_in)
 
             except Exception as e:
-                raise ApiException("Authentication failed: invalid credentials")
+                raise ApiException(status=406, reason="Authentication failed: invalid credentials")
 
             self.configuration.api_key["Authorization"] = self.access_token
             self.configuration.api_key_prefix["Authorization"] = "Bearer"
@@ -250,11 +250,11 @@ class AmberV2Client:
                     kwargs["vectors"] = [",".join([str(v) for v in row]) for row in kwargs["vectors"]]
                     kwargs["vectors"] = "],[".join(kwargs["vectors"])
                 else:
-                    raise ApiException("401: invalid dimensions of vectors given: should be 1 or 2D but got {}D".format(len(np.asarray(kwargs["vectors"]).shape)))
+                    raise ApiException(status=406, reason="invalid dimensions of vectors given: should be 1 or 2D but got {}D".format(len(np.asarray(kwargs["vectors"]).shape)))
                 kwargs["vectors"] = "[[{}]]".format(kwargs["vectors"])
             # not a string or not formatted as a string list
             elif not isinstance(kwargs["vectors"], str):
-                raise ApiException("401: invalid formatting of vectors. Expecting a array-type or numbers or string")
+                raise ApiException(status=406, reason="invalid formatting of vectors. Expecting a array-type or numbers or string")
         # clusters
         if "clusters" in kwargs.keys():
             if isinstance(kwargs["clusters"], (list, np.ndarray, tuple, str, int, float)):
@@ -404,10 +404,8 @@ class AmberV2Client:
             str
 
         """
-        import os
-
         if not os.path.exists(dir):
-            raise ApiException("target directory does not exist")
+            raise ApiException(status=406, reason="target directory does not exist")
         dir = os.path.expanduser(dir)
         path = f"{dir}/{model_id}-diagnostic.tar"
         try:
