@@ -1,15 +1,17 @@
+import base64
+import json
 import os
 import time
-import json
-import numpy as np
-import base64
-import urllib3
 from functools import wraps
+
+import numpy as np
+import urllib3
+
+from .api.default_api import DefaultApi
 from .api_client import ApiClient
 from .configuration import Configuration
-from .rest import ApiException as e
-from .api.default_api import DefaultApi
 from .models import *
+from .rest import ApiException as e
 
 
 class ApiException(e):
@@ -46,6 +48,9 @@ class AmberV2Client:
         self.refresh_token = ""
         self.reauth_time = 0
 
+        # Server type identification.  "basic" or "aws"
+        self.server_type = None
+
         self.configuration = Configuration()
         self.configuration.verify_ssl = os.environ.get("AMBER_V2_VERIFY", "True").lower() in ["true", "1", "t"]
 
@@ -69,7 +74,8 @@ class AmberV2Client:
         self.api = DefaultApi(ApiClient(self.configuration))
 
     @classmethod
-    def from_license_file(cls, license_id: str = "default", license_file: str = "~/.Amber.license", verify: bool = True):
+    def from_license_file(cls, license_id: str = "default", license_file: str = "~/.Amber.license",
+                          verify: bool = True):
         """
         Args:
             license_id: (type: str) license identifier label found within .Amber.license file
@@ -95,7 +101,9 @@ class AmberV2Client:
                     with open(filepath, "r") as f:
                         file_data = json.load(f)
                 except json.JSONDecodeError as e:
-                    raise ApiException(status=406, reason="JSON formatting error in license file: {}, line: {}, col: {}".format(e.msg, e.lineno, e.colno))
+                    raise ApiException(status=406,
+                                       reason="JSON formatting error in license file: {}, line: {}, col: {}".format(
+                                           e.msg, e.lineno, e.colno))
             else:
                 raise ApiException(status=406, reason='Amber license file "{}" not found'.format(filepath))
         if profile_id not in file_data:
@@ -108,7 +116,8 @@ class AmberV2Client:
         license_key = profile.get("license", None)
         secret_key = profile.get("secret", None)
 
-        return cls(profile=LicenseProfile(server=server, oauth_server=oauth_server, license_key=license_key, secret_key=secret_key), verify=verify)
+        return cls(profile=LicenseProfile(server=server, oauth_server=oauth_server, license_key=license_key,
+                                          secret_key=secret_key), verify=verify)
 
     @classmethod
     def from_dict(cls, profile_dict: dict = None, verify: bool = True):
@@ -119,7 +128,8 @@ class AmberV2Client:
             secret_key = profile_dict.get("secret", None)
         except JSONDecodeError as e:
             raise ApiException(status=406, reason="JSON formatting error, message: {}".format(e.msg))
-        return cls(profile=LicenseProfile(server=server, license_key=license_key, secret_key=secret_key, oauth_server=oauth_server), verify=verify)
+        return cls(profile=LicenseProfile(server=server, license_key=license_key, secret_key=secret_key,
+                                          oauth_server=oauth_server), verify=verify)
 
     @classmethod
     def from_environment(cls):
@@ -146,7 +156,8 @@ class AmberV2Client:
         secret_key = os.environ.get("AMBER_V2_SECRET_KEY", None)
         verify = os.environ.get("AMBER_V2_VERIFY", True)
 
-        return cls(profile=LicenseProfile(server=server, oauth_server=oauth_server, license_key=license_key, secret_key=secret_key), verify=verify)
+        return cls(profile=LicenseProfile(server=server, oauth_server=oauth_server, license_key=license_key,
+                                          secret_key=secret_key), verify=verify)
 
     def __authenticate(f):
         @wraps(f)
@@ -158,11 +169,17 @@ class AmberV2Client:
                 if self.access_token == "":
                     # initial authentication, use license and secret key
                     body = PostOauth2AccessRequest(self.license, self.secret)
-                    response = self.api.post_oauth2_access(body)
-                    self.access_token = response.id_token
-                    self.refresh_token = response.refresh_token
-                    self.expires_in = int(response.expires_in)
+                    response = self.api.post_oauth2_access_with_http_info(body)
+                    self.access_token = response[0].id_token
+                    self.refresh_token = response[0].refresh_token
+                    self.expires_in = int(response[0].expires_in)
                     self.secret = ""  # clear the secret from plain site
+                    if self.server_type is None:
+                        # set server type if not discovered
+                        if response[2].get("x-amz-apigw-id") is not None:
+                            self.server_type = "aws"
+                        else:
+                            self.server_type = "basic"
                 else:
                     # we have authenticated once, use the refresh token
                     body = PostOauth2RefreshRequest(self.refresh_token)
@@ -242,11 +259,14 @@ class AmberV2Client:
                     kwargs["vectors"] = [",".join([str(v) for v in row]) for row in kwargs["vectors"]]
                     kwargs["vectors"] = "],[".join(kwargs["vectors"])
                 else:
-                    raise ApiException(status=406, reason="invalid dimensions of vectors given: should be 1 or 2D but got {}D".format(len(np.asarray(kwargs["vectors"]).shape)))
+                    raise ApiException(status=406,
+                                       reason="invalid dimensions of vectors given: should be 1 or 2D but got {}D".format(
+                                           len(np.asarray(kwargs["vectors"]).shape)))
                 kwargs["vectors"] = "[[{}]]".format(kwargs["vectors"])
             # not a string or not formatted as a string list
             elif not isinstance(kwargs["vectors"], str):
-                raise ApiException(status=406, reason="invalid formatting of vectors. Expecting a array-type or numbers or string")
+                raise ApiException(status=406,
+                                   reason="invalid formatting of vectors. Expecting a array-type or numbers or string")
         # clusters
         if "clusters" in kwargs.keys():
             if isinstance(kwargs["clusters"], (list, np.ndarray, tuple, str, int, float)):
@@ -258,9 +278,12 @@ class AmberV2Client:
                 elif dimensions == 1:
                     kwargs["clusters"] = "[{}]".format(",".join([str(c) for c in kwargs["clusters"]]))
                 else:
-                    raise ApiException(status=406, reason="invalid dimensions of clusters given: should be 0 or 1D but got {}D".format(len(np.asarray(kwargs["clusters"]).shape)))
+                    raise ApiException(status=406,
+                                       reason="invalid dimensions of clusters given: should be 0 or 1D but got {}D".format(
+                                           len(np.asarray(kwargs["clusters"]).shape)))
             else:
-                raise ApiException(status=406, reason="invalid formatting of clusters. Expecting a array-type or numbers or string")
+                raise ApiException(status=406,
+                                   reason="invalid formatting of clusters. Expecting a array-type or numbers or string")
 
         if "clusters" in kwargs.keys():
             return self.api.get_model_root_cause(model_id=model_id, clusters=kwargs["clusters"])
@@ -485,7 +508,8 @@ class AmberV2Client:
         return self.api.post_model_migrate(v1_model_id=v1_model_id)
 
     @__authenticate
-    def post_pretrain(self, model_id: str, data, chunk_size: int = 400000, block: bool = True, **kwargs) -> PostPretrainResponse:
+    def post_pretrain(self, model_id: str, data, chunk_size: int = 400000, block: bool = True,
+                      **kwargs) -> PostPretrainResponse:
         """pretrain model with an existing dataset
 
         Args:
