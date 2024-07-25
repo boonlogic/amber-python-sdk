@@ -28,19 +28,58 @@ class PostLearningRequest(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'training': 'TrainingConfig'
+        'state': 'str',
+        'training': 'TrainingConfig',
+        'autotuning': 'AutotuneConfig'
     }
 
     attribute_map = {
-        'training': 'training'
+        'state': 'state',
+        'training': 'training',
+        'autotuning': 'autotuning'
     }
 
-    def __init__(self, training=None):
+    def __init__(self, state=None, training=None, autotuning=None):
         """PostLearningRequest - a model defined in Swagger"""
+        self._state = None
         self._training = None
+        self._autotuning = None
         self.discriminator = None
-        if training is not None:
-            self.training = training
+        self.state = state
+        self.training = training
+        if autotuning is not None:
+            self.autotuning = autotuning
+
+    @property
+    def state(self):
+        """Gets the state of this PostLearningRequest.
+
+        Desired learning state.
+
+        :return: The state of this PostLearningRequest.
+        :rtype: str
+        """
+        return self._state
+
+    @state.setter
+    def state(self, state):
+        """Sets the state of this PostLearningRequest.
+
+        Desired learning state.
+
+        :param state: The state of this PostLearningRequest.
+        :type: str
+        """
+        if state is None:
+            raise ValueError("Invalid value for `state`, must not be `None`")
+        allowed_values = ["Buffering", "Learning"]
+        if state not in allowed_values:
+            raise ValueError(
+                "Invalid value for `state` ({0}), must be one of {1}"
+                .format(state, allowed_values)
+            )
+
+        self._state = state
 
     @property
     def training(self):
@@ -60,8 +99,31 @@ class PostLearningRequest(object):
         :param training: The training of this PostLearningRequest.
         :type: TrainingConfig
         """
+        if training is None:
+            raise ValueError("Invalid value for `training`, must not be `None`")
 
         self._training = training
+
+    @property
+    def autotuning(self):
+        """Gets the autotuning of this PostLearningRequest.
+
+
+        :return: The autotuning of this PostLearningRequest.
+        :rtype: AutotuneConfig
+        """
+        return self._autotuning
+
+    @autotuning.setter
+    def autotuning(self, autotuning):
+        """Sets the autotuning of this PostLearningRequest.
+
+
+        :param autotuning: The autotuning of this PostLearningRequest.
+        :type: AutotuneConfig
+        """
+
+        self._autotuning = autotuning
 
     def to_dict(self):
         """Returns the model properties as a dict"""

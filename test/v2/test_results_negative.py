@@ -15,7 +15,7 @@ class TestResults(unittest.TestCase):
     def setUp(self):
         license_id = os.getenv('AMBER_TEST_LICENSE_ID')
         license_file = os.getenv('AMBER_TEST_LICENSE_FILE')
-        self.api = AmberV2Client.from_license_file(license_id=license_id, license_file=license_file)
+        self.api = AmberV2Client(profile_name=license_id, license_file=license_file)
 
         self.model_id = "non-existant-id"
 
@@ -25,7 +25,9 @@ class TestResults(unittest.TestCase):
     def testPostLearningNegative(self):
         """Test Post Learning fail"""
         with self.assertRaises(ApiException):
-            self.api.enable_learning(model_id=self.model_id)
+            training = boonamber.TrainingConfig(buffering_samples=100, learning_max_samples=100)
+            learning = boonamber.PostLearningRequest(state="Learning", training=training)
+            self.api.enable_learning(model_id=self.model_id, body=learning)
 
     def testGetNanoStatusNegative(self):
         """Test Get Nano Status fail"""

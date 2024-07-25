@@ -68,19 +68,15 @@ class AmberStream:
             results['state'], results['progress'], results['totalInferences'], results['clusterCount'], (int)(self.sample_cnt / self.feature_count),
             delta))
         print("Message: {}".format(results['message']))
-        for analytic in ['ID', 'NI', 'NS', 'NW', 'OM', 'PI', 'SI', 'RI', 'AD', 'AH', 'AM', 'AW']:
+        for analytic in ['ID', 'NI', 'NS', 'NW', 'OM', 'SI', 'RI', 'AD', 'AH', 'AM', 'AW']:
             if analytic in ['AM', 'OM']:
                 analytic_pretty = ','.join("{:.6f}".format(a) for a in results[analytic])
-            if analytic == 'NW':
+            elif analytic == 'NW':
                 analytic_pretty = ','.join("{}".format(int(100 - (a * 50))) for a in results[analytic])
             else:
                 analytic_pretty = ','.join("{}".format(a) for a in results[analytic])
 
-            if analytic == 'NW':
-                # rename to CS: compliance score
-                print("CS: {} ".format(analytic_pretty))
-            else:
-                print("{}: {} ".format(analytic, analytic_pretty))
+            print("{}: {} ".format(analytic, analytic_pretty))
 
         neg_ids = [num for num in results['ID'] if num < 0]
         if len(neg_ids) > 0:
