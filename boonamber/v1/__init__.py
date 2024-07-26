@@ -77,6 +77,9 @@ class AmberV1Client:
         self.license_file = license_file
         self.license_file = os.environ.get("AMBER_LICENSE_FILE", self.license_file)
 
+        # Server type identification.  "basic" or "aws"
+        self.server_type = None
+
         # determine which license_id to use, override from environment if specified
         self.license_id = os.environ.get("AMBER_LICENSE_ID", license_id)
 
@@ -159,6 +162,13 @@ class AmberV1Client:
             if response.status_code != 200:
                 message = "authentication failed: {}".format(response.json().get("message", "no message"))
                 raise AmberCloudError(response.status_code, message)
+
+            # establish server_type if not identified
+            if self.server_type is None:
+                if response.headers.get("x-amz-apigw-id") is not None:
+                    self.server_type = "aws"
+                else:
+                    self.server_type = "basic"
 
             # invalid credentials return a 200 where token is an empty string
             self.token = response.json().get("idToken")

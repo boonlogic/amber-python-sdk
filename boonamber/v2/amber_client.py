@@ -1,15 +1,17 @@
+import base64
+import json
 import os
 import time
-import json
-import numpy as np
-import base64
-import urllib3
 from functools import wraps
+
+import numpy as np
+import urllib3
+
+from .api.default_api import DefaultApi
 from .api_client import ApiClient
 from .configuration import Configuration
-from .rest import ApiException as e
-from .api.default_api import DefaultApi
 from .models import *
+from .rest import ApiException as e
 
 
 class ApiException(e):
@@ -45,6 +47,9 @@ class AmberV2Client:
         self.access_token = ""
         self.refresh_token = ""
         self.reauth_time = 0
+
+        # Server type identification.  "basic" or "aws"
+        self.server_type = None
 
         self.configuration = Configuration()
         self.configuration.verify_ssl = os.environ.get("AMBER_V2_VERIFY", "True").lower() in ["true", "1", "t"]
@@ -158,11 +163,17 @@ class AmberV2Client:
                 if self.access_token == "":
                     # initial authentication, use license and secret key
                     body = PostOauth2AccessRequest(self.license, self.secret)
-                    response = self.api.post_oauth2_access(body)
-                    self.access_token = response.id_token
-                    self.refresh_token = response.refresh_token
-                    self.expires_in = int(response.expires_in)
+                    response = self.api.post_oauth2_access_with_http_info(body)
+                    self.access_token = response[0].id_token
+                    self.refresh_token = response[0].refresh_token
+                    self.expires_in = int(response[0].expires_in)
                     self.secret = ""  # clear the secret from plain site
+                    if self.server_type is None:
+                        # set server type if not discovered
+                        if response[2].get("x-amz-apigw-id") is not None:
+                            self.server_type = "aws"
+                        else:
+                            self.server_type = "basic"
                 else:
                     # we have authenticated once, use the refresh token
                     body = PostOauth2RefreshRequest(self.refresh_token)
