@@ -3,8 +3,7 @@ from __future__ import absolute_import
 import unittest
 
 import boonamber
-from create_test_client import create_test_client
-
+from . import create_test_client
 
 class TestConfig(unittest.TestCase):
     """Version unit test stubs"""
