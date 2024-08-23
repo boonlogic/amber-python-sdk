@@ -4,7 +4,7 @@ import unittest
 
 import boonamber
 from boonamber import ApiException
-from create_test_client import create_test_client
+from . import create_test_client
 
 
 class TestConfig(unittest.TestCase):

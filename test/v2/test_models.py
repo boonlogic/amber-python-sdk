@@ -1,12 +1,10 @@
 from __future__ import absolute_import
 
 import unittest
-import os
 
-from create_test_client import create_test_client
+from . import create_test_client
 
 import boonamber
-from boonamber import AmberClient
 
 class TestModels(unittest.TestCase):
     """Version unit test stubs"""
