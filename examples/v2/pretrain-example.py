@@ -9,6 +9,11 @@ import boonamber
 
 model_id = None  # fill this in if a model has already been created.
 
+def cleanup():
+    if model_id is not None:
+        print("cleanup: deleting model {}".format(model_id))
+        amber.delete_model(model_id)
+
 # load csv_file
 data = []
 with open('output_current.csv', 'r') as f:
@@ -41,6 +46,10 @@ try:
     status = amber.get_status(model_id)
     print(status)
 
+    cleanup()
+    print("succeeded")
+
 except ApiException as e:
     print(e)
+    cleanup()
     sys.exit(1)
