@@ -42,7 +42,7 @@ class AmberV2Client:
 
           License File:
               license_file: path to license file (defaults to ~/.Amber.license) (AMBER_LICENSE_FILE)
-              profile_name: profile name withing .Amber.license (defaults to "default") (AMBER_LICENSE_ID)
+              profile_name: profile name withing .Amber.license (defaults to "default") (AMBER_PROFILE_NAME aka AMBER_LICENSE_ID)
 
           Profile Dictionary:
               profile: profile dictionary
@@ -59,6 +59,12 @@ class AmberV2Client:
         `AMBER_SSL_CERT`: path to ssl client cert file (.pem)
 
         `AMBER_SSL_VERIFY`: Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
+
+        `AMBER_LICENSE_FILE`: file containing amber credentials
+
+        `AMBER_PROFILE_NAME`: named entry within the AMBER_LICENSE_FILE
+
+        `AMBER_LICENSE_ID`: alias for AMBER_PROFILE_NAME
     """
 
     def __init__(self, **kwargs):
@@ -132,7 +138,7 @@ class AmberV2Client:
             license_file: (type: str) path to .Amber.license file
         """
         filepath = os.environ.get("AMBER_LICENSE_FILE", license_file)
-        profile_name = os.environ.get("AMBER_LICENSE_ID", profile_name)
+        profile_name = os.environ.get("AMBER_PROFILE_NAME", os.environ.get("AMBER_LICENSE_ID", profile_name))
         file_data = ""
 
         if filepath is not None:
