@@ -110,9 +110,9 @@ class AmberV2Client:
         self.server_type = None
 
         # generate separate configurations for talking to the authentication server and core amber api
-        self.api_config= Configuration()
+        self.api_config = Configuration()
         self.api_config.host = self.server
-        self.oauth_config= Configuration()
+        self.oauth_config = Configuration()
         self.oauth_config.host = self.oauth_server
 
         if self.verify_ssl != "":
@@ -129,7 +129,6 @@ class AmberV2Client:
 
         self.api = DefaultApi(ApiClient(self.api_config))
         self.oauth_api = DefaultApi(ApiClient(self.oauth_config))
-
 
     def _from_license_file(self, profile_name: str = "default", license_file: str = "~/.Amber.license"):
         """
