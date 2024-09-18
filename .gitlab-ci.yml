@@ -68,7 +68,7 @@ test-v1:
   script:
     - cd ${CI_PROJECT_DIR}/ci-root/packages/amber-python-sdk/amber-python-sdk
     - . local-env/bin/activate
-    - python test/amber_secrets.py aoc > ${CI_PROJECT_DIR}/ci-root/.Amber.license
+    - python test/amber_secrets.py v1sdk > ${CI_PROJECT_DIR}/ci-root/.Amber.license
     - export AMBER_TEST_LICENSE_FILE=${CI_PROJECT_DIR}/ci-root/.Amber.license
     - cd ${CI_PROJECT_DIR}/ci-root/packages/amber-python-sdk/amber-python-sdk
     - make test-v1sdk
