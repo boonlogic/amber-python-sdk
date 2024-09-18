@@ -67,6 +67,7 @@ test-v1:
     MONGO_URI: $V1_MONGO_URI
   script:
     - cd ${CI_PROJECT_DIR}/ci-root/packages/amber-python-sdk/amber-python-sdk
+    - . local-env/bin/activate
     - python test/amber_secrets.py aoc > ${CI_PROJECT_DIR}/ci-root/.Amber.license
     - export AMBER_TEST_LICENSE_FILE=${CI_PROJECT_DIR}/ci-root/.Amber.license
     - cd ${CI_PROJECT_DIR}/ci-root/packages/amber-python-sdk/amber-python-sdk
