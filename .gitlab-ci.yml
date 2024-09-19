@@ -19,6 +19,7 @@ variables:
   CLANG_FORMAT: clang-format
   REF_NAME: master
   SHELL: /bin/bash
+  CI_DEBUG_SERVICES: "true"
   
 stages:
   - build
