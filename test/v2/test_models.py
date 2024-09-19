@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from . import create_test_client
+from test.v2.create_test_client import create_test_client
 
 import boonamber
 

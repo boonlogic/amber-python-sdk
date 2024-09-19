@@ -8,9 +8,9 @@ def create_test_client():
     assert amber_license_id is not None, 'AMBER_TEST_LICENSE_ID is missing in test environment'
 
     if amber_license_file is not None:
-        amber_client = AmberV2Client.from_license_file(amber_license_id, amber_license_file)
+        amber_client = AmberV2Client(profile_name=amber_license_id, license_file=amber_license_file)
     else:
         secret_dict = get_secrets()
         license_profile = secret_dict.get(amber_license_id, None)
-        amber_client = AmberV2Client.from_dict(license_profile, verify=False)
+        amber_client = AmberV2Client(profile=license_profile, verify=False)
     return amber_client

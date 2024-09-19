@@ -18,14 +18,6 @@ class ApiException(e):
     pass
 
 
-class LicenseProfile:
-    def __init__(self, license_key: str = None, secret_key: str = None, server: str = None, oauth_server: str = None):
-        self.license_key = license_key
-        self.server = server
-        self.secret_key = secret_key
-        self.oauth_server = oauth_server
-
-
 class AmberV2Client:
     """Main client which interfaces with an amber server. Amber account
     credentials are specified through discovered within a .Amber.license file located in the
@@ -138,7 +130,7 @@ class AmberV2Client:
         """
         filepath = os.environ.get("AMBER_LICENSE_FILE", license_file)
         profile_name = os.environ.get("AMBER_PROFILE_NAME", os.environ.get("AMBER_LICENSE_ID", profile_name))
-        file_data = ""
+        file_data = {}
 
         if filepath is not None:
             filepath = os.path.expanduser(filepath)
@@ -152,7 +144,12 @@ class AmberV2Client:
                 # it's fine to not have a .Amber.license file
                 return {}
 
+        if file_data is None:
+            return {}
+
         profile = file_data.get(profile_name, None)
+        if profile is None:
+            raise ApiException(status=406, reason=f"profile {profile_name} not found")
 
         # when specified in license file, oauth-server appears with a hyphen, convert to underscore
         if "oauth-server" in profile:
