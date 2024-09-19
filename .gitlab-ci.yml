@@ -37,6 +37,7 @@ build:
     - BRANCH=${CI_COMMIT_REF_NAME} make amber-python-sdk-env
     - make amber-python-sdk-build
     - pipelines/expert-api/create-amber-pipeline-vars > amber.env
+    - aws secretsmanager get-secret-value --secret-id amber/dev/boon-license-token | jq -r -M .SecretString >> amber.env
   artifacts:
     paths:
     - ci-root
@@ -89,6 +90,7 @@ test-v2:
     BOON_AMBER_PORT: 5007
     BOON_MAX_INSTANCES: 1
     MONGO_URI: $V2_MONGO_URI
+    BOON_ACCESS_SECRET: $BOON_ACCESS_SECRET
   script:
     - cd ${CI_PROJECT_DIR}/ci-root/packages/amber-python-sdk/amber-python-sdk
     - . local-env/bin/activate
