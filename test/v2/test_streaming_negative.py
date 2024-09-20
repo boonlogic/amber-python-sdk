@@ -15,7 +15,7 @@ class TestData(unittest.TestCase):
     def setUp(self):
         license_id = os.getenv('AMBER_TEST_LICENSE_ID')
         license_file = os.getenv('AMBER_TEST_LICENSE_FILE')
-        self.api = AmberV2Client.from_license_file(license_id=license_id, license_file=license_file)
+        self.api = AmberV2Client(profile_name=license_id, license_file=license_file)
                 
         self.model_id = "non-existant-id"
 
