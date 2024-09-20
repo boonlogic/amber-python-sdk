@@ -14,7 +14,7 @@ class AmberStream:
 
         """
         Initializes the AmberStream example class.
-        :param model_id: The model_id to be used by AmberStream.  If model_id is None, then a sensor is created
+        :param model_id: The model_id to be used by AmberStream.  If model_id is None, then a model is created
         """
         self.data = []
         self.sample_cnt = 0
@@ -23,7 +23,7 @@ class AmberStream:
         self.config = model_config
 
         try:
-            self.amber = AmberV2Client.from_license_file()
+            self.amber = AmberV2Client()
             if model_id is None:
                 param = boonamber.PostModelRequest(label=self.label)
                 model_result = self.amber.post_model(param)
@@ -54,7 +54,7 @@ class AmberStream:
         print("State: {}({}%), inferences: {}, clusters: {}, samples: {}, duration: {}".format(
             status.state, status.progress, status.sample_count, status.cluster_count, self.sample_cnt, delta))
         analytics = results.analytics
-        if status.message is not None:
+        if status.message != "":
             print("Message: {}".format(status.message))
 
         if status.state in ["Learning", "Monitoring"]:
@@ -110,12 +110,14 @@ streaming_window = 25
 percent_variation = None
 feature = boonamber.FeatureConfig()
 features = [feature]
-training = None     # boonamber.TrainingConfig
+training = {
+    "learning_max_samples": 25000  # set arbitrary graduation threshold
+}
 autotuning = None   # boonamber.AutotuneConfig
 config = boonamber.PostConfigRequest(streaming_window=streaming_window, percent_variation=percent_variation,
                                     features=features, training=training, autotuning=autotuning)
 
 # init the streamer
-streamer = AmberStream(model_id=None, label='amber.sdk.example.v2:streaming-advanced', model_config=config)
+streamer = AmberStream(model_id=None, label='amber.sdk.example', model_config=config)
 
 streamer.stream_csv('output_current.csv', samples_per_request=10)

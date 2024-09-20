@@ -108,14 +108,43 @@ home directory, or optionally overridden using environment variables.</p>
 </dd>
 <dt id="boonamber.AmberV2Client"><code class="flex name class">
 <span>class <span class="ident">AmberV2Client</span></span>
-<span>(</span><span>profile: <a title="boonamber.v2.amber_client.LicenseProfile" href="v2/amber_client.html#boonamber.v2.amber_client.LicenseProfile">LicenseProfile</a> = None, verify: bool = True)</span>
+<span>(</span><span>**kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Main client which interfaces with the Amber cloud. Amber account
-credentials are discovered within a .Amber.license file located in the
+<div class="desc"><p>Main client which interfaces with an amber server. Amber account
+credentials are specified through discovered within a .Amber.license file located in the
 home directory, or optionally overridden using environment variables.</p>
-<p>Environment:
-AMBER_V2_VERIFY: specifies the ssl verification required or not</p></div>
+<h2 id="args">Args</h2>
+<p>kwargs:
+Direct specification:
+server: full URL for amber server
+oauth_server: full URL for oauth server
+license_key: Amber license_key
+secret_key: Amber secret key
+timeout: Timeout value for all requests</p>
+<p>License File:
+license_file: path to license file (defaults to ~/.Amber.license) (AMBER_LICENSE_FILE)
+profile_name: profile name withing .Amber.license (defaults to "default") (AMBER_PROFILE_NAME aka AMBER_LICENSE_ID)</p>
+<p>Profile Dictionary:
+profile: profile dictionary
+Environment variables:
+<code>AMBER_LICENSE_KEY</code>: license key</p>
+<pre><code>&lt;code&gt;AMBER\_SECRET\_KEY&lt;/code&gt;: secret key
+
+&lt;code&gt;AMBER\_SERVER&lt;/code&gt;: amber server address
+
+&lt;code&gt;AMBER\_OAUTH\_SERVER&lt;/code&gt;: amber oauth server address, defaults to AMBER_SERVER if unset
+
+&lt;code&gt;AMBER\_SSL\_CERT&lt;/code&gt;: path to ssl client cert file (.pem)
+
+&lt;code&gt;AMBER\_SSL\_VERIFY&lt;/code&gt;: Either a boolean, in which case it controls whether we verify the server’s TLS certificate, or a string, in which case it must be a path to a CA bundle to use
+
+&lt;code&gt;AMBER\_LICENSE\_FILE&lt;/code&gt;: file containing amber credentials
+
+&lt;code&gt;AMBER\_PROFILE\_NAME&lt;/code&gt;: named entry within the AMBER_LICENSE_FILE
+
+&lt;code&gt;AMBER\_LICENSE\_ID&lt;/code&gt;: alias for AMBER_PROFILE_NAME
+</code></pre></div>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="boonamber.v2.amber_client.AmberV2Client" href="v2/amber_client.html#boonamber.v2.amber_client.AmberV2Client">AmberV2Client</a></li>
@@ -127,8 +156,6 @@ AMBER_V2_VERIFY: specifies the ssl verification required or not</p></div>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.copy_model" href="v2/amber_client.html#boonamber.v2.amber_client.AmberV2Client.copy_model">copy_model</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.delete_model" href="v2/amber_client.html#boonamber.v2.amber_client.AmberV2Client.delete_model">delete_model</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.enable_learning" href="v2/amber_client.html#boonamber.v2.amber_client.AmberV2Client.enable_learning">enable_learning</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberV2Client.from_environment" href="v2/amber_client.html#boonamber.v2.amber_client.AmberV2Client.from_environment">from_environment</a></code></li>
-<li><code><a title="boonamber.v2.amber_client.AmberV2Client.from_license_file" href="v2/amber_client.html#boonamber.v2.amber_client.AmberV2Client.from_license_file">from_license_file</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_config" href="v2/amber_client.html#boonamber.v2.amber_client.AmberV2Client.get_config">get_config</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_diagnostic" href="v2/amber_client.html#boonamber.v2.amber_client.AmberV2Client.get_diagnostic">get_diagnostic</a></code></li>
 <li><code><a title="boonamber.v2.amber_client.AmberV2Client.get_model" href="v2/amber_client.html#boonamber.v2.amber_client.AmberV2Client.get_model">get_model</a></code></li>
