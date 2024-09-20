@@ -19,8 +19,7 @@ variables:
   CLANG_FORMAT: clang-format
   REF_NAME: master
   SHELL: /bin/bash
-  CI_DEBUG_SERVICES: "true"
-  
+
 stages:
   - build
   - self-test
@@ -93,8 +92,6 @@ test-v2:
     MONGO_URI: $V2_MONGO_URI
     BOON_ACCESS_SECRET: $BOON_ACCESS_SECRET
   script:
-    - sleep 30
-    - echo $BOON_ACCESS_SECRET
     - cd ${CI_PROJECT_DIR}/ci-root/packages/amber-python-sdk/amber-python-sdk
     - . local-env/bin/activate
     - python test/amber_secrets.py v2sdk > ${CI_PROJECT_DIR}/ci-root/.Amber.license
