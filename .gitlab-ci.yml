@@ -86,12 +86,12 @@ test-v2:
   services:
     - name: 715859896688.dkr.ecr.us-east-1.amazonaws.com/expert-server:${AMBER_TAG}
       alias: amber-test-fixture-v2
-  variables:
-    BOON_PRODUCT_ID: amber-cloud-v2
-    BOON_AMBER_PORT: 5007
-    BOON_MAX_INSTANCES: 1
-    MONGO_URI: $V2_MONGO_URI
-    BOON_ACCESS_SECRET: $BOON_ACCESS_SECRET
+      variables:
+        BOON_PRODUCT_ID: amber-cloud-v2
+        BOON_AMBER_PORT: 5007
+        BOON_MAX_INSTANCES: 1
+        MONGO_URI: $V2_MONGO_URI
+        BOON_ACCESS_SECRET: $BOON_ACCESS_SECRET
   script:
     - echo $BOON_ACCESS_SECRET
     - cd ${CI_PROJECT_DIR}/ci-root/packages/amber-python-sdk/amber-python-sdk
