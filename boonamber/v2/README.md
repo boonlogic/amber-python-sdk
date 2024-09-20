@@ -25,51 +25,36 @@ The license key and secret key should be placed in a file named _~/.Amber.licens
 ```json
 {
     "default": {
-        "license": "AMBER-ACCOUNT-LICENSE",
-        "secret": "AMBER-ACCOUNT-SECRET",
-        "server": "https://amber.boonlogic.com/v2"
+        "license-key": "AMBER-ACCOUNT-LICENSE",
+        "secret-key": "AMBER-ACCOUNT-SECRET",
+        "server": "https://v2.amber.boonlogic.com"
     }
 }
 ```
 
-The _~/.Amber.license_ file will be consulted by the Amber SDK to find and authenticate your account credentials with the Amber server. Credentials may optionally be provided instead via the environment variables `AMBER_USERNAME` and `AMBER_PASSWORD`.
+The _~/.Amber.license_ file will be consulted by the Amber SDK to find and authenticate your account credentials with the Amber server.  Profile configurations may also
+be set through a set of environment variables or kwargs when the AmberV2Client object is created.
 
 ## Connectivity test
 
 The following Python script provides a basic proof-of-connectivity:
 
-[connect-example.py](examples/connect-example.py)
+[connect-example.py](../../examples/v2/connect-example.py)
 
 ```python
 import sys
 import json
-from boonamber import AmberClient, AmberCloudError, AmberUserError
-
-# if you wish to turn off tls certificate warnings
-# import urllib3
-# urllib3.disable_warnings()
-#
-# Alternatively invoke python with -Wignore
-#
-
-# At initialization the client discovers Amber account credentials
-# under the "default" entry in the ~/.Amber.license file.
-#amber = AmberClient(verify=False)
-amber = AmberClient()
+from boonamber import AmberV2Client, ApiException
 
 try:
-    # Get a list of all sensors belonging to the current user.
+    # Use ~/.Amber.license file and "default" profile
+    amber = AmberV2Client()
     version_info = amber.get_version()
-except AmberCloudError as e:
-    # AmberCloudError is raised upon any error response from the Amber server.
-    print("Amber Cloud error: {}".format(e))
-    sys.exit(1)
-except AmberUserError as e:
-    # AmberUserError is raised upon client-side usage errors with the SDK.
-    print("Amber user error: {}".format(e))
+except ApiException as e:
+    print(f"Error: {e}")
     sys.exit(1)
 
-print(json.dumps(version_info, indent=4))
+print(json.dumps(version_info.to_dict(), indent=4))
 ```
 
 Running the connect-example.py script should yield output like the following:
