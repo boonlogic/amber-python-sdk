@@ -93,6 +93,7 @@ test-v2:
     MONGO_URI: $V2_MONGO_URI
     BOON_ACCESS_SECRET: $BOON_ACCESS_SECRET
   script:
+    - echo $BOON_ACCESS_SECRET
     - cd ${CI_PROJECT_DIR}/ci-root/packages/amber-python-sdk/amber-python-sdk
     - . local-env/bin/activate
     - python test/amber_secrets.py v2sdk > ${CI_PROJECT_DIR}/ci-root/.Amber.license
