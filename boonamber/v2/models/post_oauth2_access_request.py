@@ -28,47 +28,47 @@ class PostOauth2AccessRequest(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'license_id': 'str',
+        'license_key': 'str',
         'secret_key': 'str'
     }
 
     attribute_map = {
-        'license_id': 'licenseId',
+        'license_key': 'licenseKey',
         'secret_key': 'secretKey'
     }
 
-    def __init__(self, license_id=None, secret_key=None):
+    def __init__(self, license_key=None, secret_key=None):
         """PostOauth2AccessRequest - a model defined in Swagger"""
-        self._license_id = None
+        self._license_key = None
         self._secret_key = None
         self.discriminator = None
-        self.license_id = license_id
+        self.license_key = license_key
         self.secret_key = secret_key
 
     @property
-    def license_id(self):
-        """Gets the license_id of this PostOauth2AccessRequest.
+    def license_key(self):
+        """Gets the license_key of this PostOauth2AccessRequest.
 
         Amber account license.
 
-        :return: The license_id of this PostOauth2AccessRequest.
+        :return: The license_key of this PostOauth2AccessRequest.
         :rtype: str
         """
-        return self._license_id
+        return self._license_key
 
-    @license_id.setter
-    def license_id(self, license_id):
-        """Sets the license_id of this PostOauth2AccessRequest.
+    @license_key.setter
+    def license_key(self, license_key):
+        """Sets the license_key of this PostOauth2AccessRequest.
 
         Amber account license.
 
-        :param license_id: The license_id of this PostOauth2AccessRequest.
+        :param license_key: The license_key of this PostOauth2AccessRequest.
         :type: str
         """
-        if license_id is None:
-            raise ValueError("Invalid value for `license_id`, must not be `None`")
+        if license_key is None:
+            raise ValueError("Invalid value for `license_key`, must not be `None`")
 
-        self._license_id = license_id
+        self._license_key = license_key
 
     @property
     def secret_key(self):
