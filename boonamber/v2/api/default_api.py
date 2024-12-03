@@ -317,6 +317,99 @@ class DefaultApi(object):
             _request_timeout=params.get('_request_timeout'),
             collection_formats=collection_formats)
 
+    def get_model_data_set_run(self, model_id, **kwargs):  # noqa: E501
+        """get status on any running datasets  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+        >>> thread = api.get_model_data_set_run(model_id, async_req=True)
+        >>> result = thread.get()
+
+        :param async_req bool
+        :param str model_id: (required)
+        :return: GetModelDataSetRunResponse
+                 If the method is called asynchronously,
+                 returns the request thread.
+        """
+        kwargs['_return_http_data_only'] = True
+        if kwargs.get('async_req'):
+            return self.get_model_data_set_run_with_http_info(model_id, **kwargs)  # noqa: E501
+        else:
+            (data) = self.get_model_data_set_run_with_http_info(model_id, **kwargs)  # noqa: E501
+            return data
+
+    def get_model_data_set_run_with_http_info(self, model_id, **kwargs):  # noqa: E501
+        """get status on any running datasets  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+        >>> thread = api.get_model_data_set_run_with_http_info(model_id, async_req=True)
+        >>> result = thread.get()
+
+        :param async_req bool
+        :param str model_id: (required)
+        :return: GetModelDataSetRunResponse
+                 If the method is called asynchronously,
+                 returns the request thread.
+        """
+
+        all_params = ['model_id']  # noqa: E501
+        all_params.append('async_req')
+        all_params.append('_return_http_data_only')
+        all_params.append('_preload_content')
+        all_params.append('_request_timeout')
+
+        params = locals()
+        for key, val in six.iteritems(params['kwargs']):
+            if key not in all_params:
+                raise TypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_model_data_set_run" % key
+                )
+            params[key] = val
+        del params['kwargs']
+        # verify the required parameter 'model_id' is set
+        if ('model_id' not in params or
+                params['model_id'] is None):
+            raise ValueError("Missing the required parameter `model_id` when calling `get_model_data_set_run`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'model_id' in params:
+            path_params['modelId'] = params['model_id']  # noqa: E501
+
+        query_params = []
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['Bearer']  # noqa: E501
+
+        return self.api_client.call_api(
+            '/models/{modelId}/dataset/run', 'GET',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_type='GetModelDataSetRunResponse',  # noqa: E501
+            auth_settings=auth_settings,
+            async_req=params.get('async_req'),
+            _return_http_data_only=params.get('_return_http_data_only'),
+            _preload_content=params.get('_preload_content', True),
+            _request_timeout=params.get('_request_timeout'),
+            collection_formats=collection_formats)
+
     def get_model_diagnostic(self, model_id, **kwargs):  # noqa: E501
         """get the diagnostic of a model  # noqa: E501
 
@@ -1483,6 +1576,103 @@ class DefaultApi(object):
             _request_timeout=params.get('_request_timeout'),
             collection_formats=collection_formats)
 
+    def post_model_data_set_run(self, model_id, **kwargs):  # noqa: E501
+        """run the nano on a previously uploaded dataset  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+        >>> thread = api.post_model_data_set_run(model_id, async_req=True)
+        >>> result = thread.get()
+
+        :param async_req bool
+        :param str model_id: (required)
+        :param str type:
+        :return: PostModelDataSetRunResponse
+                 If the method is called asynchronously,
+                 returns the request thread.
+        """
+        kwargs['_return_http_data_only'] = True
+        if kwargs.get('async_req'):
+            return self.post_model_data_set_run_with_http_info(model_id, **kwargs)  # noqa: E501
+        else:
+            (data) = self.post_model_data_set_run_with_http_info(model_id, **kwargs)  # noqa: E501
+            return data
+
+    def post_model_data_set_run_with_http_info(self, model_id, **kwargs):  # noqa: E501
+        """run the nano on a previously uploaded dataset  # noqa: E501
+
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+        >>> thread = api.post_model_data_set_run_with_http_info(model_id, async_req=True)
+        >>> result = thread.get()
+
+        :param async_req bool
+        :param str model_id: (required)
+        :param str type:
+        :return: PostModelDataSetRunResponse
+                 If the method is called asynchronously,
+                 returns the request thread.
+        """
+
+        all_params = ['model_id', 'type']  # noqa: E501
+        all_params.append('async_req')
+        all_params.append('_return_http_data_only')
+        all_params.append('_preload_content')
+        all_params.append('_request_timeout')
+
+        params = locals()
+        for key, val in six.iteritems(params['kwargs']):
+            if key not in all_params:
+                raise TypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method post_model_data_set_run" % key
+                )
+            params[key] = val
+        del params['kwargs']
+        # verify the required parameter 'model_id' is set
+        if ('model_id' not in params or
+                params['model_id'] is None):
+            raise ValueError("Missing the required parameter `model_id` when calling `post_model_data_set_run`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'model_id' in params:
+            path_params['modelId'] = params['model_id']  # noqa: E501
+
+        query_params = []
+        if 'type' in params:
+            query_params.append(('type', params['type']))  # noqa: E501
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = ['Bearer']  # noqa: E501
+
+        return self.api_client.call_api(
+            '/models/{modelId}/dataset/run', 'POST',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_type='PostModelDataSetRunResponse',  # noqa: E501
+            auth_settings=auth_settings,
+            async_req=params.get('async_req'),
+            _return_http_data_only=params.get('_return_http_data_only'),
+            _preload_content=params.get('_preload_content', True),
+            _request_timeout=params.get('_request_timeout'),
+            collection_formats=collection_formats)
+
     def post_model_learning(self, model_id, **kwargs):  # noqa: E501
         """update model configuration and re-enable learning  # noqa: E501
 
@@ -1970,7 +2160,7 @@ class DefaultApi(object):
             ['application/json'])  # noqa: E501
 
         # Authentication setting
-        auth_settings = []  # noqa: E501
+        auth_settings = ['Bearer']  # noqa: E501
 
         return self.api_client.call_api(
             '/oauth2/access', 'POST',
@@ -2069,7 +2259,7 @@ class DefaultApi(object):
             ['application/json'])  # noqa: E501
 
         # Authentication setting
-        auth_settings = []  # noqa: E501
+        auth_settings = ['Bearer']  # noqa: E501
 
         return self.api_client.call_api(
             '/oauth2/refresh', 'POST',

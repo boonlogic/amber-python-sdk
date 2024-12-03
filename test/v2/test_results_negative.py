@@ -25,7 +25,9 @@ class TestResults(unittest.TestCase):
     def testPostLearningNegative(self):
         """Test Post Learning fail"""
         with self.assertRaises(ApiException):
-            self.api.enable_learning(model_id=self.model_id)
+            training = boonamber.TrainingConfig(buffering_samples=100, learning_max_samples=100)
+            learning = boonamber.PostLearningRequest(state="Learning", training=training)
+            self.api.enable_learning(model_id=self.model_id, body=learning)
 
     def testGetNanoStatusNegative(self):
         """Test Get Nano Status fail"""

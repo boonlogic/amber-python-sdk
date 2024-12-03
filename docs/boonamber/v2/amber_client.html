@@ -104,7 +104,7 @@ Environment variables:
 </dl></div>
 </dd>
 <dt id="boonamber.v2.amber_client.AmberV2Client.enable_learning"><code class="name flex">
-<span>def <span class="ident">enable_learning</span></span>(<span>self, model_id: str, **kwargs) ‑> <a title="boonamber.v2.models.post_learning_response.PostLearningResponse" href="models/post_learning_response.html#boonamber.v2.models.post_learning_response.PostLearningResponse">PostLearningResponse</a></span>
+<span>def <span class="ident">enable_learning</span></span>(<span>self, model_id: str, body: <a title="boonamber.v2.models.post_learning_request.PostLearningRequest" href="models/post_learning_request.html#boonamber.v2.models.post_learning_request.PostLearningRequest">PostLearningRequest</a>) ‑> <a title="boonamber.v2.models.post_learning_response.PostLearningResponse" href="models/post_learning_response.html#boonamber.v2.models.post_learning_response.PostLearningResponse">PostLearningResponse</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Update model configuration and re-enable learning</p>
@@ -112,11 +112,11 @@ Environment variables:
 <dl>
 <dt><strong><code>model_id</code></strong></dt>
 <dd>(type: str) (required)</dd>
-<dt><strong><code>training</code></strong></dt>
-<dd>(type: <code><a title="boonamber.v2.models.training_config.TrainingConfig" href="models/training_config.html#boonamber.v2.models.training_config.TrainingConfig">TrainingConfig</a></code>) updates to apply</dd>
+<dt><strong><code>body</code></strong></dt>
+<dd>(type: <code>boonamber.v2.models.PostLearningRequest</code>) updates to apply</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p><code><a title="boonamber.v2.models.post_learning_response.PostLearningResponse" href="models/post_learning_response.html#boonamber.v2.models.post_learning_response.PostLearningResponse">PostLearningResponse</a></code></p></div>
+<p><code>boonamber.v2.models.PostLearningRequest</code></p></div>
 </dd>
 <dt id="boonamber.v2.amber_client.AmberV2Client.get_config"><code class="name flex">
 <span>def <span class="ident">get_config</span></span>(<span>self, model_id: str) ‑> <a title="boonamber.v2.models.post_config_response.PostConfigResponse" href="models/post_config_response.html#boonamber.v2.models.post_config_response.PostConfigResponse">PostConfigResponse</a></span>

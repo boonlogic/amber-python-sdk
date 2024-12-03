@@ -610,23 +610,20 @@ class AmberV2Client:
         return response
 
     @__authenticate
-    def enable_learning(self, model_id: str, **kwargs) -> PostLearningResponse:
+    def enable_learning(self, model_id: str, body: PostLearningRequest) -> PostLearningResponse:
         """
 
         Update model configuration and re-enable learning
 
         Args:
             model_id: (type: str) (required)
-            training: (type: `boonamber.v2.models.training_config.TrainingConfig`) updates to apply
+            body: (type: `boonamber.v2.models.PostLearningRequest`) updates to apply
 
         Returns:
-            `boonamber.v2.models.post_learning_response.PostLearningResponse`
+            `boonamber.v2.models.PostLearningRequest`
 
         """
-        if "training" in kwargs:
-            kwargs["body"] = PostLearningRequest(training=kwargs["training"])
-            del kwargs["training"]
-        return self.api.post_model_learning(model_id=model_id, **kwargs)
+        return self.api.post_model_learning(model_id=model_id, body=body)
 
     @__authenticate
     def put_data(self, model_id: str, body: PutDataRequest) -> PutDataResponse:
