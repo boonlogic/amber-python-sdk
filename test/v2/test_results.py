@@ -52,7 +52,8 @@ class TestResults(unittest.TestCase):
     def testPostLearning(self):
         """Test Post Learning"""
         training = boonamber.TrainingConfig(buffering_samples=400, learning_max_samples=500)
-        response = self.api.enable_learning(model_id=self.model_id, training=training)
+        learning = boonamber.PostLearningRequest(state="Learning", training=training)
+        response = self.api.enable_learning(model_id=self.model_id, body=learning)
         assert "Learning" == response.status.state
 
     def testGetNanoStatus(self):
